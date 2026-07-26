@@ -14,16 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      incident_reports: {
+        Row: {
+          badge_or_unit: string | null
+          city: string | null
+          consent_given: boolean
+          created_at: string
+          description: string
+          id: string
+          incident_at: string
+          injury_details: string | null
+          location_text: string
+          report_code: string
+          reporter_contact: string | null
+          reporter_name: string | null
+          status: Database["public"]["Enums"]["report_status"]
+          updated_at: string
+          witness_contact: string | null
+          witness_name: string | null
+        }
+        Insert: {
+          badge_or_unit?: string | null
+          city?: string | null
+          consent_given?: boolean
+          created_at?: string
+          description: string
+          id?: string
+          incident_at: string
+          injury_details?: string | null
+          location_text: string
+          report_code?: string
+          reporter_contact?: string | null
+          reporter_name?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+          witness_contact?: string | null
+          witness_name?: string | null
+        }
+        Update: {
+          badge_or_unit?: string | null
+          city?: string | null
+          consent_given?: boolean
+          created_at?: string
+          description?: string
+          id?: string
+          incident_at?: string
+          injury_details?: string | null
+          location_text?: string
+          report_code?: string
+          reporter_contact?: string | null
+          reporter_name?: string | null
+          status?: Database["public"]["Enums"]["report_status"]
+          updated_at?: string
+          witness_contact?: string | null
+          witness_name?: string | null
+        }
+        Relationships: []
+      }
+      report_evidence: {
+        Row: {
+          content_type: string | null
+          created_at: string
+          file_name: string | null
+          id: string
+          report_id: string
+          sha256: string
+          size_bytes: number | null
+          storage_path: string
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          report_id: string
+          sha256: string
+          size_bytes?: number | null
+          storage_path: string
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string
+          file_name?: string | null
+          id?: string
+          report_id?: string
+          sha256?: string
+          size_bytes?: number | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_evidence_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "incident_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      public_incident_stats: {
+        Args: { city_filter?: string; from_date?: string; to_date?: string }
+        Returns: {
+          by_city: Json
+          by_month: Json
+          total_reports: number
+        }[]
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "legal_partner"
+      report_status: "new" | "under_review" | "referred" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +283,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "legal_partner"],
+      report_status: ["new", "under_review", "referred", "closed"],
+    },
   },
 } as const
