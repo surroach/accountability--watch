@@ -32,11 +32,11 @@ function Dashboard() {
   const { data, isLoading } = useQuery({
     queryKey: ["public-stats", from, to, city],
     queryFn: async (): Promise<Stats> => {
-      const { data, error } = await supabase.rpc("public_incident_stats", {
-        from_date: from ? new Date(from).toISOString() : null,
-        to_date: to ? new Date(to).toISOString() : null,
-        city_filter: city ? `%${city}%` : null,
-      });
+      const args: Record<string, string> = {};
+      if (from) args.from_date = new Date(from).toISOString();
+      if (to) args.to_date = new Date(to).toISOString();
+      if (city) args.city_filter = `%${city}%`;
+      const { data, error } = await supabase.rpc("public_incident_stats", args as never);
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
       return {
