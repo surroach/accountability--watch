@@ -51,7 +51,7 @@ class LocalDB {
 
   select(fields?: string) {
     if (fields) {
-      this.selectFields = fields.split(',').map(f => f.trim());
+      this.selectFields = fields.split(",").map((f) => f.trim());
     }
     return this;
   }
@@ -68,13 +68,15 @@ class LocalDB {
 
   async delete() {
     if (!this.table || this.whereConditions.length === 0) {
-      return { data: null, error: { message: 'Invalid delete operation' } };
+      return { data: null, error: { message: "Invalid delete operation" } };
     }
 
     try {
       const items = store[this.table] || [];
-      const filtered = items.filter(item => {
-        return !this.whereConditions.every(cond => item[cond.field] === cond.value);
+      const filtered = items.filter((item) => {
+        return !this.whereConditions.every(
+          (cond) => item[cond.field] === cond.value,
+        );
       });
       store[this.table] = filtered;
       return { data: null, error: null };
@@ -85,7 +87,7 @@ class LocalDB {
 
   async single() {
     if (!this.table) {
-      return { data: null, error: { message: 'No table specified' } };
+      return { data: null, error: { message: "No table specified" } };
     }
 
     try {
@@ -103,12 +105,13 @@ class LocalDB {
         store[this.table].push(record);
 
         // Return selected fields
-        const result = this.selectFields.length > 0
-          ? this.selectFields.reduce((acc: any, field) => {
-              acc[field] = record[field];
-              return acc;
-            }, {})
-          : record;
+        const result =
+          this.selectFields.length > 0
+            ? this.selectFields.reduce((acc: any, field) => {
+                acc[field] = record[field];
+                return acc;
+              }, {})
+            : record;
 
         return { data: result, error: null };
       }
@@ -118,7 +121,7 @@ class LocalDB {
 
       // Apply where conditions
       for (const cond of this.whereConditions) {
-        items = items.filter(item => item[cond.field] === cond.value);
+        items = items.filter((item) => item[cond.field] === cond.value);
       }
 
       if (items.length === 0) {
@@ -143,7 +146,7 @@ class LocalDB {
 
   async toArray() {
     if (!this.table) {
-      return { data: [], error: { message: 'No table specified' } };
+      return { data: [], error: { message: "No table specified" } };
     }
 
     try {
@@ -151,16 +154,16 @@ class LocalDB {
 
       // Apply where conditions
       for (const cond of this.whereConditions) {
-        items = items.filter(item => item[cond.field] === cond.value);
+        items = items.filter((item) => item[cond.field] === cond.value);
       }
 
       // Apply select fields
       if (this.selectFields.length > 0) {
-        items = items.map(item =>
+        items = items.map((item) =>
           this.selectFields.reduce((acc: any, field) => {
             acc[field] = item[field];
             return acc;
-          }, {})
+          }, {}),
         );
       }
 
@@ -189,7 +192,7 @@ class LocalStorage {
           const key = `${bucket}/${path}`;
           const file = storage[key];
           if (!file) {
-            return { data: null, error: { message: 'File not found' } };
+            return { data: null, error: { message: "File not found" } };
           }
           return { data: file, error: null };
         } catch (err: any) {
@@ -198,7 +201,7 @@ class LocalStorage {
       },
       remove: async (paths: string[]) => {
         try {
-          paths.forEach(path => {
+          paths.forEach((path) => {
             const key = `${bucket}/${path}`;
             delete storage[key];
           });
@@ -266,7 +269,7 @@ export function getLocalData(table: string) {
 }
 
 export function clearLocalData() {
-  Object.keys(store).forEach(key => {
+  Object.keys(store).forEach((key) => {
     store[key] = [];
   });
 }

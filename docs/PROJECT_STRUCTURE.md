@@ -105,6 +105,7 @@ accountability-watch/
 ## 📊 File Organization
 
 ### Source Code (`src/`)
+
 - **lib/** - 6 core production modules (1,980 lines)
 - **middleware/** - Authorization layer (340 lines)
 - **routes/** - Page components (React)
@@ -112,16 +113,19 @@ accountability-watch/
 - **integrations/** - External services
 
 ### Tests (`tests/`)
+
 - **4 test suites** - 1,400 lines total
 - **50+ test cases** - comprehensive coverage
 - Run with: `npm run test`
 
 ### Documentation (`docs/`)
+
 - **10 comprehensive guides** - 1,400+ lines
 - Start with: `docs/START_HERE.md`
 - Choose based on your needs
 
 ### Configuration
+
 - **db/** - SQLite schema
 - **config/** - Environment variables
 - **supabase/** - Database setup
@@ -132,6 +136,7 @@ accountability-watch/
 ## 🗂️ How to Navigate
 
 ### For Understanding the Code
+
 ```
 Start here:
   src/lib/full-text-search.ts    (simplest module)
@@ -141,6 +146,7 @@ Start here:
 ```
 
 ### For Understanding Tests
+
 ```
 Start here:
   tests/rate-limiter.test.ts     (simplest tests)
@@ -149,6 +155,7 @@ Start here:
 ```
 
 ### For Using Modules
+
 ```
 Read in this order:
   docs/PHASE_2_3_INTEGRATION_GUIDE.md
@@ -157,6 +164,7 @@ Read in this order:
 ```
 
 ### For Deployment
+
 ```
 Read in this order:
   docs/PRODUCTION_DEPLOYMENT.md
@@ -165,6 +173,7 @@ Read in this order:
 ```
 
 ### For College Submission
+
 ```
 Read in this order:
   docs/COLLEGE_DEFENSE_GUIDE.md
@@ -177,23 +186,27 @@ Read in this order:
 ## 📈 File Statistics
 
 ### Code Files
+
 - 6 core modules in `src/lib/` - 1,980 lines
 - 1 middleware in `src/middleware/` - 340 lines
 - 1 UI component in `src/routes/` - 480 lines
 - **Total: 2,800 lines of production code**
 
 ### Test Files
+
 - 4 test suites in `tests/` - 1,400 lines
 - 50+ individual test cases
 - **Total: 1,400 lines of test code**
 
 ### Documentation Files
+
 - 10 comprehensive guides in `docs/` - 1,400+ lines
 - README and quick-start guides
 - Integration and deployment instructions
 - **Total: 1,400+ lines of documentation**
 
 ### Overall
+
 - **21 new files created**
 - **5,580+ total lines**
 - **100% TypeScript**
@@ -204,39 +217,43 @@ Read in this order:
 ## 🎯 Key Locations
 
 ### Core Features
-| Feature | Location | Lines |
-|---------|----------|-------|
-| Search | src/lib/full-text-search.ts | 350 |
-| Rate Limiting | src/lib/rate-limiter.ts | 300 |
-| Encryption | src/lib/encryption.ts | 330 |
-| Sessions | src/lib/session-manager.ts | 320 |
-| Data Retention | src/lib/data-retention.ts | 380 |
-| Performance | src/lib/performance-monitoring.ts | 350 |
-| Authorization | src/middleware/auth-verify.ts | 340 |
-| Dashboard | src/routes/_authenticated/admin-audit.tsx | 480 |
+
+| Feature        | Location                                  | Lines |
+| -------------- | ----------------------------------------- | ----- |
+| Search         | src/lib/full-text-search.ts               | 350   |
+| Rate Limiting  | src/lib/rate-limiter.ts                   | 300   |
+| Encryption     | src/lib/encryption.ts                     | 330   |
+| Sessions       | src/lib/session-manager.ts                | 320   |
+| Data Retention | src/lib/data-retention.ts                 | 380   |
+| Performance    | src/lib/performance-monitoring.ts         | 350   |
+| Authorization  | src/middleware/auth-verify.ts             | 340   |
+| Dashboard      | src/routes/_authenticated/admin-audit.tsx | 480   |
 
 ### Tests
-| Test Suite | Location | Cases |
-|-----------|----------|-------|
-| Transactions | tests/db-transactions.test.ts | 15 |
-| Encryption | tests/encryption.test.ts | 18 |
-| Rate Limiting | tests/rate-limiter.test.ts | 20 |
-| Duplicates | tests/duplicate-detection.test.ts | 25 |
+
+| Test Suite    | Location                          | Cases |
+| ------------- | --------------------------------- | ----- |
+| Transactions  | tests/db-transactions.test.ts     | 15    |
+| Encryption    | tests/encryption.test.ts          | 18    |
+| Rate Limiting | tests/rate-limiter.test.ts        | 20    |
+| Duplicates    | tests/duplicate-detection.test.ts | 25    |
 
 ### Documentation
-| Document | Location | Purpose |
-|----------|----------|---------|
-| Quick Start | docs/START_HERE.md | Overview |
-| Structure | docs/PROJECT_STRUCTURE.md | This file |
-| Implementation | docs/IMPLEMENTATION_COMPLETE.md | Full details |
-| Integration | docs/PHASE_2_3_INTEGRATION_GUIDE.md | How to use |
-| Deployment | docs/PRODUCTION_DEPLOYMENT.md | Production |
+
+| Document       | Location                            | Purpose      |
+| -------------- | ----------------------------------- | ------------ |
+| Quick Start    | docs/START_HERE.md                  | Overview     |
+| Structure      | docs/PROJECT_STRUCTURE.md           | This file    |
+| Implementation | docs/IMPLEMENTATION_COMPLETE.md     | Full details |
+| Integration    | docs/PHASE_2_3_INTEGRATION_GUIDE.md | How to use   |
+| Deployment     | docs/PRODUCTION_DEPLOYMENT.md       | Production   |
 
 ---
 
 ## 🔍 Finding Things
 
 ### "Where is the X feature?"
+
 - **Search functionality** → `src/lib/full-text-search.ts`
 - **Login protection** → `src/lib/rate-limiter.ts`
 - **Sensitive data protection** → `src/lib/encryption.ts`
@@ -247,12 +264,14 @@ Read in this order:
 - **Audit log viewer** → `src/routes/_authenticated/admin-audit.tsx`
 
 ### "How do I test X?"
+
 - **Rate limiting** → `tests/rate-limiter.test.ts`
 - **Encryption** → `tests/encryption.test.ts`
 - **Transactions** → `tests/db-transactions.test.ts`
 - **Duplicates** → `tests/duplicate-detection.test.ts`
 
 ### "How do I understand X?"
+
 - **Setup & overview** → `docs/START_HERE.md`
 - **Full implementation** → `docs/IMPLEMENTATION_COMPLETE.md`
 - **Integration examples** → `docs/PHASE_2_3_INTEGRATION_GUIDE.md`
@@ -264,24 +283,28 @@ Read in this order:
 ## ✅ Clean Organization Principles
 
 ✅ **Separation of Concerns**
+
 - lib/ for reusable business logic
 - middleware/ for cross-cutting concerns
 - routes/ for UI/pages
 - tests/ for verification
 
 ✅ **Easy Navigation**
+
 - Clear naming conventions
 - Logical grouping
 - Consistent structure
 - Comprehensive documentation
 
 ✅ **Production Ready**
+
 - All code in src/
 - All tests in tests/
 - All docs in docs/
 - Configuration separate
 
 ✅ **Minimal Clutter**
+
 - No loose files in root (except standard config)
 - Old files in .trash/ (excluded from git)
 - Clean .gitignore
@@ -292,6 +315,7 @@ Read in this order:
 ## 🚀 Using This Structure
 
 ### To Understand a Module
+
 ```bash
 # Read the source
 cat src/lib/encryption.ts
@@ -304,9 +328,11 @@ cat docs/PHASE_2_3_INTEGRATION_GUIDE.md
 ```
 
 ### To Find Something
+
 Use this table above or search docs/ for more info.
 
 ### To Add Something New
+
 1. Put business logic in `src/lib/`
 2. Put UI in `src/routes/` or `src/components/`
 3. Put middleware in `src/middleware/`

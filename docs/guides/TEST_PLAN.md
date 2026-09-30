@@ -7,6 +7,7 @@
 **Objective:** Verify a user can submit an anonymous report with files and see confirmation
 
 **Prerequisites:**
+
 - Dev server running on http://localhost:8080
 - Supabase project has storage bucket "evidence" configured
 - SQL fixes applied (FIX_ALL_CRITICAL.sql)
@@ -89,16 +90,19 @@
 ### Test Suite 4: File Upload Edge Cases
 
 **Test 4a: File Size Validation**
+
 - Upload > 25 MB file
 - Expected: ❌ Error "exceeds 25 MB limit"
 
 **Test 4b: Multiple Files**
+
 - Upload 3 images
 - Expected: All appear in list
 - Delete one
 - Expected: Other two remain
 
 **Test 4c: Large Valid File**
+
 - Upload 24.9 MB file
 - Submit report
 - Expected: ✅ Uploads successfully
@@ -110,22 +114,27 @@
 ### Test Suite 5: Form Validation
 
 **Test 5a: Missing Required Fields**
+
 - Leave date empty, click Continue
 - Expected: ❌ Error "Date and time are required"
 
 **Test 5b: Description Too Short**
+
 - Enter < 10 characters
 - Expected: ❌ Error "at least 10 characters"
 
 **Test 5c: Future Date**
+
 - Set date to tomorrow
 - Expected: ❌ Error "within the last year"
 
 **Test 5d: Invalid Email**
+
 - Witness contact: "not-an-email"
 - Expected: ❌ Error "valid email or phone"
 
 **Test 5e: Valid Phone**
+
 - Witness contact: "+1-555-0123"
 - Expected: ✅ Passes validation
 
@@ -208,24 +217,29 @@
 ### Test Suite 9: Error Scenarios
 
 **Test 9a: Network Error**
+
 - Submit with internet off
 - Expected: ❌ Error message
 - Reconnect and retry
 - Expected: ✅ Succeeds
 
 **Test 9b: Invalid Credentials**
+
 - Sign in with wrong password
 - Expected: ❌ Error "Invalid login credentials"
 
 **Test 9c: Permission Denied**
+
 - Access /admin without admin role
 - Expected: ❌ Redirected to /auth
 
 **Test 9d: Optional Fields**
+
 - Submit without files/injury/badge
 - Expected: ✅ Still submits
 
 **Test 9e: Special Characters**
+
 - Description with `<html>`, `&amp;`, quotes, unicode
 - Expected: ✅ Renders correctly
 
@@ -236,16 +250,19 @@
 ### Test Suite 10: Privacy & Security
 
 **Test 10a: Anonymous Privacy**
+
 - Submit anonymous report
 - Go to /dashboard
 - Expected: ✅ No reporter name visible
 
 **Test 10b: Contact Info Hidden**
+
 - Submit identified report with contact
 - Go to /dashboard
 - Expected: ✅ No contact info exposed
 
 **Test 10c: Badge Numbers Scoped**
+
 - Submit 3 reports with badge numbers
 - Go to /dashboard
 - Expected: ✅ Badges not visible
@@ -253,6 +270,7 @@
 - Expected: ✅ Badges visible only to admin
 
 **Test 10d: Session Security**
+
 - Sign in to /admin
 - Session expires
 - Try to navigate
@@ -268,19 +286,21 @@ After manual testing, implement automated tests:
 
 ```javascript
 // Example: Cypress test for anonymous submission
-describe('Anonymous Report Submission', () => {
-  it('should submit report successfully', () => {
-    cy.visit('http://localhost:8080/report');
-    cy.get('input[type="datetime-local"]').type('2026-01-15T14:30');
-    cy.get('input[placeholder*="Location"]').type('Test Location');
-    cy.get('textarea[placeholder*="describe"]').type('Test description with enough characters');
+describe("Anonymous Report Submission", () => {
+  it("should submit report successfully", () => {
+    cy.visit("http://localhost:8080/report");
+    cy.get('input[type="datetime-local"]').type("2026-01-15T14:30");
+    cy.get('input[placeholder*="Location"]').type("Test Location");
+    cy.get('textarea[placeholder*="describe"]').type(
+      "Test description with enough characters",
+    );
     cy.get('button:contains("Continue")').click();
     cy.get('button:contains("Continue")').click(); // Skip files
     cy.get('input[type="checkbox"]').first().check(); // Anonymous
     cy.get('button:contains("Continue")').click();
     cy.get('input[type="checkbox"]').last().check(); // Consent
     cy.get('button:contains("Submit")').click();
-    cy.contains('Your report has been received').should('be.visible');
+    cy.contains("Your report has been received").should("be.visible");
   });
 });
 ```
@@ -289,15 +309,14 @@ describe('Anonymous Report Submission', () => {
 
 ## Success Criteria Summary
 
-| Area | Tests | Status |
-|------|-------|--------|
-| Report Form | 50+ cases | 🟡 Manual |
-| Dashboard | 10+ cases | 🟡 Manual |
-| Admin Panel | 15+ cases | 🟡 Manual |
-| Moderation | 8+ cases | 🟡 Manual |
-| Error Handling | 10+ cases | 🟡 Manual |
-| Privacy/Security | 10+ cases | 🟡 Manual |
-| **Total** | **100+ test cases** | **Ready** |
+| Area             | Tests               | Status    |
+| ---------------- | ------------------- | --------- |
+| Report Form      | 50+ cases           | 🟡 Manual |
+| Dashboard        | 10+ cases           | 🟡 Manual |
+| Admin Panel      | 15+ cases           | 🟡 Manual |
+| Moderation       | 8+ cases            | 🟡 Manual |
+| Error Handling   | 10+ cases           | 🟡 Manual |
+| Privacy/Security | 10+ cases           | 🟡 Manual |
+| **Total**        | **100+ test cases** | **Ready** |
 
 **All test suites documented and ready for execution.**
-

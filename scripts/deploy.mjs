@@ -2,211 +2,222 @@
 
 /**
  * Accountability Watch - Complete Deployment Script
- * 
+ *
  * This script automates all deployment tasks:
  * - Validates environment
  * - Tests database connectivity
  * - Runs all test suites
  * - Generates deployment report
- * 
+ *
  * Usage: node scripts/deploy.mjs
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.join(__dirname, '..');
+const projectRoot = path.join(__dirname, "..");
 
 // Colors for console output
 const colors = {
-  reset: '\x1b[0m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m',
+  reset: "\x1b[0m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  blue: "\x1b[34m",
+  cyan: "\x1b[36m",
 };
 
 function log(type, message) {
-  const timestamp = new Date().toISOString().split('T')[1].slice(0, 8);
+  const timestamp = new Date().toISOString().split("T")[1].slice(0, 8);
   const prefix = `[${timestamp}]`;
-  
+
   switch (type) {
-    case 'info':
+    case "info":
       console.log(`${colors.blue}${prefix} ℹ️  ${message}${colors.reset}`);
       break;
-    case 'success':
+    case "success":
       console.log(`${colors.green}${prefix} ✅ ${message}${colors.reset}`);
       break;
-    case 'warning':
+    case "warning":
       console.log(`${colors.yellow}${prefix} ⚠️  ${message}${colors.reset}`);
       break;
-    case 'error':
+    case "error":
       console.log(`${colors.red}${prefix} ❌ ${message}${colors.reset}`);
       break;
-    case 'section':
-      console.log(`\n${colors.cyan}${'='.repeat(60)}${colors.reset}`);
+    case "section":
+      console.log(`\n${colors.cyan}${"=".repeat(60)}${colors.reset}`);
       console.log(`${colors.cyan}${message}${colors.reset}`);
-      console.log(`${colors.cyan}${'='.repeat(60)}${colors.reset}\n`);
+      console.log(`${colors.cyan}${"=".repeat(60)}${colors.reset}\n`);
       break;
   }
 }
 
 async function checkEnvironment() {
-  log('section', 'STEP 1: Environment Check');
-  
+  log("section", "STEP 1: Environment Check");
+
   const checks = {
-    '.env exists': fs.existsSync(path.join(projectRoot, '.env')),
-    'package.json exists': fs.existsSync(path.join(projectRoot, 'package.json')),
-    'src/ exists': fs.existsSync(path.join(projectRoot, 'src')),
-    'docs/ exists': fs.existsSync(path.join(projectRoot, 'docs')),
-    'supabase/ exists': fs.existsSync(path.join(projectRoot, 'supabase')),
+    ".env exists": fs.existsSync(path.join(projectRoot, ".env")),
+    "package.json exists": fs.existsSync(
+      path.join(projectRoot, "package.json"),
+    ),
+    "src/ exists": fs.existsSync(path.join(projectRoot, "src")),
+    "docs/ exists": fs.existsSync(path.join(projectRoot, "docs")),
+    "supabase/ exists": fs.existsSync(path.join(projectRoot, "supabase")),
   };
-  
+
   let allPassed = true;
   for (const [check, passed] of Object.entries(checks)) {
     if (passed) {
-      log('success', check);
+      log("success", check);
     } else {
-      log('error', check);
+      log("error", check);
       allPassed = false;
     }
   }
-  
+
   if (!allPassed) {
-    log('error', 'Environment check failed. Please ensure all files are in place.');
+    log(
+      "error",
+      "Environment check failed. Please ensure all files are in place.",
+    );
     process.exit(1);
   }
-  
-  log('success', 'Environment check passed');
+
+  log("success", "Environment check passed");
   return true;
 }
 
 async function readEnv() {
-  log('section', 'STEP 2: Load Environment Variables');
-  
-  const envPath = path.join(projectRoot, '.env');
-  
+  log("section", "STEP 2: Load Environment Variables");
+
+  const envPath = path.join(projectRoot, ".env");
+
   if (!fs.existsSync(envPath)) {
-    log('error', '.env file not found');
-    log('info', 'Copy config/.env.example to .env and fill in your Supabase credentials');
+    log("error", ".env file not found");
+    log(
+      "info",
+      "Copy config/.env.example to .env and fill in your Supabase credentials",
+    );
     process.exit(1);
   }
-  
-  const envContent = fs.readFileSync(envPath, 'utf-8');
+
+  const envContent = fs.readFileSync(envPath, "utf-8");
   const env = {};
-  
-  envContent.split('\n').forEach(line => {
-    if (line.trim() && !line.startsWith('#')) {
-      const [key, ...valueParts] = line.split('=');
+
+  envContent.split("\n").forEach((line) => {
+    if (line.trim() && !line.startsWith("#")) {
+      const [key, ...valueParts] = line.split("=");
       if (key.trim()) {
-        env[key.trim()] = valueParts.join('=').trim();
+        env[key.trim()] = valueParts.join("=").trim();
       }
     }
   });
-  
+
   const required = [
-    'SUPABASE_URL',
-    'SUPABASE_PUBLISHABLE_KEY',
-    'VITE_SUPABASE_URL',
-    'VITE_SUPABASE_PUBLISHABLE_KEY',
+    "SUPABASE_URL",
+    "SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_URL",
+    "VITE_SUPABASE_PUBLISHABLE_KEY",
   ];
-  
+
   let allPresent = true;
   for (const key of required) {
     if (env[key]) {
-      log('success', `${key} configured`);
+      log("success", `${key} configured`);
     } else {
-      log('warning', `${key} missing - some features may not work`);
+      log("warning", `${key} missing - some features may not work`);
       allPresent = false;
     }
   }
-  
+
   if (!allPresent) {
-    log('warning', 'Some environment variables are missing. Please update .env file.');
+    log(
+      "warning",
+      "Some environment variables are missing. Please update .env file.",
+    );
   }
-  
+
   return env;
 }
 
 async function checkBuild() {
-  log('section', 'STEP 3: Build Status Check');
-  
-  const buildPath = path.join(projectRoot, '.output');
-  
+  log("section", "STEP 3: Build Status Check");
+
+  const buildPath = path.join(projectRoot, ".output");
+
   if (fs.existsSync(buildPath)) {
-    log('success', 'Build artifacts found (.output directory)');
-    
-    const publicPath = path.join(buildPath, 'public');
+    log("success", "Build artifacts found (.output directory)");
+
+    const publicPath = path.join(buildPath, "public");
     if (fs.existsSync(publicPath)) {
       const files = fs.readdirSync(publicPath);
-      log('success', `Build contains ${files.length} public assets`);
+      log("success", `Build contains ${files.length} public assets`);
     }
   } else {
-    log('warning', 'No build artifacts found (.output directory)');
-    log('info', 'Run: npm run build');
+    log("warning", "No build artifacts found (.output directory)");
+    log("info", "Run: npm run build");
   }
 }
 
 async function checkDatabase() {
-  log('section', 'STEP 4: Database Schema Check');
-  
-  const migrationsPath = path.join(projectRoot, 'supabase', 'migrations');
-  
+  log("section", "STEP 4: Database Schema Check");
+
+  const migrationsPath = path.join(projectRoot, "supabase", "migrations");
+
   if (!fs.existsSync(migrationsPath)) {
-    log('error', 'supabase/migrations directory not found');
+    log("error", "supabase/migrations directory not found");
     return false;
   }
-  
-  const deployAllPath = path.join(migrationsPath, 'DEPLOY_ALL.sql');
-  
+
+  const deployAllPath = path.join(migrationsPath, "DEPLOY_ALL.sql");
+
   if (fs.existsSync(deployAllPath)) {
-    log('success', 'DEPLOY_ALL.sql found');
-    
-    const content = fs.readFileSync(deployAllPath, 'utf-8');
-    const hasCreateTable = content.includes('CREATE TABLE');
-    const hasRLS = content.includes('ROW LEVEL SECURITY');
-    const hasPolicies = content.includes('CREATE POLICY');
-    
-    if (hasCreateTable) log('success', 'Schema includes table definitions');
-    if (hasRLS) log('success', 'Schema includes RLS configuration');
-    if (hasPolicies) log('success', 'Schema includes RLS policies');
-    
+    log("success", "DEPLOY_ALL.sql found");
+
+    const content = fs.readFileSync(deployAllPath, "utf-8");
+    const hasCreateTable = content.includes("CREATE TABLE");
+    const hasRLS = content.includes("ROW LEVEL SECURITY");
+    const hasPolicies = content.includes("CREATE POLICY");
+
+    if (hasCreateTable) log("success", "Schema includes table definitions");
+    if (hasRLS) log("success", "Schema includes RLS configuration");
+    if (hasPolicies) log("success", "Schema includes RLS policies");
+
     return true;
   } else {
-    log('error', 'DEPLOY_ALL.sql not found');
+    log("error", "DEPLOY_ALL.sql not found");
     return false;
   }
 }
 
 async function checkDocumentation() {
-  log('section', 'STEP 5: Documentation Check');
-  
+  log("section", "STEP 5: Documentation Check");
+
   const docFiles = [
-    'docs/START_HERE.md',
-    'docs/guides/AUDIT_OVERVIEW.md',
-    'docs/guides/FIX_SUMMARY.md',
-    'docs/guides/TESTING.md',
-    'docs/guides/TEST_PLAN.md',
-    'docs/deployment/FIX_ALL_CRITICAL.sql',
-    'docs/audit/SECURITY_AUDIT.md',
+    "docs/START_HERE.md",
+    "docs/guides/AUDIT_OVERVIEW.md",
+    "docs/guides/FIX_SUMMARY.md",
+    "docs/guides/TESTING.md",
+    "docs/guides/TEST_PLAN.md",
+    "docs/deployment/FIX_ALL_CRITICAL.sql",
+    "docs/audit/SECURITY_AUDIT.md",
   ];
-  
+
   for (const file of docFiles) {
     const filePath = path.join(projectRoot, file);
     if (fs.existsSync(filePath)) {
-      log('success', file);
+      log("success", file);
     } else {
-      log('warning', `${file} (missing)`);
+      log("warning", `${file} (missing)`);
     }
   }
 }
 
 async function generateDeploymentReport() {
-  log('section', 'STEP 6: Generate Deployment Report');
-  
+  log("section", "STEP 6: Generate Deployment Report");
+
   const report = `
 # 🚀 DEPLOYMENT READINESS REPORT
 
@@ -315,16 +326,16 @@ npm run test                # Run tests (if configured)
 Accountability Watch is ready to protect civil rights. 🛡️
 `;
 
-  const reportPath = path.join(projectRoot, 'DEPLOYMENT_REPORT.md');
+  const reportPath = path.join(projectRoot, "DEPLOYMENT_REPORT.md");
   fs.writeFileSync(reportPath, report);
-  
-  log('success', `Deployment report generated: DEPLOYMENT_REPORT.md`);
+
+  log("success", `Deployment report generated: DEPLOYMENT_REPORT.md`);
   return reportPath;
 }
 
 async function createDeploymentChecklist() {
-  log('section', 'STEP 7: Create Deployment Checklist');
-  
+  log("section", "STEP 7: Create Deployment Checklist");
+
   const checklist = `# ✅ DEPLOYMENT CHECKLIST
 
 ## Pre-Deployment (5 min)
@@ -412,18 +423,18 @@ If issues arise:
 All technical work is complete. Follow this checklist for successful deployment.
 `;
 
-  const checklistPath = path.join(projectRoot, 'DEPLOYMENT_CHECKLIST.md');
+  const checklistPath = path.join(projectRoot, "DEPLOYMENT_CHECKLIST.md");
   fs.writeFileSync(checklistPath, checklist);
-  
-  log('success', `Deployment checklist created: DEPLOYMENT_CHECKLIST.md`);
+
+  log("success", `Deployment checklist created: DEPLOYMENT_CHECKLIST.md`);
   return checklistPath;
 }
 
 async function main() {
   console.clear();
-  
-  log('section', '🚀 ACCOUNTABILITY WATCH - DEPLOYMENT AUTOMATION');
-  
+
+  log("section", "🚀 ACCOUNTABILITY WATCH - DEPLOYMENT AUTOMATION");
+
   try {
     // Run all checks
     await checkEnvironment();
@@ -431,13 +442,13 @@ async function main() {
     await checkBuild();
     await checkDatabase();
     await checkDocumentation();
-    
+
     // Generate reports
     await generateDeploymentReport();
     await createDeploymentChecklist();
-    
-    log('section', '✅ ALL CHECKS COMPLETE - READY FOR DEPLOYMENT');
-    
+
+    log("section", "✅ ALL CHECKS COMPLETE - READY FOR DEPLOYMENT");
+
     console.log(`
 ${colors.green}${colors.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}
 
@@ -507,9 +518,8 @@ Let's go! 🚀
 
 ${colors.cyan}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}
     `);
-    
   } catch (error) {
-    log('error', `Deployment check failed: ${error.message}`);
+    log("error", `Deployment check failed: ${error.message}`);
     process.exit(1);
   }
 }

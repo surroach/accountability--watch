@@ -3,10 +3,21 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, Clock, LogOut, AlertCircle } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -51,7 +62,8 @@ function ModerationPage() {
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("pending_moderation");
+  const [statusFilter, setStatusFilter] =
+    useState<string>("pending_moderation");
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [open, setOpen] = useState<Report | null>(null);
 
@@ -62,7 +74,10 @@ function ModerationPage() {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) {
-      if (error.code === "PGRST301" || error.message.toLowerCase().includes("permission")) {
+      if (
+        error.code === "PGRST301" ||
+        error.message.toLowerCase().includes("permission")
+      ) {
         setHasAccess(false);
       } else {
         toast.error(error.message);
@@ -104,8 +119,10 @@ function ModerationPage() {
     toast.success("Status updated");
     setReports((prev) =>
       prev.map((r) =>
-        r.id === id ? { ...r, status, is_moderated: status === "moderation_approved" } : r
-      )
+        r.id === id
+          ? { ...r, status, is_moderated: status === "moderation_approved" }
+          : r,
+      ),
     );
   }
 
@@ -133,9 +150,14 @@ function ModerationPage() {
           </div>
           <h1 className="font-display text-2xl font-bold">Access pending</h1>
           <p className="mt-3 text-muted-foreground">
-            You're signed in, but your account hasn't been granted moderation access yet. Contact your platform admin.
+            You're signed in, but your account hasn't been granted moderation
+            access yet. Contact your platform admin.
           </p>
-          <Button onClick={signOut} variant="outline" className="mt-6 rounded-full">
+          <Button
+            onClick={signOut}
+            variant="outline"
+            className="mt-6 rounded-full"
+          >
             Sign out
           </Button>
         </div>
@@ -150,12 +172,20 @@ function ModerationPage() {
           <p className="mb-2 font-display text-xs uppercase tracking-widest">
             <span className="highlight-lime">Moderation</span>
           </p>
-          <h1 className="font-display text-3xl font-bold md:text-4xl">Review queue</h1>
+          <h1 className="font-display text-3xl font-bold md:text-4xl">
+            Review queue
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Approve or reject reports before they appear in public aggregate statistics.
+            Approve or reject reports before they appear in public aggregate
+            statistics.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={signOut} className="rounded-full">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={signOut}
+          className="rounded-full"
+        >
           <LogOut className="h-4 w-4" /> Sign out
         </Button>
       </div>
@@ -192,9 +222,13 @@ function ModerationPage() {
 
       <div className="mt-6 rounded-2xl border border-border bg-card">
         {loading ? (
-          <div className="p-8 text-center text-muted-foreground">Loading reports...</div>
+          <div className="p-8 text-center text-muted-foreground">
+            Loading reports...
+          </div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">No reports found</div>
+          <div className="p-8 text-center text-muted-foreground">
+            No reports found
+          </div>
         ) : (
           <div className="divide-y divide-border">
             {filtered.map((r) => (
@@ -205,19 +239,32 @@ function ModerationPage() {
               >
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-mono text-sm font-semibold">{r.report_code}</p>
-                    {r.urgent_flag && <Badge variant="destructive" className="text-xs">Urgent</Badge>}
+                    <p className="font-mono text-sm font-semibold">
+                      {r.report_code}
+                    </p>
+                    {r.urgent_flag && (
+                      <Badge variant="destructive" className="text-xs">
+                        Urgent
+                      </Badge>
+                    )}
                     {r.submission_mode === "anonymous" && (
-                      <Badge variant="outline" className="text-xs">Anonymous</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Anonymous
+                      </Badge>
                     )}
                     {r.incident_type && (
                       <Badge variant="secondary" className="text-xs">
-                        {INCIDENT_TYPE_LABELS[r.incident_type] || r.incident_type}
+                        {INCIDENT_TYPE_LABELS[r.incident_type] ||
+                          r.incident_type}
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-foreground">{r.location_text}</p>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{r.description}</p>
+                  <p className="mt-1 text-sm text-foreground">
+                    {r.location_text}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {r.description}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p
@@ -277,9 +324,12 @@ function ModerationPage() {
                 )}
                 {open.incident_type && (
                   <div>
-                    <p className="text-xs text-muted-foreground">INCIDENT TYPE</p>
+                    <p className="text-xs text-muted-foreground">
+                      INCIDENT TYPE
+                    </p>
                     <p className="mt-1 text-sm">
-                      {INCIDENT_TYPE_LABELS[open.incident_type] || open.incident_type}
+                      {INCIDENT_TYPE_LABELS[open.incident_type] ||
+                        open.incident_type}
                     </p>
                   </div>
                 )}
@@ -287,7 +337,10 @@ function ModerationPage() {
                   <div>
                     <p className="text-xs text-muted-foreground">PRIORITY</p>
                     <p className="mt-1">
-                      <Badge variant="destructive" className="text-xs font-semibold">
+                      <Badge
+                        variant="destructive"
+                        className="text-xs font-semibold"
+                      >
                         🚨 URGENT
                       </Badge>
                     </p>
@@ -295,7 +348,9 @@ function ModerationPage() {
                 )}
                 {open.submission_mode === "anonymous" && (
                   <div>
-                    <p className="text-xs text-muted-foreground">SUBMISSION MODE</p>
+                    <p className="text-xs text-muted-foreground">
+                      SUBMISSION MODE
+                    </p>
                     <p className="mt-1">
                       <Badge variant="outline" className="text-xs">
                         Anonymous
@@ -313,7 +368,9 @@ function ModerationPage() {
               <div className="space-y-3 border-t border-border pt-4">
                 {open.status === "pending_moderation" ? (
                   <>
-                    <p className="text-sm font-semibold">Approve or reject this report?</p>
+                    <p className="text-sm font-semibold">
+                      Approve or reject this report?
+                    </p>
                     <div className="flex gap-3">
                       <Button
                         onClick={() => approveReport(open.id)}
@@ -334,7 +391,9 @@ function ModerationPage() {
                   <div className="rounded-lg bg-muted p-3">
                     <p className="text-xs text-muted-foreground">
                       <strong>Status:</strong>{" "}
-                      {open.status === "moderation_approved" ? "Approved" : "Rejected"}
+                      {open.status === "moderation_approved"
+                        ? "Approved"
+                        : "Rejected"}
                     </p>
                   </div>
                 )}

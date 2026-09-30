@@ -1,17 +1,17 @@
 /**
  * Encryption Module for Accountability Watch
- * 
+ *
  * Implements AES-256-GCM encryption for sensitive data:
  * - Contact information (email, phone, address)
  * - Reporter details
  * - Witness information
- * 
+ *
  * SECURITY PROPERTIES:
  * - Algorithm: AES-256-GCM (provides authenticated encryption)
  * - Key derivation: PBKDF2 with SHA-256
  * - IV: 96-bit cryptographically random (per-message)
  * - Authentication tag: 128-bit (prevents tampering)
- * 
+ *
  * COMPLIANCE:
  * - NIST recommended: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-38D.pdf
  * - Uses Web Crypto API (standard in modern browsers and Node.js)
@@ -22,22 +22,22 @@
  * Encryption configuration
  */
 const ENCRYPTION_CONFIG = {
-  algorithm: 'AES-GCM',
-  keySize: 256,      // 256-bit key
-  ivSize: 96,        // 96-bit IV (12 bytes) - recommended for GCM
-  tagLength: 128,    // 128-bit authentication tag
-  pbkdfIterations: 100000,  // OWASP recommendation
-  pbkdfHashAlgorithm: 'SHA-256',
+  algorithm: "AES-GCM",
+  keySize: 256, // 256-bit key
+  ivSize: 96, // 96-bit IV (12 bytes) - recommended for GCM
+  tagLength: 128, // 128-bit authentication tag
+  pbkdfIterations: 100000, // OWASP recommendation
+  pbkdfHashAlgorithm: "SHA-256",
 };
 
 /**
  * Represents an encrypted message with metadata
  */
 export interface EncryptedData {
-  ciphertext: string;      // Base64 encoded
-  iv: string;              // Base64 encoded
-  salt: string;            // Base64 encoded (for key derivation)
-  version: number;         // For future algorithm updates
+  ciphertext: string; // Base64 encoded
+  iv: string; // Base64 encoded
+  salt: string; // Base64 encoded (for key derivation)
+  version: number; // For future algorithm updates
 }
 
 /**
@@ -46,15 +46,15 @@ export interface EncryptedData {
  */
 async function generateRandomKey(bits: number = 256): Promise<CryptoKey> {
   return crypto.subtle.generateKey(
-    { name: 'AES-GCM', length: bits },
+    { name: "AES-GCM", length: bits },
     true, // extractable
-    ['encrypt', 'decrypt']
+    ["encrypt", "decrypt"],
   );
 }
 
 /**
  * Derive a key from a password using PBKDF2
- * 
+ *
  * SECURITY:
  * - Stretches password with 100k iterations
  * - Uses random salt (prevents rainbow table attacks)
@@ -62,56 +62,56 @@ async function generateRandomKey(bits: number = 256): Promise<CryptoKey> {
  */
 async function deriveKeyFromPassword(
   password: string,
-  salt: Uint8Array
+  salt: Uint8Array,
 ): Promise<CryptoKey> {
   // Import password as key material
   const keyMaterial = await crypto.subtle.importKey(
-    'raw',
+    "raw",
     new TextEncoder().encode(password),
-    { name: 'PBKDF2' },
+    { name: "PBKDF2" },
     false,
-    ['deriveBits']
+    ["deriveBits"],
   );
 
   // Derive key bits
   const keyBits = await crypto.subtle.deriveBits(
     {
-      name: 'PBKDF2',
+      name: "PBKDF2",
       salt: salt,
       iterations: ENCRYPTION_CONFIG.pbkdfIterations,
       hash: ENCRYPTION_CONFIG.pbkdfHashAlgorithm,
     },
     keyMaterial,
-    ENCRYPTION_CONFIG.keySize
+    ENCRYPTION_CONFIG.keySize,
   );
 
   // Convert bits to CryptoKey
-  return crypto.subtle.importKey(
-    'raw',
-    keyBits,
-    { name: 'AES-GCM' },
-    true,
-    ['encrypt', 'decrypt']
-  );
+  return crypto.subtle.importKey("raw", keyBits, { name: "AES-GCM" }, true, [
+    "encrypt",
+    "decrypt",
+  ]);
 }
 
 /**
  * Encrypt plaintext using AES-256-GCM
- * 
+ *
  * PROCESS:
  * 1. Generate random IV and salt
  * 2. Derive key from password + salt
  * 3. Encrypt plaintext with AES-256-GCM
  * 4. Return ciphertext + IV + salt (all base64 encoded)
- * 
+ *
  * INPUTS:
  * - plaintext: string to encrypt
  * - password: encryption password (can be master key or user-specific)
- * 
+ *
  * OUTPUT:
  * - EncryptedData object containing ciphertext, IV, salt, version
  */
-export async function encrypt(plaintext: string, password: string): Promise<EncryptedData> {
+export async function encrypt(
+  plaintext: string,
+  password: string,
+): Promise<EncryptedData> {
   try {
     // Generate random IV (96 bits for GCM is optimal)
     const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -124,9 +124,9 @@ export async function encrypt(plaintext: string, password: string): Promise<Encr
 
     // Encrypt plaintext
     const ciphertext = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv: iv, tagLength: ENCRYPTION_CONFIG.tagLength },
+      { name: "AES-GCM", iv: iv, tagLength: ENCRYPTION_CONFIG.tagLength },
       key,
-      new TextEncoder().encode(plaintext)
+      new TextEncoder().encode(plaintext),
     );
 
     // Return encrypted data as base64
@@ -143,19 +143,22 @@ export async function encrypt(plaintext: string, password: string): Promise<Encr
 
 /**
  * Decrypt AES-256-GCM encrypted data
- * 
+ *
  * PROCESS:
  * 1. Decode base64 values (ciphertext, IV, salt)
  * 2. Derive key from password + salt
  * 3. Decrypt using AES-256-GCM
  * 4. Return plaintext
- * 
+ *
  * SECURITY:
  * - Authentication tag is automatically verified by Web Crypto API
  * - If decryption fails, throws error (prevents silent failures)
  * - Constant-time comparison protects against timing attacks (built-in)
  */
-export async function decrypt(encrypted: EncryptedData, password: string): Promise<string> {
+export async function decrypt(
+  encrypted: EncryptedData,
+  password: string,
+): Promise<string> {
   try {
     // Decode base64 values
     const ciphertext = base64ToArrayBuffer(encrypted.ciphertext);
@@ -167,26 +170,28 @@ export async function decrypt(encrypted: EncryptedData, password: string): Promi
 
     // Decrypt
     const plaintext = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: iv, tagLength: ENCRYPTION_CONFIG.tagLength },
+      { name: "AES-GCM", iv: iv, tagLength: ENCRYPTION_CONFIG.tagLength },
       key,
-      ciphertext
+      ciphertext,
     );
 
     return new TextDecoder().decode(plaintext);
   } catch (error: any) {
-    throw new Error(`Decryption failed: ${error.message} (likely wrong password or corrupted data)`);
+    throw new Error(
+      `Decryption failed: ${error.message} (likely wrong password or corrupted data)`,
+    );
   }
 }
 
 /**
  * Hash a value using SHA-256
  * Used for creating searchable encrypted fields (hash-based indexing)
- * 
+ *
  * SECURITY:
  * - One-way function (cannot reverse)
  * - Same input always produces same hash
  * - Enables searching without decrypting
- * 
+ *
  * USE CASE:
  * - Create index on email_hash for fast lookups
  * - Store email_hash as additional column
@@ -195,8 +200,8 @@ export async function decrypt(encrypted: EncryptedData, password: string): Promi
 export async function hashField(value: string): Promise<string> {
   try {
     const buffer = await crypto.subtle.digest(
-      'SHA-256',
-      new TextEncoder().encode(value)
+      "SHA-256",
+      new TextEncoder().encode(value),
     );
     return arrayBufferToBase64(buffer);
   } catch (error: any) {
@@ -206,7 +211,7 @@ export async function hashField(value: string): Promise<string> {
 
 /**
  * Encrypt sensitive fields in a report object
- * 
+ *
  * FIELDS ENCRYPTED:
  * - witness_contact (phone/email)
  * - reporter_contact (phone/email)
@@ -216,22 +221,22 @@ export async function hashField(value: string): Promise<string> {
  */
 export async function encryptReportSensitiveFields(
   report: Record<string, any>,
-  masterPassword: string
+  masterPassword: string,
 ): Promise<Record<string, any>> {
   const encrypted = { ...report };
   const sensitiveFields = [
-    'witness_contact',
-    'reporter_contact',
-    'witness_name',
-    'reporter_name',
-    'injury_details',
+    "witness_contact",
+    "reporter_contact",
+    "witness_name",
+    "reporter_name",
+    "injury_details",
   ];
 
   for (const field of sensitiveFields) {
     if (encrypted[field]) {
       encrypted[`${field}_encrypted`] = await encrypt(
         encrypted[field],
-        masterPassword
+        masterPassword,
       );
       encrypted[field] = null; // Clear plaintext
     }
@@ -245,15 +250,15 @@ export async function encryptReportSensitiveFields(
  */
 export async function decryptReportSensitiveFields(
   report: Record<string, any>,
-  masterPassword: string
+  masterPassword: string,
 ): Promise<Record<string, any>> {
   const decrypted = { ...report };
   const sensitiveFields = [
-    'witness_contact',
-    'reporter_contact',
-    'witness_name',
-    'reporter_name',
-    'injury_details',
+    "witness_contact",
+    "reporter_contact",
+    "witness_name",
+    "reporter_name",
+    "injury_details",
   ];
 
   for (const field of sensitiveFields) {
@@ -262,11 +267,11 @@ export async function decryptReportSensitiveFields(
       try {
         decrypted[field] = await decrypt(
           decrypted[encryptedField],
-          masterPassword
+          masterPassword,
         );
       } catch (error) {
         console.error(`Failed to decrypt ${field}:`, error);
-        decrypted[field] = '[DECRYPTION_ERROR]';
+        decrypted[field] = "[DECRYPTION_ERROR]";
       }
     }
   }
@@ -280,15 +285,15 @@ export async function decryptReportSensitiveFields(
  */
 export async function testEncryption(): Promise<boolean> {
   try {
-    const testMessage = 'Test message for encryption';
-    const testPassword = 'test-password-123';
+    const testMessage = "Test message for encryption";
+    const testPassword = "test-password-123";
 
     const encrypted = await encrypt(testMessage, testPassword);
     const decrypted = await decrypt(encrypted, testPassword);
 
     return decrypted === testMessage;
   } catch (error) {
-    console.error('Encryption test failed:', error);
+    console.error("Encryption test failed:", error);
     return false;
   }
 }
@@ -317,7 +322,7 @@ export function getEncryptionInfo(): {
  */
 function arrayBufferToBase64(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  let binary = '';
+  let binary = "";
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
   }

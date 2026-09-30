@@ -2,7 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, Download, Trash2, Eye, EyeOff } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
@@ -50,7 +56,9 @@ function AdminReportsPage() {
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [filter, setFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
-  const [imageDataUrls, setImageDataUrls] = useState<Map<string, string>>(new Map());
+  const [imageDataUrls, setImageDataUrls] = useState<Map<string, string>>(
+    new Map(),
+  );
 
   useEffect(() => {
     loadReports();
@@ -88,23 +96,27 @@ function AdminReportsPage() {
     let filtered = reports;
 
     if (filter === "urgent") {
-      filtered = filtered.filter(r => r.urgent_flag);
+      filtered = filtered.filter((r) => r.urgent_flag);
     } else if (filter === "anonymous") {
-      filtered = filtered.filter(r => r.submission_mode === "anonymous");
+      filtered = filtered.filter((r) => r.submission_mode === "anonymous");
     } else if (filter === "named") {
-      filtered = filtered.filter(r => r.submission_mode === "identified");
+      filtered = filtered.filter((r) => r.submission_mode === "identified");
     }
 
     if (searchText) {
       const search = searchText.toLowerCase();
-      filtered = filtered.filter(r =>
-        r.location_text.toLowerCase().includes(search) ||
-        r.description.toLowerCase().includes(search) ||
-        r.report_code.toLowerCase().includes(search)
+      filtered = filtered.filter(
+        (r) =>
+          r.location_text.toLowerCase().includes(search) ||
+          r.description.toLowerCase().includes(search) ||
+          r.report_code.toLowerCase().includes(search),
       );
     }
 
-    return filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return filtered.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    );
   }
 
   function downloadReport(report: Report) {
@@ -113,7 +125,10 @@ function AdminReportsPage() {
       ["Report Code", report.report_code],
       ["Submitted", new Date(report.created_at).toLocaleString()],
       ["Incident Date", new Date(report.incident_at).toLocaleString()],
-      ["Location", `${report.location_text}${report.city ? ' (' + report.city + ')' : ''}`],
+      [
+        "Location",
+        `${report.location_text}${report.city ? " (" + report.city + ")" : ""}`,
+      ],
       ["Type", report.incident_type],
       ["Mode", report.submission_mode],
       ["Urgent", report.urgent_flag ? "Yes" : "No"],
@@ -123,7 +138,7 @@ function AdminReportsPage() {
       ["Witness", report.witness_name || "N/A"],
       ["Reporter", report.reporter_name || "N/A"],
     ]
-      .map(row => row.map(cell => `"${cell}"`).join(","))
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
       .join("\n");
 
     const blob = new Blob([csv], { type: "text/csv" });
@@ -139,7 +154,9 @@ function AdminReportsPage() {
     if (confirm("Are you sure you want to delete this report?")) {
       const store = (window as any).__KIRO_REPORTS_STORE;
       if (store && store.incident_reports) {
-        store.incident_reports = store.incident_reports.filter((r: Report) => r.id !== reportId);
+        store.incident_reports = store.incident_reports.filter(
+          (r: Report) => r.id !== reportId,
+        );
         loadReports();
         setSelectedReport(null);
       }
@@ -147,7 +164,9 @@ function AdminReportsPage() {
   }
 
   const filteredReports = getFilteredReports();
-  const reportEvidenceList = selectedReport ? evidence.get(selectedReport.id) || [] : [];
+  const reportEvidenceList = selectedReport
+    ? evidence.get(selectedReport.id) || []
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -163,7 +182,8 @@ function AdminReportsPage() {
             <h1 className="text-2xl font-bold">📊 Admin Dashboard</h1>
           </div>
           <div className="text-sm text-gray-600">
-            {reports.length} reports • {reports.filter(r => r.urgent_flag).length} urgent
+            {reports.length} reports •{" "}
+            {reports.filter((r) => r.urgent_flag).length} urgent
           </div>
         </div>
       </div>
@@ -175,7 +195,7 @@ function AdminReportsPage() {
             <div className="bg-white rounded-lg shadow">
               <div className="p-4 border-b border-gray-200">
                 <h2 className="font-semibold mb-4">Reports</h2>
-                
+
                 <div className="space-y-3">
                   <Input
                     placeholder="Search..."
@@ -204,19 +224,33 @@ function AdminReportsPage() {
                     No reports found
                   </div>
                 ) : (
-                  filteredReports.map(report => (
+                  filteredReports.map((report) => (
                     <button
                       key={report.id}
                       onClick={() => setSelectedReport(report)}
                       className={`w-full text-left p-3 hover:bg-gray-50 transition ${
-                        selectedReport?.id === report.id ? "bg-blue-50 border-l-4 border-blue-500" : ""
+                        selectedReport?.id === report.id
+                          ? "bg-blue-50 border-l-4 border-blue-500"
+                          : ""
                       }`}
                     >
-                      <div className="font-semibold text-sm">{report.report_code}</div>
-                      <div className="text-xs text-gray-600 mt-1">{report.location_text}</div>
+                      <div className="font-semibold text-sm">
+                        {report.report_code}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1">
+                        {report.location_text}
+                      </div>
                       <div className="flex gap-1 mt-2">
-                        {report.urgent_flag && <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Urgent</span>}
-                        {report.submission_mode === "anonymous" && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Anon</span>}
+                        {report.urgent_flag && (
+                          <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">
+                            Urgent
+                          </span>
+                        )}
+                        {report.submission_mode === "anonymous" && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            Anon
+                          </span>
+                        )}
                       </div>
                     </button>
                   ))
@@ -233,9 +267,12 @@ function AdminReportsPage() {
                 <div className="bg-white rounded-lg shadow p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h2 className="text-xl font-bold">{selectedReport.report_code}</h2>
+                      <h2 className="text-xl font-bold">
+                        {selectedReport.report_code}
+                      </h2>
                       <p className="text-sm text-gray-600 mt-1">
-                        Submitted {new Date(selectedReport.created_at).toLocaleString()}
+                        Submitted{" "}
+                        {new Date(selectedReport.created_at).toLocaleString()}
                       </p>
                     </div>
                     <div className="flex gap-2">
@@ -260,19 +297,27 @@ function AdminReportsPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500">LOCATION</label>
+                      <label className="text-xs font-semibold text-gray-500">
+                        LOCATION
+                      </label>
                       <p className="mt-1">{selectedReport.location_text}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500">CITY</label>
+                      <label className="text-xs font-semibold text-gray-500">
+                        CITY
+                      </label>
                       <p className="mt-1">{selectedReport.city || "N/A"}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500">INCIDENT TYPE</label>
+                      <label className="text-xs font-semibold text-gray-500">
+                        INCIDENT TYPE
+                      </label>
                       <p className="mt-1">{selectedReport.incident_type}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500">STATUS</label>
+                      <label className="text-xs font-semibold text-gray-500">
+                        STATUS
+                      </label>
                       <p className="mt-1">
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-sm">
                           {selectedReport.status}
@@ -282,13 +327,19 @@ function AdminReportsPage() {
                   </div>
 
                   <div className="mt-6">
-                    <label className="text-xs font-semibold text-gray-500">DESCRIPTION</label>
-                    <p className="mt-2 p-3 bg-gray-50 rounded">{selectedReport.description}</p>
+                    <label className="text-xs font-semibold text-gray-500">
+                      DESCRIPTION
+                    </label>
+                    <p className="mt-2 p-3 bg-gray-50 rounded">
+                      {selectedReport.description}
+                    </p>
                   </div>
 
                   {selectedReport.badge_or_unit && (
                     <div className="mt-4 p-3 bg-blue-50 rounded">
-                      <label className="text-xs font-semibold text-gray-500">BADGE/UNIT</label>
+                      <label className="text-xs font-semibold text-gray-500">
+                        BADGE/UNIT
+                      </label>
                       <p className="mt-1">{selectedReport.badge_or_unit}</p>
                     </div>
                   )}
@@ -297,10 +348,15 @@ function AdminReportsPage() {
                 {/* Evidence Images */}
                 {reportEvidenceList.length > 0 && (
                   <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-lg font-bold mb-4">📸 Evidence ({reportEvidenceList.length} files)</h3>
+                    <h3 className="text-lg font-bold mb-4">
+                      📸 Evidence ({reportEvidenceList.length} files)
+                    </h3>
                     <div className="grid grid-cols-2 gap-4">
-                      {reportEvidenceList.map(ev => (
-                        <div key={ev.id} className="border border-gray-200 rounded-lg overflow-hidden">
+                      {reportEvidenceList.map((ev) => (
+                        <div
+                          key={ev.id}
+                          className="border border-gray-200 rounded-lg overflow-hidden"
+                        >
                           <div className="aspect-square bg-gray-100 flex items-center justify-center text-gray-400">
                             {ev.content_type.startsWith("image/") ? (
                               <div className="text-center">
@@ -314,12 +370,17 @@ function AdminReportsPage() {
                               <div className="text-center">
                                 <EyeOff className="h-8 w-8 mx-auto mb-2" />
                                 <p className="text-xs">{ev.file_name}</p>
-                                <p className="text-xs text-gray-500 mt-1">{ev.content_type}</p>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {ev.content_type}
+                                </p>
                               </div>
                             )}
                           </div>
                           <div className="p-2 bg-gray-50 text-xs">
-                            <p className="font-mono text-gray-600 truncate" title={ev.sha256}>
+                            <p
+                              className="font-mono text-gray-600 truncate"
+                              title={ev.sha256}
+                            >
                               {ev.sha256.substring(0, 16)}...
                             </p>
                             <p className="text-gray-500 mt-1">

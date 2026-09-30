@@ -10,6 +10,7 @@
 **Critical Finding:** Server-side file validation is **not enforced**. The storage bucket policies check only that the bucket ID is `'evidence'`, but do NOT validate file size, MIME type, or extension. All validation is performed client-side only, which can be bypassed.
 
 **Risk:** A user who directly calls the Supabase Storage REST API (or manipulates network requests) can upload:
+
 - Files larger than 25 MB
 - Executable files (.exe, .dll, .sh) masquerading as images or video
 - Other disallowed file types
@@ -25,10 +26,11 @@
 **File:** `src/routes/report.tsx` — `UploadZone` component
 
 #### File Type Filtering
+
 ```tsx
 <input
   type="file"
-  accept="image/*,video/*,.pdf"  // ✅ HTML5 accept attribute
+  accept="image/*,video/*,.pdf" // ✅ HTML5 accept attribute
   onChange={(e) => addFiles(Array.from(e.target.files ?? []))}
 />
 ```
@@ -37,8 +39,11 @@
 **Note:** The `accept` attribute is UI-only; it does NOT prevent a user from selecting disallowed files — browsers may simply hide them in the file picker, but offer "All Files" fallback.
 
 #### File Size Enforcement
+
 ```tsx
-<p className="text-xs text-muted-foreground">Photos, video, PDF — max 25 MB each</p>
+<p className="text-xs text-muted-foreground">
+  Photos, video, PDF — max 25 MB each
+</p>
 ```
 
 **Status:** ⚠️ **Display text only**  
@@ -48,7 +53,7 @@
 for (const file of files) {
   if (file.size > 25 * 1024 * 1024) {
     toast.warning(`Skipping ${file.name} — over 25 MB`);
-    continue;  // Skip, don't reject
+    continue; // Skip, don't reject
   }
   // Upload proceeds...
 }
@@ -69,8 +74,9 @@ CREATE POLICY "anyone can upload evidence" ON storage.objects
 **Status:** ❌ **NO file validation**
 
 The RLS policy only enforces `bucket_id = 'evidence'`. It does NOT check:
+
 - File size
-- MIME type  
+- MIME type
 - File extension
 - File content/magic bytes
 
@@ -98,12 +104,13 @@ await supabase.from("report_evidence").insert({
   report_id: report.id,
   storage_path: path,
   file_name: file.name,
-  sha256: hash,  // ✅ Stored
+  sha256: hash, // ✅ Stored
   // ...
 });
 ```
 
 **Chain of Custody:**
+
 1. Client computes SHA-256 of the file in memory
 2. File is uploaded to storage
 3. Hash is written to report_evidence table
@@ -148,17 +155,20 @@ This is sound — the hash proves the file contents at submission time, even if 
 Adds a Postgres trigger function `validate_evidence_upload()` that fires **BEFORE INSERT** on `storage.objects`:
 
 ✅ **Enforces:**
+
 - Max file size: 25 MB (based on `metadata->>'size'`)
 - Allowed MIME types: `image/*, video/*, application/pdf` (whitelist)
 - Blocks executable patterns: `.exe`, `.dll`, `.sh`, `.bat`, etc. (extension-based fallback)
 - Rejects dangerous MIME types even if they slip past whitelist
 
 ✅ **Audit Trail:**
+
 - New `evidence_upload_log` table tracks all upload attempts (accepted/rejected)
 - Logs file name, size, MIME type, user ID, rejection reason
 - Indexed for quick lookup by validation status and timestamp
 
 ✅ **Error Handling:**
+
 - Invalid uploads raise a Postgres exception with HTTP 403
 - Error message indicates the rejection reason (size, MIME type, extension)
 
@@ -168,12 +178,24 @@ Current code skips oversized files silently. Better approach:
 
 ```tsx
 // Validate ALL files before starting the upload
-const invalidFiles = files.filter(f => {
+const invalidFiles = files.filter((f) => {
   if (f.size > 25 * 1024 * 1024) {
-    toast.error(`${f.name} is too large (${(f.size/1024/1024).toFixed(1)} MB). Max 25 MB.`);
+    toast.error(
+      `${f.name} is too large (${(f.size / 1024 / 1024).toFixed(1)} MB). Max 25 MB.`,
+    );
     return true;
   }
-  if (!['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'application/pdf'].includes(f.type)) {
+  if (
+    ![
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "video/mp4",
+      "video/webm",
+      "application/pdf",
+    ].includes(f.type)
+  ) {
     toast.error(`${f.name} is not a supported file type.`);
     return true;
   }
@@ -194,14 +216,16 @@ The UI copy already says "max 25 MB each" and "Photos, video, PDF". After server
 ## Deployment Steps
 
 1. **Apply the new migration:**
+
    ```bash
    supabase db push
    ```
 
 2. **Monitor the audit log** for rejected uploads:
+
    ```sql
-   SELECT * FROM evidence_upload_log 
-   WHERE validation_result = 'rejected' 
+   SELECT * FROM evidence_upload_log
+   WHERE validation_result = 'rejected'
    ORDER BY uploaded_at DESC;
    ```
 

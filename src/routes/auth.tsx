@@ -11,7 +11,10 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Partner sign in — Accountability Watch" },
-      { name: "description", content: "Sign in for verified legal aid partners and platform admins." },
+      {
+        name: "description",
+        content: "Sign in for verified legal aid partners and platform admins.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -40,13 +43,19 @@ function AuthPage() {
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
-          email, password,
+          email,
+          password,
           options: { emailRedirectTo: window.location.origin + "/admin" },
         });
         if (error) throw error;
-        toast.success("Account created. Check your email if confirmation is required.");
+        toast.success(
+          "Account created. Check your email if confirmation is required.",
+        );
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
         navigate({ to: "/admin" });
       }
@@ -105,17 +114,33 @@ function AuthPage() {
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <Label className="font-display text-xs">Email</Label>
-            <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
           <div>
             <Label className="font-display text-xs">Password</Label>
-            <Input type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+            <Input
+              type="password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
           </div>
           <Button
-            type="submit" disabled={busy}
+            type="submit"
+            disabled={busy}
             className="w-full rounded-full bg-ink py-6 font-display font-semibold text-ink-foreground"
           >
-            {busy ? "Please wait…" : mode === "signin" ? "Sign in" : "Create account"}
+            {busy
+              ? "Please wait…"
+              : mode === "signin"
+                ? "Sign in"
+                : "Create account"}
           </Button>
         </form>
 

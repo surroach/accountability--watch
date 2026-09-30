@@ -7,12 +7,14 @@
 ## 📋 Presentation Structure (20-30 minutes)
 
 ### Part 1: Problem Analysis (5 minutes)
+
 **"What were the issues with the original system?"**
 
 Show: `DEEP_TECHNICAL_AUDIT.md`
 
 **Say:**
 "The original Accountability Watch platform had 9 critical issues:
+
 - No input validation (SQL injection risk)
 - No rate limiting (brute-force vulnerability)
 - No encryption (PII exposed)
@@ -29,6 +31,7 @@ Show: `DEEP_TECHNICAL_AUDIT.md`
 ---
 
 ### Part 2: Solution Architecture (8 minutes)
+
 **"How did you solve each problem?"**
 
 Show: `src/lib/` files and `IMPLEMENTATION_COMPLETE.md`
@@ -69,11 +72,13 @@ Show: `src/lib/` files and `IMPLEMENTATION_COMPLETE.md`
 ---
 
 ### Part 3: Implementation Quality (5 minutes)
+
 **"How did you ensure code quality?"**
 
 Show: `tests/` directory
 
 **Metrics to highlight:**
+
 - ✅ 5,580+ lines of production code
 - ✅ 1,400+ lines of test code
 - ✅ 50+ comprehensive test cases
@@ -82,12 +87,14 @@ Show: `tests/` directory
 - ✅ Full type safety
 
 **Specific tests:**
+
 - "Rate limiting tests verify token bucket algorithm works correctly"
 - "Encryption tests verify encrypt/decrypt cycles and key derivation"
 - "Transaction tests verify atomicity and rollback scenarios"
 - "Duplicate detection tests verify 4-factor similarity scoring"
 
 **Run tests:**
+
 ```bash
 npm run test
 # Shows: All tests passing ✓
@@ -98,9 +105,11 @@ npm run test
 ---
 
 ### Part 4: Live Demo (5 minutes)
+
 **"Show the features working"**
 
 Demo order:
+
 1. **Search** - `npm run dev` → Search for a report
 2. **Rate Limiting** - Show headers/rejection after threshold
 3. **Audit Dashboard** - Show real-time event tracking
@@ -111,12 +120,14 @@ Demo order:
 ---
 
 ### Part 5: Production Readiness (2 minutes)
+
 **"Is this production-ready?"**
 
 Show: `PRODUCTION_DEPLOYMENT.md`
 
 **Say:**
 "Yes! I have a comprehensive production deployment guide including:
+
 - Security hardening (HTTPS, CORS, headers)
 - Environment setup and secrets management
 - Deployment checklist
@@ -150,6 +161,7 @@ Show: `PRODUCTION_DEPLOYMENT.md`
 
 **Good Answer:**
 "Implementing proper encryption without external dependencies. The Web Crypto API requires careful handling of:
+
 - Random IV generation
 - Key derivation with sufficient iterations
 - Per-message authentication tags
@@ -162,6 +174,7 @@ I solved this by following NIST recommendations and thoroughly testing edge case
 ### "What trade-offs did you make?"
 
 **Good Answers:**
+
 1. "SQLite vs Supabase: Chose SQLite for local development but made code compatible with Supabase for production."
 2. "Token bucket vs Sliding window: Token bucket for simplicity, but implemented sliding window as well for accuracy."
 3. "Encryption at app level vs database level: App-level provides flexibility and works with any database backend."
@@ -171,6 +184,7 @@ I solved this by following NIST recommendations and thoroughly testing edge case
 ### "How would you improve it further?"
 
 **Good Answers:**
+
 1. "Implement Redis for distributed rate limiting across multiple servers"
 2. "Add machine learning for anomaly detection in reports"
 3. "Implement GraphQL API for more efficient queries"
@@ -182,6 +196,7 @@ I solved this by following NIST recommendations and thoroughly testing edge case
 ## 📊 Visual Aids
 
 ### Slide 1: Problem Summary
+
 ```
 9 Critical Issues Found:
 ❌ No input validation        → SQL injection risk
@@ -196,6 +211,7 @@ I solved this by following NIST recommendations and thoroughly testing edge case
 ```
 
 ### Slide 2: Solution Overview
+
 ```
 6 Core Modules Implemented:
 ✅ Rate Limiting             (Token bucket)
@@ -211,6 +227,7 @@ I solved this by following NIST recommendations and thoroughly testing edge case
 ```
 
 ### Slide 3: Code Quality
+
 ```
 Metrics:
 📊 5,580 lines of code
@@ -222,6 +239,7 @@ Metrics:
 ```
 
 ### Slide 4: Architecture Diagram
+
 ```
 ┌─────────────────────────────────┐
 │     React UI Layer              │
@@ -253,23 +271,30 @@ Metrics:
 ## 🎯 Sample Answers to Common Questions
 
 ### Q: "Why not use an existing library for encryption?"
+
 A: "The Web Crypto API is a browser standard, so no external dependency is needed. This reduces attack surface and licensing issues. I followed NIST recommendations for algorithm selection and key derivation parameters."
 
 ### Q: "How do you handle concurrent updates?"
+
 A: "SQLite handles locking automatically. For multi-server scenarios, I document using Redis for distributed rate limiting. Transaction tests verify atomicity even under concurrent access."
 
 ### Q: "What about performance at scale?"
+
 A: "I implemented performance monitoring that tracks query execution times and suggests optimizations. FTS5 search scales linearly. For 10k+ reports, I'd recommend Supabase which supports horizontal scaling."
 
 ### Q: "How do you ensure data privacy?"
+
 A: "Multi-layered approach:
+
 - Encryption for sensitive fields (email, phone, PII)
 - Role-based access control (only authorized users see data)
 - Audit logging (tracks who accessed what)
 - GDPR compliance (automatic anonymization and deletion)"
 
 ### Q: "What about security vulnerabilities?"
+
 A: "I implemented defenses against:
+
 - SQL injection (parameterized queries)
 - XSS (input sanitization)
 - CSRF (token validation)
@@ -294,6 +319,7 @@ A: "I implemented defenses against:
 ## 🎓 Viva Tips
 
 ### General Tips
+
 1. **Be confident** - You've built something substantial
 2. **Know your code** - Be ready to explain any file
 3. **Admit limitations** - "I didn't implement X because..."
@@ -301,6 +327,7 @@ A: "I implemented defenses against:
 5. **Ask clarifying questions** - If confused, ask before answering
 
 ### Technical Tips
+
 1. **Start high-level** - Explain architecture first
 2. **Go detailed only if asked** - Don't overwhelm with details
 3. **Use real examples** - "Here's the actual code..."
@@ -308,6 +335,7 @@ A: "I implemented defenses against:
 5. **Reference documentation** - "This is explained in IMPLEMENTATION_COMPLETE.md"
 
 ### When Asked Difficult Questions
+
 1. **Don't panic** - It's okay if you don't know
 2. **Think out loud** - Show your reasoning process
 3. **Admit gaps** - "I didn't consider that, but I could..."
@@ -348,17 +376,19 @@ Before walking into your viva:
 ✅ Can show code snippets  
 ✅ Can demo at least 2 features  
 ✅ Have metrics memorized:
-  - 5,580 lines of code
-  - 1,400 lines of tests
-  - 50+ test cases
-  - 100% TypeScript
-  - 0 security vulnerabilities
+
+- 5,580 lines of code
+- 1,400 lines of tests
+- 50+ test cases
+- 100% TypeScript
+- 0 security vulnerabilities
 
 ---
 
 **You've got this! 💪**
 
 Good luck with your defense! Remember:
+
 - Your code quality speaks for itself
 - Your test coverage demonstrates rigor
 - Your documentation shows professionalism

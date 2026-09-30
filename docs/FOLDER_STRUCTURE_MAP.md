@@ -101,6 +101,7 @@ src/
 ```
 
 **Key Files:**
+
 - `src/lib/` - 6 core production modules (1,980 lines total)
 - `src/middleware/auth-verify.ts` - Authorization layer
 - `src/routes/_authenticated/admin-audit.tsx` - Audit dashboard
@@ -136,6 +137,7 @@ tests/
 **Total: 1,400+ lines of tests, 50+ test cases**
 
 **Run tests:**
+
 ```bash
 npm run test                    # All tests
 npm run test -- tests/encryption.test.ts  # Specific suite
@@ -191,6 +193,7 @@ config/
 ```
 
 **To set up:**
+
 ```bash
 cp config/.env.example .env
 # Edit .env with your settings
@@ -248,12 +251,14 @@ accountability-watch/
 ## 🎯 How to Find Things
 
 ### "Where is the search feature?"
+
 ```
 src/lib/full-text-search.ts
   └─ 350 lines of FTS5 implementation
 ```
 
 ### "Where are the tests?"
+
 ```
 tests/
   ├─ db-transactions.test.ts (15 cases)
@@ -263,12 +268,14 @@ tests/
 ```
 
 ### "Where is the audit dashboard?"
+
 ```
 src/routes/_authenticated/admin-audit.tsx
   └─ 480 lines of React component
 ```
 
 ### "Where is documentation?"
+
 ```
 docs/
   ├─ START_HERE.md (quick start)
@@ -279,6 +286,7 @@ docs/
 ```
 
 ### "Where is the database schema?"
+
 ```
 db/schema.sql
   └─ Complete SQLite schema with indexes
@@ -290,14 +298,14 @@ db/schema.sql
 
 ### By Folder
 
-| Folder | Files | Lines | Purpose |
-|--------|-------|-------|---------|
-| `src/lib/` | 8 | 2,299 | Core modules |
-| `src/middleware/` | 1 | 340 | Authorization |
-| `src/routes/` | 11 | 2,000+ | Pages & components |
-| `tests/` | 4 | 1,400 | Test suites |
-| `docs/` | 10 | 1,400+ | Documentation |
-| `supabase/` | var | var | Database config |
+| Folder            | Files | Lines  | Purpose            |
+| ----------------- | ----- | ------ | ------------------ |
+| `src/lib/`        | 8     | 2,299  | Core modules       |
+| `src/middleware/` | 1     | 340    | Authorization      |
+| `src/routes/`     | 11    | 2,000+ | Pages & components |
+| `tests/`          | 4     | 1,400  | Test suites        |
+| `docs/`           | 10    | 1,400+ | Documentation      |
+| `supabase/`       | var   | var    | Database config    |
 
 ### Totals
 
@@ -415,6 +423,7 @@ accountability-watch/ (root)
 ## 📍 What to Read When
 
 ### "I just got the project"
+
 ```
 1. README.md (2 min)
 2. docs/START_HERE.md (5 min)
@@ -422,6 +431,7 @@ accountability-watch/ (root)
 ```
 
 ### "I want to use a module"
+
 ```
 1. docs/PHASE_2_3_INTEGRATION_GUIDE.md
 2. src/lib/[module].ts (read docstrings)
@@ -429,6 +439,7 @@ accountability-watch/ (root)
 ```
 
 ### "I'm preparing for college"
+
 ```
 1. docs/COLLEGE_DEFENSE_GUIDE.md
 2. docs/IMPLEMENTATION_COMPLETE.md
@@ -436,6 +447,7 @@ accountability-watch/ (root)
 ```
 
 ### "I need to deploy to production"
+
 ```
 1. docs/PRODUCTION_DEPLOYMENT.md
 2. config/.env.example
@@ -443,6 +455,7 @@ accountability-watch/ (root)
 ```
 
 ### "I want to understand everything"
+
 ```
 1. docs/START_HERE.md (overview)
 2. docs/IMPLEMENTATION_COMPLETE.md (full details)
@@ -455,22 +468,26 @@ accountability-watch/ (root)
 ## ✅ Organization Principles
 
 ✅ **Separation of Concerns**
+
 - `lib/` - Business logic (reusable)
 - `middleware/` - Cross-cutting concerns
 - `routes/` - UI/Pages
 - `tests/` - Verification
 
 ✅ **Clear Naming**
+
 - Descriptive file names
 - Consistent conventions
 - Self-documenting code
 
 ✅ **Easy Navigation**
+
 - Logical grouping
 - Comprehensive documentation
 - Visual folder structure
 
 ✅ **Production Ready**
+
 - All code in `src/`
 - All tests in `tests/`
 - All docs in `docs/`
@@ -481,6 +498,7 @@ accountability-watch/ (root)
 ## 🚀 Using This Structure
 
 ### To Explore the Codebase
+
 ```
 1. Start at: docs/PROJECT_STRUCTURE.md
 2. Browse: src/lib/ (core modules)
@@ -489,6 +507,7 @@ accountability-watch/ (root)
 ```
 
 ### To Add New Code
+
 ```
 1. Business logic → src/lib/
 2. UI component → src/routes/ or src/components/
@@ -498,6 +517,7 @@ accountability-watch/ (root)
 ```
 
 ### To Find Something Specific
+
 ```
 Use this map! Search for the folder:
 ├── Feature in lib/ → Core logic
@@ -511,37 +531,41 @@ Use this map! Search for the folder:
 
 ## 📞 Quick Links
 
-| Need | Location |
-|------|----------|
-| Quick start | `docs/START_HERE.md` |
-| Documentation index | `docs/README.md` |
-| Project structure | `docs/PROJECT_STRUCTURE.md` (this file) |
-| All modules | `src/lib/` |
-| All tests | `tests/` |
-| Integration help | `docs/PHASE_2_3_INTEGRATION_GUIDE.md` |
-| College prep | `docs/COLLEGE_DEFENSE_GUIDE.md` |
-| Production setup | `docs/PRODUCTION_DEPLOYMENT.md` |
+| Need                | Location                                |
+| ------------------- | --------------------------------------- |
+| Quick start         | `docs/START_HERE.md`                    |
+| Documentation index | `docs/README.md`                        |
+| Project structure   | `docs/PROJECT_STRUCTURE.md` (this file) |
+| All modules         | `src/lib/`                              |
+| All tests           | `tests/`                                |
+| Integration help    | `docs/PHASE_2_3_INTEGRATION_GUIDE.md`   |
+| College prep        | `docs/COLLEGE_DEFENSE_GUIDE.md`         |
+| Production setup    | `docs/PRODUCTION_DEPLOYMENT.md`         |
 
 ---
 
 ## ✨ Pro Tips
 
 💡 **Reading Code?**
+
 - Start with `src/lib/rate-limiter.ts` (simplest module)
 - Then `src/lib/encryption.ts` (complex logic)
 - Then `src/middleware/auth-verify.ts` (authorization)
 
 💡 **Learning Tests?**
+
 - Start with `tests/rate-limiter.test.ts` (straightforward)
 - Then `tests/encryption.test.ts` (comprehensive)
 - Then `tests/db-transactions.test.ts` (complex scenarios)
 
 💡 **Understanding Architecture?**
+
 - Read `docs/IMPLEMENTATION_COMPLETE.md` first
 - Then explore `src/` directory
 - Then check corresponding tests
 
 💡 **Preparing for College?**
+
 - Read `docs/COLLEGE_DEFENSE_GUIDE.md`
 - Practice explaining each module (5 min each)
 - Review `docs/FINAL_CHECKLIST.md`

@@ -6,9 +6,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft, ArrowRight, LogOut, MapPin, Clock, X, ShieldCheck, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  LogOut,
+  MapPin,
+  Clock,
+  X,
+  ShieldCheck,
+  Upload,
+} from "lucide-react";
 import { z } from "zod";
 import * as exifr from "exifr";
 
@@ -16,7 +31,11 @@ export const Route = createFileRoute("/report")({
   head: () => ({
     meta: [
       { title: "File an incident report — Accountability Watch" },
-      { name: "description", content: "Document an incident of alleged police misconduct at a protest. Anonymous, timestamped, and hashed for tamper-evidence." },
+      {
+        name: "description",
+        content:
+          "Document an incident of alleged police misconduct at a protest. Anonymous, timestamped, and hashed for tamper-evidence.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -43,7 +62,8 @@ const STEPS = [
 
 // Per-step schemas for inline validation
 const step1Schema = z.object({
-  incident_at: z.string()
+  incident_at: z
+    .string()
     .min(1, "Date and time are required")
     .refine((dt) => {
       const d = new Date(dt + "Z");
@@ -54,14 +74,22 @@ const step1Schema = z.object({
   location_text: z.string().trim().min(2, "Location is required").max(500),
   city: z.string().trim().max(120).optional(),
   incident_type: z.string().optional(),
-  description: z.string().trim().min(10, "Please add more detail (at least 10 characters)").max(5000),
+  description: z
+    .string()
+    .trim()
+    .min(10, "Please add more detail (at least 10 characters)")
+    .max(5000),
   injury_details: z.string().trim().max(2000).optional(),
   badge_or_unit: z.string().trim().max(200).optional(),
 });
 
 const step3Schema = z.object({
   witness_name: z.string().trim().max(200).optional(),
-  witness_contact: z.string().trim().max(200).optional()
+  witness_contact: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
     .refine((val) => {
       if (!val) return true; // optional
       // Basic email or phone validation
@@ -70,7 +98,11 @@ const step3Schema = z.object({
       return emailRegex.test(val) || phoneRegex.test(val);
     }, "Contact should be valid email or phone number"),
   reporter_name: z.string().trim().max(200).optional(),
-  reporter_contact: z.string().trim().max(200).optional()
+  reporter_contact: z
+    .string()
+    .trim()
+    .max(200)
+    .optional()
     .refine((val) => {
       if (!val) return true; // optional
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -79,13 +111,20 @@ const step3Schema = z.object({
     }, "Contact should be valid email or phone number"),
 });
 
-type FileMeta = { lat?: number; lon?: number; accuracy?: number; timestamp?: string };
+type FileMeta = {
+  lat?: number;
+  lon?: number;
+  accuracy?: number;
+  timestamp?: string;
+};
 type FieldErrors = Record<string, string>;
 
 async function sha256Hex(file: File): Promise<string> {
   const buf = await file.arrayBuffer();
   const hash = await crypto.subtle.digest("SHA-256", buf);
-  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 async function extractFileMeta(file: File): Promise<FileMeta | null> {
@@ -93,7 +132,13 @@ async function extractFileMeta(file: File): Promise<FileMeta | null> {
     if (!file.type.startsWith("image/")) return null;
     const data = await exifr.parse(file, {
       gps: true,
-      pick: ["GPSLatitude", "GPSLongitude", "GPSAccuracy", "DateTime", "DateTimeOriginal"],
+      pick: [
+        "GPSLatitude",
+        "GPSLongitude",
+        "GPSAccuracy",
+        "DateTime",
+        "DateTimeOriginal",
+      ],
     });
     if (!data) return null;
     const result: FileMeta = {};
@@ -128,12 +173,17 @@ function ProgressIndicator({ step }: { step: number }) {
                 >
                   {done ? "✓" : s.number}
                 </div>
-                <span className={`hidden font-display text-xs sm:block ${active ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                <span
+                  className={`hidden font-display text-xs sm:block ${active ? "text-foreground font-semibold" : "text-muted-foreground"}`}
+                >
                   {s.label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div className={`mx-1 h-0.5 flex-1 ${done ? "bg-ink" : "bg-border"}`} aria-hidden />
+                <div
+                  className={`mx-1 h-0.5 flex-1 ${done ? "bg-ink" : "bg-border"}`}
+                  aria-hidden
+                />
               )}
             </li>
           );
@@ -146,11 +196,14 @@ function ProgressIndicator({ step }: { step: number }) {
 // ── Quick Exit ────────────────────────────────────────────────────────────────
 function QuickExit() {
   // FIX #4: Make quick exit configurable, use safer default
-  const quickExitURL = import.meta.env.VITE_QUICK_EXIT_URL || "https://www.wikipedia.org";
-  
+  const quickExitURL =
+    import.meta.env.VITE_QUICK_EXIT_URL || "https://www.wikipedia.org";
+
   return (
     <button
-      onClick={() => { window.location.replace(quickExitURL); }}
+      onClick={() => {
+        window.location.replace(quickExitURL);
+      }}
       className="fixed right-4 top-4 z-50 flex items-center gap-1.5 rounded-full border-2 border-destructive bg-background px-3 py-2 font-display text-xs font-bold text-destructive shadow-lg hover:bg-destructive hover:text-destructive-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-destructive"
       title="Quick exit — leaves this page immediately"
       aria-label="Quick exit — leaves this page immediately"
@@ -163,19 +216,36 @@ function QuickExit() {
 
 // ── Field wrapper ─────────────────────────────────────────────────────────────
 function Field({
-  label, hint, required, error, children,
+  label,
+  hint,
+  required,
+  error,
+  children,
 }: {
-  label: string; hint?: string; required?: boolean; error?: string; children: React.ReactNode;
+  label: string;
+  hint?: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div>
       <Label className="font-display text-sm font-semibold">
-        {label}{required && <span className="ml-0.5 text-destructive" aria-hidden>*</span>}
+        {label}
+        {required && (
+          <span className="ml-0.5 text-destructive" aria-hidden>
+            *
+          </span>
+        )}
       </Label>
       <div className="mt-2">{children}</div>
-      {error
-        ? <p className="mt-1.5 text-sm text-destructive" role="alert">{error}</p>
-        : hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>}
+      {error ? (
+        <p className="mt-1.5 text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : (
+        hint && <p className="mt-1.5 text-xs text-muted-foreground">{hint}</p>
+      )}
     </div>
   );
 }
@@ -214,15 +284,20 @@ function UploadZone({
       if (meta) fileMetadata.set(f.name, meta);
     }
     if (incoming.some((f) => fileMetadata.has(f.name))) {
-      toast.info("GPS / timestamp metadata detected — will be included for verification.");
+      toast.info(
+        "GPS / timestamp metadata detected — will be included for verification.",
+      );
     }
   }
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    addFiles(Array.from(e.dataTransfer.files));
-  }, [files]);
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      addFiles(Array.from(e.dataTransfer.files));
+    },
+    [files],
+  );
 
   function removeFile(idx: number) {
     const next = files.filter((_, i) => i !== idx);
@@ -237,7 +312,10 @@ function UploadZone({
   return (
     <div className="space-y-4">
       <div
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragging(true);
+        }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
         onClick={() => inputRef.current?.click()}
@@ -249,9 +327,15 @@ function UploadZone({
           ${dragging ? "border-ink bg-lime/20" : "border-ink/30 bg-muted/40 hover:border-ink hover:bg-muted/60"}`}
       >
         <Upload className="mb-3 h-8 w-8 text-muted-foreground" aria-hidden />
-        <p className="font-display text-sm font-semibold">Drag files here, or tap to browse</p>
-        <p className="mt-1 text-xs text-muted-foreground">Photos, video, PDF — max 25 MB each</p>
-        <p className="mt-1 text-xs text-muted-foreground">Files are hashed (SHA-256) and visible only to legal partners</p>
+        <p className="font-display text-sm font-semibold">
+          Drag files here, or tap to browse
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Photos, video, PDF — max 25 MB each
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          Files are hashed (SHA-256) and visible only to legal partners
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -268,16 +352,27 @@ function UploadZone({
             const url = previewUrl(f);
             const meta = fileMetadata.get(f.name);
             return (
-              <li key={i} className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/30 p-3">
-                {url
-                  ? <img src={url} alt={f.name} className="h-14 w-14 flex-shrink-0 rounded-lg object-cover border border-border" onLoad={() => URL.revokeObjectURL(url)} />
-                  : <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-xs text-muted-foreground font-mono">
-                      {f.name.split(".").pop()?.toUpperCase()}
-                    </div>
-                }
+              <li
+                key={i}
+                className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/30 p-3"
+              >
+                {url ? (
+                  <img
+                    src={url}
+                    alt={f.name}
+                    className="h-14 w-14 flex-shrink-0 rounded-lg object-cover border border-border"
+                    onLoad={() => URL.revokeObjectURL(url)}
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-muted text-xs text-muted-foreground font-mono">
+                    {f.name.split(".").pop()?.toUpperCase()}
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-mono text-sm">{f.name}</p>
-                  <p className="text-xs text-muted-foreground">{(f.size / 1024).toFixed(0)} KB</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(f.size / 1024).toFixed(0)} KB
+                  </p>
                   {meta && (
                     <div className="mt-1 space-y-0.5">
                       {meta.lat && meta.lon && (
@@ -355,7 +450,10 @@ function ReportPage() {
       injury_details: injuryDetails,
       badge_or_unit: badgeOrUnit,
     });
-    if (result.success) { setErrors({}); return true; }
+    if (result.success) {
+      setErrors({});
+      return true;
+    }
     const errs: FieldErrors = {};
     for (const issue of result.error.issues) {
       const key = issue.path[0] as string;
@@ -371,7 +469,9 @@ function ReportPage() {
     const result = (partial as z.ZodType).safeParse(value);
     setErrors((prev) => ({
       ...prev,
-      [name]: result.success ? "" : (result.error.issues[0]?.message ?? "Invalid"),
+      [name]: result.success
+        ? ""
+        : (result.error.issues[0]?.message ?? "Invalid"),
     }));
   }
 
@@ -390,30 +490,37 @@ function ReportPage() {
   }
 
   async function onSubmit() {
-    if (!consent) { toast.error("Please confirm the consent statement to submit."); return; }
-    
+    if (!consent) {
+      toast.error("Please confirm the consent statement to submit.");
+      return;
+    }
+
     // Validate step 1
-    if (!step1Schema.safeParse({
-      incident_at: incidentAt,
-      location_text: locationText,
-      city,
-      incident_type: incidentType,
-      description,
-      injury_details: injuryDetails,
-      badge_or_unit: badgeOrUnit,
-    }).success) {
+    if (
+      !step1Schema.safeParse({
+        incident_at: incidentAt,
+        location_text: locationText,
+        city,
+        incident_type: incidentType,
+        description,
+        injury_details: injuryDetails,
+        badge_or_unit: badgeOrUnit,
+      }).success
+    ) {
       toast.error("Please fill in all required fields correctly");
       setStep(1);
       return;
     }
 
     // Validate step 3
-    if (!step3Schema.safeParse({
-      witness_name: witnessName,
-      witness_contact: witnessContact,
-      reporter_name: reporterName,
-      reporter_contact: reporterContact,
-    }).success) {
+    if (
+      !step3Schema.safeParse({
+        witness_name: witnessName,
+        witness_contact: witnessContact,
+        reporter_name: reporterName,
+        reporter_contact: reporterContact,
+      }).success
+    ) {
       toast.error("Please correct the contact information");
       setStep(3);
       return;
@@ -423,9 +530,9 @@ function ReportPage() {
     try {
       // FIX #1: Convert datetime-local string to proper ISO timestamp
       if (!incidentAt) throw new Error("Date and time are required");
-      
+
       const incidentDate = new Date(incidentAt + "Z").toISOString();
-      
+
       const reportData: Record<string, unknown> = {
         incident_at: incidentDate,
         location_text: locationText?.trim() || "",
@@ -438,33 +545,33 @@ function ReportPage() {
         urgent_flag: isUrgent || false,
         status: "pending_moderation",
         consent_given: true,
-        witness_name: isAnonymous ? null : (witnessName?.trim() || null),
-        witness_contact: isAnonymous ? null : (witnessContact?.trim() || null),
-        reporter_name: isAnonymous ? null : (reporterName?.trim() || null),
-        reporter_contact: isAnonymous ? null : (reporterContact?.trim() || null),
+        witness_name: isAnonymous ? null : witnessName?.trim() || null,
+        witness_contact: isAnonymous ? null : witnessContact?.trim() || null,
+        reporter_name: isAnonymous ? null : reporterName?.trim() || null,
+        reporter_contact: isAnonymous ? null : reporterContact?.trim() || null,
       };
 
       console.log("Submitting report data:", reportData);
-      
+
       const result = await supabase
         .from("incident_reports")
         .insert([reportData])
         .select("id, report_code")
         .single();
-      
+
       console.log("Insert response:", result);
-      
+
       const { data: report, error } = result;
-      
+
       if (error) {
         console.error("Insert error details:", error);
         throw new Error(error?.message || "Failed to create report");
       }
-      
+
       if (!report) {
         throw new Error("No report was created");
       }
-      
+
       const reportRecord = report;
       console.log("Report created:", reportRecord);
 
@@ -472,68 +579,85 @@ function ReportPage() {
       let uploadedCount = 0;
       for (const file of files) {
         try {
-          if (file.size > 25 * 1024 * 1024) { 
-            toast.warning(`Skipping ${file.name} — over 25 MB`); 
-            continue; 
+          if (file.size > 25 * 1024 * 1024) {
+            toast.warning(`Skipping ${file.name} — over 25 MB`);
+            continue;
           }
-          
+
           const hash = await sha256Hex(file);
           const meta = fileMetadata.get(file.name);
           const sanitizedName = file.name.replace(/[^\w.\-]/g, "_");
           const path = `${reportRecord.id}/${Date.now()}-${sanitizedName}`;
-          
+
           // FIX #3: Improved error handling for file uploads
-          const uploadResult = await supabase.storage.from("evidence").upload(path, file, { 
-            contentType: file.type || "application/octet-stream", 
-            upsert: false 
-          });
-          
+          const uploadResult = await supabase.storage
+            .from("evidence")
+            .upload(path, file, {
+              contentType: file.type || "application/octet-stream",
+              upsert: false,
+            });
+
           const { error: upErr } = uploadResult;
-          if (upErr) { 
+          if (upErr) {
             console.error("Upload error:", upErr);
             toast.warning(`Upload failed for ${file.name}: ${upErr.message}`);
             continue;
           }
-          
+
           uploadedCount++;
-          
+
           // Create evidence record
           try {
-            const evResult = await supabase.from("report_evidence").insert({
-              report_id: reportRecord.id,
-              storage_path: path,
-              file_name: sanitizedName,
-              content_type: file.type || "application/octet-stream",
-              size_bytes: file.size,
-              sha256: hash,
-              gps_latitude: meta?.lat ?? null,
-              gps_longitude: meta?.lon ?? null,
-              gps_accuracy_meters: meta?.accuracy ?? null,
-              media_timestamp: meta?.timestamp ?? null,
-            }).select("id").single();
-            
+            const evResult = await supabase
+              .from("report_evidence")
+              .insert({
+                report_id: reportRecord.id,
+                storage_path: path,
+                file_name: sanitizedName,
+                content_type: file.type || "application/octet-stream",
+                size_bytes: file.size,
+                sha256: hash,
+                gps_latitude: meta?.lat ?? null,
+                gps_longitude: meta?.lon ?? null,
+                gps_accuracy_meters: meta?.accuracy ?? null,
+                media_timestamp: meta?.timestamp ?? null,
+              })
+              .select("id")
+              .single();
+
             if (evResult.error) {
-              console.warn(`Evidence record failed for ${file.name}:`, evResult.error);
-              toast.warning(`Evidence for ${file.name} uploaded but record failed`);
+              console.warn(
+                `Evidence record failed for ${file.name}:`,
+                evResult.error,
+              );
+              toast.warning(
+                `Evidence for ${file.name} uploaded but record failed`,
+              );
             }
           } catch (evErr) {
             console.warn("Evidence record error:", evErr);
-            toast.warning(`Evidence for ${file.name} uploaded but could not create record`);
+            toast.warning(
+              `Evidence for ${file.name} uploaded but could not create record`,
+            );
           }
         } catch (fileErr) {
           console.error("File processing error:", fileErr);
           toast.warning(`Could not process ${file.name}`);
         }
       }
-      
+
       if (files.length > 0 && uploadedCount === 0) {
-        toast.warning("No files were uploaded successfully, but report was created");
+        toast.warning(
+          "No files were uploaded successfully, but report was created",
+        );
       } else if (uploadedCount > 0) {
-        toast.success(`Report submitted with ${uploadedCount} file${uploadedCount !== 1 ? 's' : ''}`);
+        toast.success(
+          `Report submitted with ${uploadedCount} file${uploadedCount !== 1 ? "s" : ""}`,
+        );
       } else {
         toast.success(`Report submitted! Code: ${reportRecord.report_code}`);
       }
-      
+
       setSubmitted({ code: reportRecord.report_code });
       window.scrollTo({ top: 0, behavior: "instant" });
     } catch (err) {
@@ -554,18 +678,26 @@ function ReportPage() {
           <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-lime">
             <ShieldCheck className="h-6 w-6" aria-hidden />
           </div>
-          <h1 className="font-display text-2xl font-bold">Your report has been received.</h1>
+          <h1 className="font-display text-2xl font-bold">
+            Your report has been received.
+          </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            It has been sealed with a tamper-evident timestamp and file hash. Our moderation team will
-            review it before it contributes to aggregate statistics.
+            It has been sealed with a tamper-evident timestamp and file hash.
+            Our moderation team will review it before it contributes to
+            aggregate statistics.
           </p>
           <div className="mt-6 rounded-xl border border-border/60 bg-muted/40 p-4">
-            <p className="font-display text-xs uppercase tracking-widest text-muted-foreground">Reference number</p>
-            <p className="mt-1 font-mono text-xl font-bold tracking-wide">{submitted.code}</p>
+            <p className="font-display text-xs uppercase tracking-widest text-muted-foreground">
+              Reference number
+            </p>
+            <p className="mt-1 font-mono text-xl font-bold tracking-wide">
+              {submitted.code}
+            </p>
           </div>
           <p className="mt-4 text-xs text-muted-foreground">
-            Save this reference number. Legal partners can use it when following up with you directly.
-            Your report details are only visible to verified organisations.
+            Save this reference number. Legal partners can use it when following
+            up with you directly. Your report details are only visible to
+            verified organisations.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
@@ -576,9 +708,17 @@ function ReportPage() {
             </Link>
             <button
               onClick={() => {
-                setSubmitted(null); setFiles([]); setConsent(false); setStep(1);
-                setIncidentAt(""); setLocationText(""); setCity(""); setIncidentType("");
-                setDescription(""); setInjuryDetails(""); setBadgeOrUnit("");
+                setSubmitted(null);
+                setFiles([]);
+                setConsent(false);
+                setStep(1);
+                setIncidentAt("");
+                setLocationText("");
+                setCity("");
+                setIncidentType("");
+                setDescription("");
+                setInjuryDetails("");
+                setBadgeOrUnit("");
                 navigate({ to: "/report" });
               }}
               className="rounded-full bg-ink px-5 py-2.5 font-display text-sm font-semibold text-ink-foreground hover:opacity-90"
@@ -608,7 +748,8 @@ function ReportPage() {
         </p>
         <h1 className="font-display text-3xl font-bold">File a report</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          All fields are private. You can submit anonymously. Optional fields can be left blank.
+          All fields are private. You can submit anonymously. Optional fields
+          can be left blank.
         </p>
 
         <div className="mt-8">
@@ -620,7 +761,11 @@ function ReportPage() {
           <div className="card-white space-y-6 p-6 md:p-8">
             <h2 className="font-display text-lg font-bold">What happened</h2>
 
-            <Field label="Date & time of incident" required error={errors.incident_at}>
+            <Field
+              label="Date & time of incident"
+              required
+              error={errors.incident_at}
+            >
               <Input
                 type="datetime-local"
                 value={incidentAt}
@@ -631,7 +776,12 @@ function ReportPage() {
             </Field>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Location" hint="Address, landmark, or coordinates" required error={errors.location_text}>
+              <Field
+                label="Location"
+                hint="Address, landmark, or coordinates"
+                required
+                error={errors.location_text}
+              >
                 <Input
                   value={locationText}
                   onChange={(e) => setLocationText(e.target.value)}
@@ -649,18 +799,29 @@ function ReportPage() {
               </Field>
             </div>
 
-            <Field label="Incident type" hint="Helps categorize reports and identify patterns">
+            <Field
+              label="Incident type"
+              hint="Helps categorize reports and identify patterns"
+            >
               <Select value={incidentType} onValueChange={setIncidentType}>
-                <SelectTrigger><SelectValue placeholder="Select type (optional)" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type (optional)" />
+                </SelectTrigger>
                 <SelectContent>
                   {INCIDENT_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </Field>
 
-            <Field label="Describe the incident" required error={errors.description}>
+            <Field
+              label="Describe the incident"
+              required
+              error={errors.description}
+            >
               <Textarea
                 rows={6}
                 value={description}
@@ -671,7 +832,10 @@ function ReportPage() {
               />
             </Field>
 
-            <Field label="Injury details" hint="Any injuries you or others sustained (optional)">
+            <Field
+              label="Injury details"
+              hint="Any injuries you or others sustained (optional)"
+            >
               <Textarea
                 rows={3}
                 value={injuryDetails}
@@ -680,7 +844,10 @@ function ReportPage() {
               />
             </Field>
 
-            <Field label="Badge number or unit ID" hint="As reported — unverified. Never published publicly.">
+            <Field
+              label="Badge number or unit ID"
+              hint="As reported — unverified. Never published publicly."
+            >
               <Input
                 value={badgeOrUnit}
                 onChange={(e) => setBadgeOrUnit(e.target.value)}
@@ -695,7 +862,8 @@ function ReportPage() {
           <div className="card-white space-y-6 p-6 md:p-8">
             <h2 className="font-display text-lg font-bold">Evidence upload</h2>
             <p className="text-sm text-muted-foreground">
-              Upload any photos, video, or documents. This step is optional — you can skip it and still submit.
+              Upload any photos, video, or documents. This step is optional —
+              you can skip it and still submit.
             </p>
             <UploadZone
               files={files}
@@ -708,7 +876,9 @@ function ReportPage() {
         {/* ── Step 3: Contact / anonymous choice ── */}
         {step === 3 && (
           <div className="card-white space-y-6 p-6 md:p-8">
-            <h2 className="font-display text-lg font-bold">Contact & privacy</h2>
+            <h2 className="font-display text-lg font-bold">
+              Contact & privacy
+            </h2>
 
             <div className="space-y-3">
               <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 hover:bg-muted/50 has-[:checked]:border-ink">
@@ -718,9 +888,12 @@ function ReportPage() {
                   onCheckedChange={(v) => setIsAnonymous(!!v)}
                 />
                 <div>
-                  <p className="font-display text-sm font-semibold">Submit anonymously</p>
+                  <p className="font-display text-sm font-semibold">
+                    Submit anonymously
+                  </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    No contact info will be stored or associated with your report.
+                    No contact info will be stored or associated with your
+                    report.
                   </p>
                 </div>
               </label>
@@ -731,9 +904,12 @@ function ReportPage() {
                   onCheckedChange={(v) => setIsUrgent(!!v)}
                 />
                 <div>
-                  <p className="font-display text-sm font-semibold">Mark as urgent</p>
+                  <p className="font-display text-sm font-semibold">
+                    Mark as urgent
+                  </p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    For ongoing incidents or where immediate legal assistance is needed.
+                    For ongoing incidents or where immediate legal assistance is
+                    needed.
                   </p>
                 </div>
               </label>
@@ -742,25 +918,45 @@ function ReportPage() {
             {!isAnonymous && (
               <>
                 <div className="border-t border-border/60 pt-5">
-                  <h3 className="mb-4 font-display text-sm font-bold">Witness details (optional)</h3>
+                  <h3 className="mb-4 font-display text-sm font-bold">
+                    Witness details (optional)
+                  </h3>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Witness name">
-                      <Input value={witnessName} onChange={(e) => setWitnessName(e.target.value)} />
+                      <Input
+                        value={witnessName}
+                        onChange={(e) => setWitnessName(e.target.value)}
+                      />
                     </Field>
                     <Field label="Witness contact">
-                      <Input value={witnessContact} onChange={(e) => setWitnessContact(e.target.value)} placeholder="Phone or email" />
+                      <Input
+                        value={witnessContact}
+                        onChange={(e) => setWitnessContact(e.target.value)}
+                        placeholder="Phone or email"
+                      />
                     </Field>
                   </div>
                 </div>
                 <div className="border-t border-border/60 pt-5">
-                  <h3 className="mb-1 font-display text-sm font-bold">Your contact details (optional)</h3>
-                  <p className="mb-4 text-xs text-muted-foreground">Only used by legal aid for follow-up. Never made public.</p>
+                  <h3 className="mb-1 font-display text-sm font-bold">
+                    Your contact details (optional)
+                  </h3>
+                  <p className="mb-4 text-xs text-muted-foreground">
+                    Only used by legal aid for follow-up. Never made public.
+                  </p>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <Field label="Your name">
-                      <Input value={reporterName} onChange={(e) => setReporterName(e.target.value)} />
+                      <Input
+                        value={reporterName}
+                        onChange={(e) => setReporterName(e.target.value)}
+                      />
                     </Field>
                     <Field label="Your contact">
-                      <Input value={reporterContact} onChange={(e) => setReporterContact(e.target.value)} placeholder="Phone or email" />
+                      <Input
+                        value={reporterContact}
+                        onChange={(e) => setReporterContact(e.target.value)}
+                        placeholder="Phone or email"
+                      />
                     </Field>
                   </div>
                 </div>
@@ -773,30 +969,63 @@ function ReportPage() {
         {step === 4 && (
           <div className="space-y-5">
             <div className="card-white p-6 md:p-8">
-              <h2 className="mb-5 font-display text-lg font-bold">Review your report</h2>
+              <h2 className="mb-5 font-display text-lg font-bold">
+                Review your report
+              </h2>
               <dl className="space-y-3 text-sm">
-                <ReviewRow label="Date & time" value={incidentAt ? new Date(incidentAt).toLocaleString() : "—"} />
+                <ReviewRow
+                  label="Date & time"
+                  value={
+                    incidentAt ? new Date(incidentAt).toLocaleString() : "—"
+                  }
+                />
                 <ReviewRow label="Location" value={locationText || "—"} />
                 {city && <ReviewRow label="City" value={city} />}
-                {incidentType && <ReviewRow label="Type" value={INCIDENT_TYPES.find((t) => t.value === incidentType)?.label ?? incidentType} />}
+                {incidentType && (
+                  <ReviewRow
+                    label="Type"
+                    value={
+                      INCIDENT_TYPES.find((t) => t.value === incidentType)
+                        ?.label ?? incidentType
+                    }
+                  />
+                )}
                 <ReviewRow label="Description" value={description} multiline />
-                {injuryDetails && <ReviewRow label="Injuries" value={injuryDetails} multiline />}
-                {badgeOrUnit && <ReviewRow label="Badge / unit" value={badgeOrUnit} />}
-                <ReviewRow label="Files attached" value={files.length > 0 ? `${files.length} file(s)` : "None"} />
-                <ReviewRow label="Submission mode" value={isAnonymous ? "Anonymous" : "Identified"} />
-                {isUrgent && <ReviewRow label="Priority" value="Marked urgent" />}
+                {injuryDetails && (
+                  <ReviewRow label="Injuries" value={injuryDetails} multiline />
+                )}
+                {badgeOrUnit && (
+                  <ReviewRow label="Badge / unit" value={badgeOrUnit} />
+                )}
+                <ReviewRow
+                  label="Files attached"
+                  value={files.length > 0 ? `${files.length} file(s)` : "None"}
+                />
+                <ReviewRow
+                  label="Submission mode"
+                  value={isAnonymous ? "Anonymous" : "Identified"}
+                />
+                {isUrgent && (
+                  <ReviewRow label="Priority" value="Marked urgent" />
+                )}
               </dl>
             </div>
 
             <div className="card-white p-6">
               <label className="flex cursor-pointer items-start gap-3">
-                <Checkbox className="mt-0.5" checked={consent} onCheckedChange={(v) => setConsent(!!v)} />
+                <Checkbox
+                  className="mt-0.5"
+                  checked={consent}
+                  onCheckedChange={(v) => setConsent(!!v)}
+                />
                 <span className="text-sm leading-relaxed">
-                  I understand this report may be shared with legal aid organisations and verified civil
-                  rights groups. In aggregate and anonymised form, insights may be shared with journalists
+                  I understand this report may be shared with legal aid
+                  organisations and verified civil rights groups. In aggregate
+                  and anonymised form, insights may be shared with journalists
                   and researchers. Identifying details about individual officers{" "}
-                  <span className="highlight-lime">will not be published</span> on this platform. I affirm
-                  this information is true to the best of my knowledge.
+                  <span className="highlight-lime">will not be published</span>{" "}
+                  on this platform. I affirm this information is true to the
+                  best of my knowledge.
                   <Link
                     to="/terms"
                     className="mt-2 block text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
@@ -817,8 +1046,9 @@ function ReportPage() {
                 {submitting ? "Submitting…" : "Submit report"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                {isAnonymous ? "Anonymous · " : ""}{isUrgent ? "Urgent · " : ""}
-                A tamper-evident ID and timestamp will be created on submission.
+                {isAnonymous ? "Anonymous · " : ""}
+                {isUrgent ? "Urgent · " : ""}A tamper-evident ID and timestamp
+                will be created on submission.
               </p>
             </div>
           </div>
@@ -826,14 +1056,21 @@ function ReportPage() {
 
         {/* ── Step nav ── */}
         <div className="mt-6 flex items-center justify-between">
-          {step > 1
-            ? <button onClick={backStep} className="inline-flex items-center gap-1 rounded-full border-2 border-ink px-5 py-2.5 font-display text-sm font-semibold hover:bg-muted">
-                <ArrowLeft className="h-4 w-4" aria-hidden /> Back
-              </button>
-            : <div />
-          }
+          {step > 1 ? (
+            <button
+              onClick={backStep}
+              className="inline-flex items-center gap-1 rounded-full border-2 border-ink px-5 py-2.5 font-display text-sm font-semibold hover:bg-muted"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden /> Back
+            </button>
+          ) : (
+            <div />
+          )}
           {step < 4 && (
-            <button onClick={advanceStep} className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-2.5 font-display text-sm font-semibold text-ink-foreground hover:opacity-90">
+            <button
+              onClick={advanceStep}
+              className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-2.5 font-display text-sm font-semibold text-ink-foreground hover:opacity-90"
+            >
               Continue <ArrowRight className="h-4 w-4" aria-hidden />
             </button>
           )}
@@ -843,11 +1080,25 @@ function ReportPage() {
   );
 }
 
-function ReviewRow({ label, value, multiline }: { label: string; value: string; multiline?: boolean }) {
+function ReviewRow({
+  label,
+  value,
+  multiline,
+}: {
+  label: string;
+  value: string;
+  multiline?: boolean;
+}) {
   return (
     <div className="flex gap-3">
-      <dt className="w-32 flex-shrink-0 font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</dt>
-      <dd className={`flex-1 text-foreground ${multiline ? "whitespace-pre-wrap" : ""}`}>{value}</dd>
+      <dt className="w-32 flex-shrink-0 font-display text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </dt>
+      <dd
+        className={`flex-1 text-foreground ${multiline ? "whitespace-pre-wrap" : ""}`}
+      >
+        {value}
+      </dd>
     </div>
   );
 }

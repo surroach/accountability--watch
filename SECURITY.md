@@ -9,12 +9,14 @@ If you discover a security vulnerability in Accountability Watch, please report 
 **Do NOT open a public issue.**
 
 Instead, please email security concerns to the project maintainer with:
+
 - Description of the vulnerability
 - Steps to reproduce
 - Potential impact
 - Suggested fix (if you have one)
 
 The maintainer will:
+
 1. Confirm receipt within 48 hours
 2. Investigate and assess severity
 3. Develop and test a fix
@@ -24,12 +26,14 @@ The maintainer will:
 ### What to Include
 
 ✅ **DO include:**
+
 - Clear vulnerability description
 - Reproduction steps
 - Affected versions
 - Your contact information
 
 ❌ **DON'T include:**
+
 - Proof-of-concept exploits that could cause harm
 - Passwords, API keys, or credentials
 - Personal information about users/organizations
@@ -59,6 +63,7 @@ This is a **college Computer Science project**, not a production system. Underst
 - Manual moderation only
 
 If you are building a production incident reporting system, consider:
+
 - Adding Web Application Firewall (WAF)
 - Implementing DDoS protection
 - Using managed database services
@@ -113,6 +118,7 @@ See `tests/` for security-focused test suites and `docs/` for architecture detai
 ## Questions?
 
 If you have security questions:
+
 1. Check `docs/` for existing documentation
 2. Review test cases in `tests/` for examples
 3. Examine source code in `src/` with comments

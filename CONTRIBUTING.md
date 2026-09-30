@@ -22,16 +22,19 @@ If you find a bug or have a suggestion:
 ### Development Workflow
 
 1. **Fork the repository**
+
    ```bash
    git clone https://github.com/your-username/accountability-watch.git
    ```
 
 2. **Create a feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 3. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -42,6 +45,7 @@ If you find a bug or have a suggestion:
    - Write tests for new functionality
 
 5. **Run quality checks**
+
    ```bash
    npm run lint
    npm run format
@@ -49,11 +53,13 @@ If you find a bug or have a suggestion:
    ```
 
 6. **Commit with clear messages**
+
    ```bash
    git commit -m "Brief description of changes"
    ```
 
 7. **Push to your fork**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -73,6 +79,7 @@ If you find a bug or have a suggestion:
 - JSDoc comments for public functions
 
 Example:
+
 ```typescript
 /**
  * Validates an incident report
@@ -134,6 +141,7 @@ npm run test -- --coverage
 ### Security-Sensitive Tests
 
 For encryption, authentication, or authorization code:
+
 - Include tests for invalid inputs
 - Test failure modes
 - Document assumptions
@@ -144,6 +152,7 @@ For encryption, authentication, or authorization code:
 ### README Updates
 
 Update `README.md` if your change:
+
 - Adds a new feature
 - Changes how to set up the project
 - Modifies the technology stack

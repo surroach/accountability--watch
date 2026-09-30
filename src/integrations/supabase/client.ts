@@ -1,7 +1,7 @@
 // Accountability Watch - Database Client
 // Uses local in-memory database for development
 
-import type { Database } from './types';
+import type { Database } from "./types";
 
 // Simple in-memory store
 const store: Record<string, any[]> = {
@@ -11,15 +11,15 @@ const store: Record<string, any[]> = {
 };
 
 // Expose to window for debugging
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   (window as any).__KIRO_REPORTS_STORE = store;
   (window as any).__KIRO_VIEW_REPORTS = () => {
-    console.log('📊 ALL SUBMITTED REPORTS:\n');
+    console.log("📊 ALL SUBMITTED REPORTS:\n");
     console.table(store.incident_reports);
     return store.incident_reports;
   };
   (window as any).__KIRO_VIEW_USERS = () => {
-    console.log('👥 ALL USER ROLES:\n');
+    console.log("👥 ALL USER ROLES:\n");
     console.table(store.user_roles);
     return store.user_roles;
   };
@@ -46,7 +46,9 @@ export const supabase = {
       // Create object that's both thenable and has select method
       const chainable = {
         select: (fields?: string) => {
-          const fieldsList = fields ? fields.split(',').map(f => f.trim()) : undefined;
+          const fieldsList = fields
+            ? fields.split(",").map((f) => f.trim())
+            : undefined;
           return {
             single: async () => {
               try {
@@ -73,11 +75,11 @@ export const supabase = {
                 console.error("Insert error:", err);
                 return { data: null, error: { message: err.message } };
               }
-            }
+            },
           };
         },
         // Make it thenable for .then() chains
-        then: function(callback: any) {
+        then: function (callback: any) {
           try {
             const record = Array.isArray(data) ? data[0] : data;
             const fullRecord = {
@@ -92,19 +94,21 @@ export const supabase = {
 
             console.log(`✅ Inserted into ${table}:`, fullRecord.id);
 
-            if (typeof callback === 'function') {
-              return Promise.resolve(callback({ data: fullRecord, error: null }));
+            if (typeof callback === "function") {
+              return Promise.resolve(
+                callback({ data: fullRecord, error: null }),
+              );
             }
             return Promise.resolve({ data: fullRecord, error: null });
           } catch (err: any) {
             console.error("Insert error:", err);
             const result = { data: null, error: { message: err.message } };
-            if (typeof callback === 'function') {
+            if (typeof callback === "function") {
               return Promise.resolve(callback(result));
             }
             return Promise.resolve(result);
           }
-        }
+        },
       };
       return chainable as any;
     },
@@ -113,10 +117,14 @@ export const supabase = {
       eq: (field: string, value: any) => ({
         single: async () => {
           try {
-            const items = (store[table] || []).filter(item => item[field] === value);
+            const items = (store[table] || []).filter(
+              (item) => item[field] === value,
+            );
             if (items.length === 0) return { data: null, error: null };
-            
-            const fieldsList = fields ? fields.split(',').map(f => f.trim()) : undefined;
+
+            const fieldsList = fields
+              ? fields.split(",").map((f) => f.trim())
+              : undefined;
             const result = fieldsList
               ? buildQueryResult(table, items[0], fieldsList)
               : items[0];
@@ -125,71 +133,79 @@ export const supabase = {
           } catch (err: any) {
             return { data: null, error: { message: err.message } };
           }
-        }
+        },
       }),
       // For fetching multiple rows (like all roles for a user)
       async: () => async () => {
         try {
-          const items = (store[table] || []);
-          const fieldsList = fields ? fields.split(',').map(f => f.trim()) : undefined;
-          
-          const results = items.map(item =>
-            fieldsList ? buildQueryResult(table, item, fieldsList) : item
+          const items = store[table] || [];
+          const fieldsList = fields
+            ? fields.split(",").map((f) => f.trim())
+            : undefined;
+
+          const results = items.map((item) =>
+            fieldsList ? buildQueryResult(table, item, fieldsList) : item,
           );
 
           return { data: results, error: null };
         } catch (err: any) {
           return { data: null, error: { message: err.message } };
         }
-      }
+      },
     }),
 
     // Generic select without eq filter
     select: (fields?: string) => {
       // This handles the case from route.tsx: .from("user_roles").select("role").eq("user_id", user.id)
-      const fieldsList = fields ? fields.split(',').map(f => f.trim()) : undefined;
-      
+      const fieldsList = fields
+        ? fields.split(",").map((f) => f.trim())
+        : undefined;
+
       return {
         eq: (field: string, value: any) => {
           return {
             then: async (callback: any) => {
               try {
-                const items = (store[table] || []).filter(item => item[field] === value);
-                const results = items.map(item =>
-                  fieldsList ? buildQueryResult(table, item, fieldsList) : item
+                const items = (store[table] || []).filter(
+                  (item) => item[field] === value,
+                );
+                const results = items.map((item) =>
+                  fieldsList ? buildQueryResult(table, item, fieldsList) : item,
                 );
 
                 const result = { data: results, error: null };
-                if (typeof callback === 'function') {
+                if (typeof callback === "function") {
                   return callback(result);
                 }
                 return result;
               } catch (err: any) {
                 const result = { data: null, error: { message: err.message } };
-                if (typeof callback === 'function') {
+                if (typeof callback === "function") {
                   return callback(result);
                 }
                 return result;
               }
             },
             // Also support async/await
-            catch: function(errCallback: any) {
+            catch: function (errCallback: any) {
               return this;
             },
             // Support Promise-like chaining
             async: () => async () => {
               try {
-                const items = (store[table] || []).filter(item => item[field] === value);
-                const results = items.map(item =>
-                  fieldsList ? buildQueryResult(table, item, fieldsList) : item
+                const items = (store[table] || []).filter(
+                  (item) => item[field] === value,
+                );
+                const results = items.map((item) =>
+                  fieldsList ? buildQueryResult(table, item, fieldsList) : item,
                 );
                 return { data: results, error: null };
               } catch (err: any) {
                 return { data: null, error: { message: err.message } };
               }
-            }
+            },
           };
-        }
+        },
       };
     },
 
@@ -199,10 +215,10 @@ export const supabase = {
           try {
             const items = store[table] || [];
             let updated = false;
-            items.forEach(item => {
+            items.forEach((item) => {
               if (item[field] === value) {
                 Object.assign(item, updates, {
-                  updated_at: new Date().toISOString()
+                  updated_at: new Date().toISOString(),
                 });
                 updated = true;
               }
@@ -216,9 +232,9 @@ export const supabase = {
           } catch (err: any) {
             return { data: null, error: { message: err.message } };
           }
-        }
-      })
-    })
+        },
+      }),
+    }),
   }),
 
   storage: {
@@ -227,7 +243,9 @@ export const supabase = {
         try {
           if (!file) throw new Error("No file provided");
           if (!path) throw new Error("No path specified");
-          console.log(`✅ Uploaded ${file.name || 'file'} to ${bucket}/${path}`);
+          console.log(
+            `✅ Uploaded ${file.name || "file"} to ${bucket}/${path}`,
+          );
           return { data: { path }, error: null };
         } catch (err: any) {
           console.error("Upload error:", err);
@@ -235,18 +253,18 @@ export const supabase = {
         }
       },
       download: async (path: string) => {
-        return { data: null, error: { message: 'File not found' } };
+        return { data: null, error: { message: "File not found" } };
       },
       remove: async (paths: string[]) => {
         return { data: null, error: null };
-      }
-    })
+      },
+    }),
   },
 
   auth: {
     getSession: async () => {
       // Check if user is logged in (stored in sessionStorage)
-      const userData = sessionStorage.getItem('__KIRO_AUTH_USER');
+      const userData = sessionStorage.getItem("__KIRO_AUTH_USER");
       if (userData) {
         try {
           const user = JSON.parse(userData);
@@ -254,10 +272,12 @@ export const supabase = {
             data: {
               session: {
                 user,
-                access_token: sessionStorage.getItem('__KIRO_AUTH_TOKEN') || 'token-' + user.id,
-              }
+                access_token:
+                  sessionStorage.getItem("__KIRO_AUTH_TOKEN") ||
+                  "token-" + user.id,
+              },
             },
-            error: null
+            error: null,
           };
         } catch (err) {
           return { data: { session: null }, error: null };
@@ -268,44 +288,57 @@ export const supabase = {
 
     getUser: async () => {
       // Check if user is logged in
-      const userData = sessionStorage.getItem('__KIRO_AUTH_USER');
+      const userData = sessionStorage.getItem("__KIRO_AUTH_USER");
       if (userData) {
         try {
           const user = JSON.parse(userData);
           return { data: { user }, error: null };
         } catch (err) {
-          return { data: { user: null }, error: { message: 'Invalid user data' } };
+          return {
+            data: { user: null },
+            error: { message: "Invalid user data" },
+          };
         }
       }
       return { data: { user: null }, error: null };
     },
 
-    signInWithPassword: async ({ email, password }: { email: string; password: string }) => {
+    signInWithPassword: async ({
+      email,
+      password,
+    }: {
+      email: string;
+      password: string;
+    }) => {
       try {
         if (!email || !password) {
-          throw new Error('Email and password required');
+          throw new Error("Email and password required");
         }
 
         // Create a mock user (in production this would verify against a real auth service)
         const user = {
-          id: 'user-' + generateId(),
+          id: "user-" + generateId(),
           email,
           created_at: new Date().toISOString(),
-          role: 'authenticated',
+          role: "authenticated",
         };
 
         // Store user session
-        sessionStorage.setItem('__KIRO_AUTH_USER', JSON.stringify(user));
-        sessionStorage.setItem('__KIRO_AUTH_TOKEN', 'token-' + user.id);
+        sessionStorage.setItem("__KIRO_AUTH_USER", JSON.stringify(user));
+        sessionStorage.setItem("__KIRO_AUTH_TOKEN", "token-" + user.id);
 
         // Add user role (lawyer/admin for testing)
-        const isAdmin = email.includes('admin');
-        const isLawyer = email.includes('lawyer') || email.includes('legal');
-        
-        const roleType = isAdmin ? 'admin' : isLawyer ? 'legal_partner' : 'user';
-        
-        if (!store['user_roles']) store['user_roles'] = [];
-        store['user_roles'].push({
+        const isAdmin = email.includes("admin");
+        const isLawyer = email.includes("lawyer") || email.includes("legal");
+
+        const roleType = isAdmin
+          ? "admin"
+          : isLawyer
+            ? "legal_partner"
+            : "user";
+
+        if (!store["user_roles"]) store["user_roles"] = [];
+        store["user_roles"].push({
           id: generateId(),
           user_id: user.id,
           role: roleType,
@@ -315,7 +348,7 @@ export const supabase = {
         console.log(`✅ User signed in: ${email} (role: ${roleType})`);
         return { data: { user }, error: null };
       } catch (err: any) {
-        console.error('Auth error:', err);
+        console.error("Auth error:", err);
         return { data: { user: null }, error: { message: err.message } };
       }
     },
@@ -323,50 +356,50 @@ export const supabase = {
     signUp: async ({ email, password, options }: any) => {
       try {
         if (!email || !password) {
-          throw new Error('Email and password required');
+          throw new Error("Email and password required");
         }
 
         const user = {
-          id: 'user-' + generateId(),
+          id: "user-" + generateId(),
           email,
           created_at: new Date().toISOString(),
-          role: 'authenticated',
+          role: "authenticated",
         };
 
-        sessionStorage.setItem('__KIRO_AUTH_USER', JSON.stringify(user));
-        sessionStorage.setItem('__KIRO_AUTH_TOKEN', 'token-' + user.id);
+        sessionStorage.setItem("__KIRO_AUTH_USER", JSON.stringify(user));
+        sessionStorage.setItem("__KIRO_AUTH_TOKEN", "token-" + user.id);
 
         // Add user role
-        if (!store['user_roles']) store['user_roles'] = [];
-        store['user_roles'].push({
+        if (!store["user_roles"]) store["user_roles"] = [];
+        store["user_roles"].push({
           id: generateId(),
           user_id: user.id,
-          role: 'legal_partner',
+          role: "legal_partner",
           created_at: new Date().toISOString(),
         });
 
         console.log(`✅ Account created: ${email} (role: legal_partner)`);
         return { data: { user }, error: null };
       } catch (err: any) {
-        console.error('Auth error:', err);
+        console.error("Auth error:", err);
         return { data: { user: null }, error: { message: err.message } };
       }
     },
 
     signOut: async () => {
-      sessionStorage.removeItem('__KIRO_AUTH_USER');
-      sessionStorage.removeItem('__KIRO_AUTH_TOKEN');
-      console.log('✅ User signed out');
+      sessionStorage.removeItem("__KIRO_AUTH_USER");
+      sessionStorage.removeItem("__KIRO_AUTH_TOKEN");
+      console.log("✅ User signed out");
       return { error: null };
     },
 
     onAuthStateChange: (callback?: any) => {
       if (callback) {
         supabase.auth.getUser().then(({ data }) => {
-          callback(data.user ? 'SIGNED_IN' : 'SIGNED_OUT', data.user);
+          callback(data.user ? "SIGNED_IN" : "SIGNED_OUT", data.user);
         });
       }
       return { unsubscribe: () => {} };
-    }
-  }
+    },
+  },
 } as any;

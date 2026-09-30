@@ -6,9 +6,19 @@ export const Route = createFileRoute("/transparency")({
   head: () => ({
     meta: [
       { title: "Data Policy & Transparency — Accountability Watch" },
-      { name: "description", content: "How Accountability Watch handles data, who accesses reports, and our anonymization practices." },
-      { property: "og:title", content: "Data Policy & Transparency — Accountability Watch" },
-      { property: "og:description", content: "Data handling, retention, and access policies." },
+      {
+        name: "description",
+        content:
+          "How Accountability Watch handles data, who accesses reports, and our anonymization practices.",
+      },
+      {
+        property: "og:title",
+        content: "Data Policy & Transparency — Accountability Watch",
+      },
+      {
+        property: "og:description",
+        content: "Data handling, retention, and access policies.",
+      },
     ],
   }),
   component: TransparencyPage,
@@ -17,16 +27,22 @@ export const Route = createFileRoute("/transparency")({
 function TransparencyPage() {
   return (
     <div className="mx-auto max-w-3xl px-5 py-12">
-      <Link to="/" className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/"
+        className="mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> Back
       </Link>
 
       <p className="mb-3 font-display text-xs uppercase tracking-widest">
         <span className="highlight-lime">Transparency</span>
       </p>
-      <h1 className="font-display text-4xl font-bold">Data policy & anonymization</h1>
+      <h1 className="font-display text-4xl font-bold">
+        Data policy & anonymization
+      </h1>
       <p className="mt-3 text-muted-foreground">
-        We're committed to protecting reporter privacy while enabling civil rights accountability.
+        We're committed to protecting reporter privacy while enabling civil
+        rights accountability.
       </p>
 
       <div className="mt-12 space-y-10">
@@ -35,7 +51,11 @@ function TransparencyPage() {
           content={
             <>
               <p className="mb-6 text-sm text-muted-foreground">
-                Accountability Watch partners with established civil rights and legal aid organizations to ensure reports reach trained advocates and lawyers. These organizations are verified partners committed to protecting reporter privacy and supporting civil rights.
+                Accountability Watch partners with established civil rights and
+                legal aid organizations to ensure reports reach trained
+                advocates and lawyers. These organizations are verified partners
+                committed to protecting reporter privacy and supporting civil
+                rights.
               </p>
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <PartnerCard
@@ -70,7 +90,9 @@ function TransparencyPage() {
                 />
               </div>
               <p className="mt-6 text-xs text-muted-foreground">
-                All partners are bound by confidentiality agreements and committed to responsible data use. Reports are shared only with explicit consent and in compliance with local laws.
+                All partners are bound by confidentiality agreements and
+                committed to responsible data use. Reports are shared only with
+                explicit consent and in compliance with local laws.
               </p>
             </>
           }
@@ -82,9 +104,13 @@ function TransparencyPage() {
               <Shield className="h-7 w-7 text-lime" />
             </div>
             <div>
-              <p className="font-display text-sm font-semibold">Accountability Watch is committed to transparency</p>
+              <p className="font-display text-sm font-semibold">
+                Accountability Watch is committed to transparency
+              </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                We undergo regular security audits and comply with data protection regulations including GDPR, CCPA, and regional privacy laws.
+                We undergo regular security audits and comply with data
+                protection regulations including GDPR, CCPA, and regional
+                privacy laws.
               </p>
             </div>
           </div>
@@ -98,12 +124,30 @@ function TransparencyPage() {
                 When you submit a report, we collect the details you provide:
               </p>
               <ul className="mt-4 space-y-2 ml-4 text-sm text-muted-foreground">
-                <li>• <strong>Event details:</strong> Date, time, location, description of incident</li>
-                <li>• <strong>Incident type:</strong> Category of alleged misconduct (excessive force, detention, etc.)</li>
-                <li>• <strong>Evidence:</strong> Photos, videos, or documents you upload</li>
-                <li>• <strong>Witness info:</strong> Name and contact info if you provide it (optional)</li>
-                <li>• <strong>Your contact info:</strong> Only if you opt in (anonymous submissions don't require this)</li>
-                <li>• <strong>Metadata:</strong> GPS coordinates, timestamps, and file information from media</li>
+                <li>
+                  • <strong>Event details:</strong> Date, time, location,
+                  description of incident
+                </li>
+                <li>
+                  • <strong>Incident type:</strong> Category of alleged
+                  misconduct (excessive force, detention, etc.)
+                </li>
+                <li>
+                  • <strong>Evidence:</strong> Photos, videos, or documents you
+                  upload
+                </li>
+                <li>
+                  • <strong>Witness info:</strong> Name and contact info if you
+                  provide it (optional)
+                </li>
+                <li>
+                  • <strong>Your contact info:</strong> Only if you opt in
+                  (anonymous submissions don't require this)
+                </li>
+                <li>
+                  • <strong>Metadata:</strong> GPS coordinates, timestamps, and
+                  file information from media
+                </li>
               </ul>
             </>
           }
@@ -115,27 +159,36 @@ function TransparencyPage() {
             <>
               <div className="space-y-4 text-sm text-muted-foreground">
                 <div>
-                  <strong className="text-foreground">Anonymous vs. Identified Submissions</strong>
+                  <strong className="text-foreground">
+                    Anonymous vs. Identified Submissions
+                  </strong>
                   <p className="mt-1">
-                    You can submit completely anonymously (no contact info) or provide your name for legal follow-up. Either way, your identity is never published.
+                    You can submit completely anonymously (no contact info) or
+                    provide your name for legal follow-up. Either way, your
+                    identity is never published.
                   </p>
                 </div>
                 <div>
                   <strong className="text-foreground">Encryption</strong>
                   <p className="mt-1">
-                    All data in transit is encrypted (TLS 1.3). Sensitive fields (officer names, badge numbers, reporter contact info) are never public.
+                    All data in transit is encrypted (TLS 1.3). Sensitive fields
+                    (officer names, badge numbers, reporter contact info) are
+                    never public.
                   </p>
                 </div>
                 <div>
                   <strong className="text-foreground">Access Control</strong>
                   <p className="mt-1">
-                    Raw reports are visible only to: (1) legal aid partners and civil rights organizations we've verified, (2) platform admins. No one else.
+                    Raw reports are visible only to: (1) legal aid partners and
+                    civil rights organizations we've verified, (2) platform
+                    admins. No one else.
                   </p>
                 </div>
                 <div>
                   <strong className="text-foreground">Data Hashing</strong>
                   <p className="mt-1">
-                    Evidence files are hashed (SHA-256) on submission, creating a tamper-evident record that proves file integrity.
+                    Evidence files are hashed (SHA-256) on submission, creating
+                    a tamper-evident record that proves file integrity.
                   </p>
                 </div>
               </div>
@@ -148,16 +201,31 @@ function TransparencyPage() {
           content={
             <>
               <p>
-                Only anonymized aggregate data is ever public. You'll see on our dashboard:
+                Only anonymized aggregate data is ever public. You'll see on our
+                dashboard:
               </p>
               <ul className="mt-4 space-y-2 ml-4 text-sm text-muted-foreground">
-                <li>• <strong>Total reports by city and month</strong> (no individual case detail)</li>
-                <li>• <strong>Incident type breakdowns</strong> (e.g. "15 excessive force reports in July")</li>
-                <li>• <strong>Trend charts</strong> showing patterns over time</li>
-                <li>• <strong>Geographic heatmaps</strong> (city-level only, no addresses)</li>
+                <li>
+                  • <strong>Total reports by city and month</strong> (no
+                  individual case detail)
+                </li>
+                <li>
+                  • <strong>Incident type breakdowns</strong> (e.g. "15
+                  excessive force reports in July")
+                </li>
+                <li>
+                  • <strong>Trend charts</strong> showing patterns over time
+                </li>
+                <li>
+                  • <strong>Geographic heatmaps</strong> (city-level only, no
+                  addresses)
+                </li>
               </ul>
               <p className="mt-4">
-                <strong className="text-foreground">Never published:</strong> Officer names, badge numbers, specific addresses, photos/videos, reporter names, witness details, contact info, incident descriptions.
+                <strong className="text-foreground">Never published:</strong>{" "}
+                Officer names, badge numbers, specific addresses, photos/videos,
+                reporter names, witness details, contact info, incident
+                descriptions.
               </p>
             </>
           }
@@ -169,13 +237,23 @@ function TransparencyPage() {
             <>
               <div className="space-y-4 text-sm text-muted-foreground">
                 <div>
-                  <strong className="text-foreground">Individual reports:</strong> Stored indefinitely in a secure, access-controlled database. You can request deletion; contact us for details.
+                  <strong className="text-foreground">
+                    Individual reports:
+                  </strong>{" "}
+                  Stored indefinitely in a secure, access-controlled database.
+                  You can request deletion; contact us for details.
                 </div>
                 <div>
-                  <strong className="text-foreground">Evidence files:</strong> Kept as long as the report may be relevant to ongoing legal matters (typically 5–7 years).
+                  <strong className="text-foreground">Evidence files:</strong>{" "}
+                  Kept as long as the report may be relevant to ongoing legal
+                  matters (typically 5–7 years).
                 </div>
                 <div>
-                  <strong className="text-foreground">Aggregate statistics:</strong> Published data is kept for historical reference but cannot be traced back to individuals.
+                  <strong className="text-foreground">
+                    Aggregate statistics:
+                  </strong>{" "}
+                  Published data is kept for historical reference but cannot be
+                  traced back to individuals.
                 </div>
               </div>
             </>
@@ -187,16 +265,26 @@ function TransparencyPage() {
           content={
             <>
               <p>
-                Before any report aggregates into public statistics, it goes through our moderation process:
+                Before any report aggregates into public statistics, it goes
+                through our moderation process:
               </p>
               <ol className="mt-4 space-y-2 ml-4 text-sm text-muted-foreground">
                 <li>1. You submit a report (marked "pending moderation")</li>
-                <li>2. Our team reviews it for spam, false reporting, or abuse</li>
-                <li>3. Approved reports are marked "moderation approved" and included in public stats</li>
-                <li>4. Rejected reports are flagged but kept in our database for legal partners to review</li>
+                <li>
+                  2. Our team reviews it for spam, false reporting, or abuse
+                </li>
+                <li>
+                  3. Approved reports are marked "moderation approved" and
+                  included in public stats
+                </li>
+                <li>
+                  4. Rejected reports are flagged but kept in our database for
+                  legal partners to review
+                </li>
               </ol>
               <p className="mt-4">
-                This process protects accuracy while ensuring legitimate reports reach civil rights organizations and researchers.
+                This process protects accuracy while ensuring legitimate reports
+                reach civil rights organizations and researchers.
               </p>
             </>
           }
@@ -208,16 +296,31 @@ function TransparencyPage() {
             <>
               <div className="space-y-3 text-sm">
                 <div>
-                  <strong className="text-foreground block mb-2">Public (anyone visiting our dashboard)</strong>
-                  <span className="text-muted-foreground">Anonymized aggregate data only: totals by city/month/incident type.</span>
+                  <strong className="text-foreground block mb-2">
+                    Public (anyone visiting our dashboard)
+                  </strong>
+                  <span className="text-muted-foreground">
+                    Anonymized aggregate data only: totals by
+                    city/month/incident type.
+                  </span>
                 </div>
                 <div>
-                  <strong className="text-foreground block mb-2">Verified legal partners & NGOs</strong>
-                  <span className="text-muted-foreground">Full report details to support legal cases and advocacy. Bound by confidentiality agreements.</span>
+                  <strong className="text-foreground block mb-2">
+                    Verified legal partners & NGOs
+                  </strong>
+                  <span className="text-muted-foreground">
+                    Full report details to support legal cases and advocacy.
+                    Bound by confidentiality agreements.
+                  </span>
                 </div>
                 <div>
-                  <strong className="text-foreground block mb-2">Platform admins</strong>
-                  <span className="text-muted-foreground">All data, for moderation, security, and operational purposes.</span>
+                  <strong className="text-foreground block mb-2">
+                    Platform admins
+                  </strong>
+                  <span className="text-muted-foreground">
+                    All data, for moderation, security, and operational
+                    purposes.
+                  </span>
                 </div>
               </div>
             </>
@@ -230,16 +333,25 @@ function TransparencyPage() {
             <>
               <div className="space-y-3 text-sm text-muted-foreground">
                 <p>
-                  <strong className="text-foreground">Right to request deletion:</strong> Contact us and we can remove your report from our system (though it may remain in legal partner archives).
+                  <strong className="text-foreground">
+                    Right to request deletion:
+                  </strong>{" "}
+                  Contact us and we can remove your report from our system
+                  (though it may remain in legal partner archives).
                 </p>
                 <p>
-                  <strong className="text-foreground">Right to access:</strong> You can request a copy of your submitted data.
+                  <strong className="text-foreground">Right to access:</strong>{" "}
+                  You can request a copy of your submitted data.
                 </p>
                 <p>
-                  <strong className="text-foreground">Right to correct:</strong> If your report contains errors, contact us to update it.
+                  <strong className="text-foreground">Right to correct:</strong>{" "}
+                  If your report contains errors, contact us to update it.
                 </p>
                 <p>
-                  For requests, email: <span className="font-mono">privacy@accountability-watch.org</span>
+                  For requests, email:{" "}
+                  <span className="font-mono">
+                    privacy@accountability-watch.org
+                  </span>
                 </p>
               </div>
             </>
@@ -270,8 +382,20 @@ function TransparencyPage() {
                 If you have questions about how we handle your data:
               </p>
               <div className="mt-4 space-y-2 text-sm">
-                <p><strong className="text-foreground">Email:</strong> <span className="font-mono">privacy@accountability-watch.org</span></p>
-                <p><strong className="text-foreground">Data subject requests:</strong> <span className="font-mono">dsr@accountability-watch.org</span></p>
+                <p>
+                  <strong className="text-foreground">Email:</strong>{" "}
+                  <span className="font-mono">
+                    privacy@accountability-watch.org
+                  </span>
+                </p>
+                <p>
+                  <strong className="text-foreground">
+                    Data subject requests:
+                  </strong>{" "}
+                  <span className="font-mono">
+                    dsr@accountability-watch.org
+                  </span>
+                </p>
               </div>
             </>
           }
@@ -279,7 +403,8 @@ function TransparencyPage() {
 
         <div className="card-white p-6 mt-10">
           <p className="text-xs text-muted-foreground">
-            Last updated: January 2025. We'll notify users of any material changes to this policy.
+            Last updated: January 2025. We'll notify users of any material
+            changes to this policy.
           </p>
         </div>
       </div>
@@ -287,7 +412,13 @@ function TransparencyPage() {
   );
 }
 
-function Section({ title, content }: { title: string; content: React.ReactNode }) {
+function Section({
+  title,
+  content,
+}: {
+  title: string;
+  content: React.ReactNode;
+}) {
   return (
     <section>
       <h2 className="font-display text-xl font-bold">{title}</h2>
@@ -296,14 +427,27 @@ function Section({ title, content }: { title: string; content: React.ReactNode }
   );
 }
 
-function PartnerCard({ name, description, verified }: { name: string; description: string; verified?: boolean }) {
+function PartnerCard({
+  name,
+  description,
+  verified,
+}: {
+  name: string;
+  description: string;
+  verified?: boolean;
+}) {
   return (
     <div className="rounded-2xl border-2 border-border/60 p-4 hover:border-lime/40 transition-colors">
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h3 className="font-display text-sm font-semibold leading-tight">{name}</h3>
+        <h3 className="font-display text-sm font-semibold leading-tight">
+          {name}
+        </h3>
         {verified && (
           <div className="flex-shrink-0">
-            <Badge className="bg-lime text-ink hover:bg-lime/90" variant="default">
+            <Badge
+              className="bg-lime text-ink hover:bg-lime/90"
+              variant="default"
+            >
               <CheckCircle className="h-3 w-3 mr-1" />
               Verified
             </Badge>

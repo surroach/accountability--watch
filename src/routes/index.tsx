@@ -1,13 +1,32 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Shield, Lock, Scale, FileText, MapPin, Users } from "lucide-react";
+import {
+  ArrowRight,
+  Shield,
+  Lock,
+  Scale,
+  FileText,
+  MapPin,
+  Users,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Accountability Watch — Document alleged police misconduct at protests" },
-      { name: "description", content: "A civic accountability platform for documenting alleged police misconduct at protests. Private by default. Shared with legal aid. Anonymized publicly." },
+      {
+        title:
+          "Accountability Watch — Document alleged police misconduct at protests",
+      },
+      {
+        name: "description",
+        content:
+          "A civic accountability platform for documenting alleged police misconduct at protests. Private by default. Shared with legal aid. Anonymized publicly.",
+      },
       { property: "og:title", content: "Accountability Watch" },
-      { property: "og:description", content: "Document alleged police misconduct at protests. Private by default. Shared with legal aid. Anonymized publicly." },
+      {
+        property: "og:description",
+        content:
+          "Document alleged police misconduct at protests. Private by default. Shared with legal aid. Anonymized publicly.",
+      },
     ],
   }),
   component: Home,
@@ -22,12 +41,14 @@ function Home() {
           <span className="highlight-lime">Civil-rights accountability</span>
         </p>
         <h1 className="mx-auto max-w-3xl font-display text-4xl font-bold leading-[1.05] md:text-6xl">
-          Document what happened.<br />
+          Document what happened.
+          <br />
           <span className="text-muted-foreground">Protect who reports it.</span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-base text-muted-foreground md:text-lg">
-          A private, timestamped record of alleged police misconduct at protests — for legal aid,
-          civil-rights groups, and journalists working in aggregate. Not for public identification.
+          A private, timestamped record of alleged police misconduct at protests
+          — for legal aid, civil-rights groups, and journalists working in
+          aggregate. Not for public identification.
         </p>
 
         {/* Single unmistakable primary CTA */}
@@ -45,11 +66,19 @@ function Home() {
 
         {/* Secondary navigation — below the fold trigger, visually quiet */}
         <div className="mt-6 flex items-center justify-center gap-5">
-          <Link to="/dashboard" className="font-display text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+          <Link
+            to="/dashboard"
+            className="font-display text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
             View public data
           </Link>
-          <span className="text-border" aria-hidden>·</span>
-          <Link to="/about" className="font-display text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+          <span className="text-border" aria-hidden>
+            ·
+          </span>
+          <Link
+            to="/about"
+            className="font-display text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
+          >
             How this works
           </Link>
         </div>
@@ -121,17 +150,21 @@ function Home() {
       {/* Boundaries */}
       <section className="my-10 rounded-4xl border-2 border-ink bg-lime p-8 md:p-12">
         <p className="font-display text-xs uppercase tracking-widest">
-          <span className="rounded-md bg-ink px-2 py-1 text-ink-foreground">Our boundaries</span>
+          <span className="rounded-md bg-ink px-2 py-1 text-ink-foreground">
+            Our boundaries
+          </span>
         </p>
         <div className="mt-6 grid gap-6 md:grid-cols-3">
           <Boundary title="Not a face database">
             We never match uploads against face or officer registries.
           </Boundary>
           <Boundary title="Not public naming">
-            Officer names, badge numbers, and photos are never displayed publicly.
+            Officer names, badge numbers, and photos are never displayed
+            publicly.
           </Boundary>
           <Boundary title="Not vigilante action">
-            This is a legal-aid pipeline, not a doxxing tool. We reject any use for retaliation.
+            This is a legal-aid pipeline, not a doxxing tool. We reject any use
+            for retaliation.
           </Boundary>
         </div>
       </section>
@@ -144,10 +177,14 @@ function Home() {
           </div>
           <h3 className="font-display text-xl font-bold">Public dashboard</h3>
           <p className="mt-2 text-sm text-muted-foreground">
-            Anonymized counts by location and date. Journalists and researchers can see patterns
-            without exposing individuals — on either side of an incident.
+            Anonymized counts by location and date. Journalists and researchers
+            can see patterns without exposing individuals — on either side of an
+            incident.
           </p>
-          <Link to="/dashboard" className="mt-5 inline-flex items-center gap-1 font-display text-sm underline underline-offset-4">
+          <Link
+            to="/dashboard"
+            className="mt-5 inline-flex items-center gap-1 font-display text-sm underline underline-offset-4"
+          >
             View dashboard <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -157,10 +194,14 @@ function Home() {
           </div>
           <h3 className="font-display text-xl font-bold">For legal partners</h3>
           <p className="mt-2 text-sm text-white/70">
-            Signed-in legal aid organisations can view full case detail, update status, and export
-            data for referral. Access is logged and auditable.
+            Signed-in legal aid organisations can view full case detail, update
+            status, and export data for referral. Access is logged and
+            auditable.
           </p>
-          <Link to="/auth" className="mt-5 inline-flex items-center gap-1 font-display text-sm text-lime underline underline-offset-4">
+          <Link
+            to="/auth"
+            className="mt-5 inline-flex items-center gap-1 font-display text-sm text-lime underline underline-offset-4"
+          >
             Partner sign-in <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -172,7 +213,8 @@ function Home() {
           Have something to <span className="highlight-lime">report?</span>
         </h2>
         <p className="mx-auto mt-4 max-w-lg text-muted-foreground">
-          Takes about 3 minutes. You choose what to share and whether to leave contact info.
+          Takes about 3 minutes. You choose what to share and whether to leave
+          contact info.
         </p>
         <Link
           to="/report"
@@ -186,7 +228,11 @@ function Home() {
 }
 
 function FeatureCard({
-  variant, icon, step, title, body,
+  variant,
+  icon,
+  step,
+  title,
+  body,
 }: {
   variant: "white" | "ink";
   icon: React.ReactNode;
@@ -198,18 +244,34 @@ function FeatureCard({
   return (
     <div className={`${isInk ? "card-ink" : "card-white"} p-8 md:p-10`}>
       <div className="flex items-start justify-between">
-        <div className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${isInk ? "bg-lime text-ink" : "bg-ink text-ink-foreground"}`}>
+        <div
+          className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${isInk ? "bg-lime text-ink" : "bg-ink text-ink-foreground"}`}
+        >
           {icon}
         </div>
-        <span className={`font-display text-xs ${isInk ? "text-white/50" : "text-muted-foreground"}`}>{step}</span>
+        <span
+          className={`font-display text-xs ${isInk ? "text-white/50" : "text-muted-foreground"}`}
+        >
+          {step}
+        </span>
       </div>
       <h3 className="mt-6 font-display text-xl font-bold">{title}</h3>
-      <p className={`mt-2 text-sm ${isInk ? "text-white/70" : "text-muted-foreground"}`}>{body}</p>
+      <p
+        className={`mt-2 text-sm ${isInk ? "text-white/70" : "text-muted-foreground"}`}
+      >
+        {body}
+      </p>
     </div>
   );
 }
 
-function Boundary({ title, children }: { title: string; children: React.ReactNode }) {
+function Boundary({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-2xl border-2 border-ink bg-background p-5">
       <h4 className="font-display text-base font-bold">{title}</h4>

@@ -3,30 +3,32 @@
  * View all submitted reports from in-memory database
  */
 
-console.log('\n╔════════════════════════════════════════════════════════╗');
-console.log('║            SUBMITTED REPORTS VIEWER                    ║');
-console.log('║            Local In-Memory Database                    ║');
-console.log('╚════════════════════════════════════════════════════════╝\n');
+console.log("\n╔════════════════════════════════════════════════════════╗");
+console.log("║            SUBMITTED REPORTS VIEWER                    ║");
+console.log("║            Local In-Memory Database                    ║");
+console.log("╚════════════════════════════════════════════════════════╝\n");
 
 // This is a simplified viewer - in real app you'd access via API
 // For now, we'll show you WHERE the data is and HOW to access it
 
-console.log('📍 WHERE YOUR DATA IS STORED:\n');
-console.log('Location: Browser Memory (JavaScript Store)');
-console.log('Database: In-memory object in src/integrations/supabase/client.ts');
-console.log('Table: incident_reports\n');
+console.log("📍 WHERE YOUR DATA IS STORED:\n");
+console.log("Location: Browser Memory (JavaScript Store)");
+console.log(
+  "Database: In-memory object in src/integrations/supabase/client.ts",
+);
+console.log("Table: incident_reports\n");
 
-console.log('📋 HOW TO VIEW YOUR DATA:\n');
+console.log("📋 HOW TO VIEW YOUR DATA:\n");
 
-console.log('Option 1: Browser Console (F12)\n');
-console.log('  1. Open http://localhost:8080');
-console.log('  2. Press F12 to open Developer Tools');
-console.log('  3. Go to Console tab');
-console.log('  4. Paste this command:');
-console.log('     window.__DEBUG_STORE = true; console.log(localStorage);\n');
+console.log("Option 1: Browser Console (F12)\n");
+console.log("  1. Open http://localhost:8080");
+console.log("  2. Press F12 to open Developer Tools");
+console.log("  3. Go to Console tab");
+console.log("  4. Paste this command:");
+console.log("     window.__DEBUG_STORE = true; console.log(localStorage);\n");
 
-console.log('Option 2: Create a Debug Dashboard\n');
-console.log('  We\'ll create a simple page to view all reports...\n');
+console.log("Option 2: Create a Debug Dashboard\n");
+console.log("  We'll create a simple page to view all reports...\n");
 
 // Create a simple HTML page to view reports
 const htmlContent = `
@@ -202,27 +204,29 @@ const htmlContent = `
 `;
 
 // Save the viewer
-const fs = await import('fs');
-const path = await import('path');
-const viewerPath = path.join('/accountability-watch/public/reports-viewer.html');
+const fs = await import("fs");
+const path = await import("path");
+const viewerPath = path.join(
+  "/accountability-watch/public/reports-viewer.html",
+);
 
 try {
-  fs.mkdirSync('/accountability-watch/public', { recursive: true });
+  fs.mkdirSync("/accountability-watch/public", { recursive: true });
   fs.writeFileSync(viewerPath, htmlContent);
-  console.log('✅ Created viewer at: public/reports-viewer.html\n');
-  console.log('📖 Access it at: http://localhost:8080/reports-viewer.html\n');
+  console.log("✅ Created viewer at: public/reports-viewer.html\n");
+  console.log("📖 Access it at: http://localhost:8080/reports-viewer.html\n");
 } catch (err) {
-  console.log('Note: Could not create file, but here\'s the structure:\n');
+  console.log("Note: Could not create file, but here's the structure:\n");
 }
 
-console.log('═══════════════════════════════════════════════════════\n');
-console.log('REAL-TIME DATA ACCESS:\n');
-console.log('The reports are stored in memory in your browser.\n');
-console.log('To see them:\n');
-console.log('1. Open Browser DevTools (F12)');
-console.log('2. Go to Console tab');
-console.log('3. Type: window.__KIRO_REPORTS_STORE');
-console.log('4. Press Enter\n');
-console.log('You\'ll see all submitted reports as JSON.\n');
+console.log("═══════════════════════════════════════════════════════\n");
+console.log("REAL-TIME DATA ACCESS:\n");
+console.log("The reports are stored in memory in your browser.\n");
+console.log("To see them:\n");
+console.log("1. Open Browser DevTools (F12)");
+console.log("2. Go to Console tab");
+console.log("3. Type: window.__KIRO_REPORTS_STORE");
+console.log("4. Press Enter\n");
+console.log("You'll see all submitted reports as JSON.\n");
 
-console.log('═══════════════════════════════════════════════════════\n');
+console.log("═══════════════════════════════════════════════════════\n");

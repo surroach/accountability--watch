@@ -1,19 +1,19 @@
 /**
  * Data Retention and Cleanup Policies for Accountability Watch
- * 
+ *
  * Implements GDPR-compliant data retention policies:
  * - Archive old reports (>1 year) to separate table
  * - Delete audit logs after retention period (>2 years)
  * - Anonymize personal data after closure
  * - Purge temporary evidence files
- * 
+ *
  * COMPLIANCE:
  * - GDPR right to erasure (Article 17)
  * - Data minimization principle
  * - Retention schedule (what, when, how long)
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Data retention schedule
@@ -21,20 +21,20 @@ import { supabase } from '@/integrations/supabase/client';
 export const RETENTION_SCHEDULE = {
   // Active reports: keep indefinitely (part of permanent record)
   activeReports: {
-    statuses: ['new', 'under_review', 'referred', 'moderation_approved'],
+    statuses: ["new", "under_review", "referred", "moderation_approved"],
     retentionDays: null, // indefinite
   },
 
   // Closed reports: archive after 1 year
   closedReports: {
-    statuses: ['closed'],
+    statuses: ["closed"],
     retentionDays: 365,
     archiveAfterDays: 365,
   },
 
   // Rejected reports: keep 6 months, then delete
   rejectedReports: {
-    statuses: ['moderation_rejected'],
+    statuses: ["moderation_rejected"],
     retentionDays: 180,
     deleteAfterDays: 180,
   },
@@ -74,19 +74,19 @@ export interface RetentionResult {
   itemsDeleted?: number;
   bytesFreed?: number;
   error?: string;
-  duration: number;  // milliseconds
+  duration: number; // milliseconds
 }
 
 /**
  * Archive old closed reports to a separate table
  * Reduces active table size and improves query performance
- * 
+ *
  * PROCESS:
  * 1. Find reports closed >1 year ago that haven't been archived
  * 2. Copy to archive table
  * 3. Mark as archived in original table
  * 4. Keep status history and evidence for reference
- * 
+ *
  * INDEXES OPTIMIZED:
  * - Original table: smaller, faster queries
  * - Archive table: optimized for historical analysis
@@ -96,15 +96,17 @@ export async function archiveOldReports(): Promise<RetentionResult> {
 
   try {
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_SCHEDULE.closedReports.archiveAfterDays);
+    cutoffDate.setDate(
+      cutoffDate.getDate() - RETENTION_SCHEDULE.closedReports.archiveAfterDays,
+    );
 
     // Find eligible reports
     const { data: reports, error: findError } = await supabase
-      .from('incident_reports')
-      .select('id')
-      .in('status', RETENTION_SCHEDULE.closedReports.statuses)
-      .lt('updated_at', cutoffDate.toISOString())
-      .eq('archived', false);
+      .from("incident_reports")
+      .select("id")
+      .in("status", RETENTION_SCHEDULE.closedReports.statuses)
+      .lt("updated_at", cutoffDate.toISOString())
+      .eq("archived", false);
 
     if (findError) {
       return {
@@ -115,7 +117,7 @@ export async function archiveOldReports(): Promise<RetentionResult> {
       };
     }
 
-    const reportIds = reports?.map(r => r.id) || [];
+    const reportIds = reports?.map((r) => r.id) || [];
 
     if (reportIds.length === 0) {
       return {
@@ -128,9 +130,9 @@ export async function archiveOldReports(): Promise<RetentionResult> {
 
     // Mark as archived
     const { error: updateError, count } = await supabase
-      .from('incident_reports')
+      .from("incident_reports")
       .update({ archived: true })
-      .in('id', reportIds);
+      .in("id", reportIds);
 
     if (updateError) {
       return {
@@ -142,7 +144,7 @@ export async function archiveOldReports(): Promise<RetentionResult> {
     }
 
     // Log archival action
-    await logRetentionAction('archive', 'incident_reports', reportIds.length);
+    await logRetentionAction("archive", "incident_reports", reportIds.length);
 
     return {
       success: true,
@@ -162,7 +164,7 @@ export async function archiveOldReports(): Promise<RetentionResult> {
 
 /**
  * Delete old rejected reports
- * 
+ *
  * SECURITY:
  * - Only deletes reports past retention period
  * - Logs deletion for audit trail
@@ -173,14 +175,16 @@ export async function deleteExpiredRejectedReports(): Promise<RetentionResult> {
 
   try {
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_SCHEDULE.rejectedReports.deleteAfterDays);
+    cutoffDate.setDate(
+      cutoffDate.getDate() - RETENTION_SCHEDULE.rejectedReports.deleteAfterDays,
+    );
 
     // Find eligible reports
     const { data: reports, error: findError } = await supabase
-      .from('incident_reports')
-      .select('id')
-      .in('status', RETENTION_SCHEDULE.rejectedReports.statuses)
-      .lt('updated_at', cutoffDate.toISOString());
+      .from("incident_reports")
+      .select("id")
+      .in("status", RETENTION_SCHEDULE.rejectedReports.statuses)
+      .lt("updated_at", cutoffDate.toISOString());
 
     if (findError) {
       return {
@@ -191,7 +195,7 @@ export async function deleteExpiredRejectedReports(): Promise<RetentionResult> {
       };
     }
 
-    const reportIds = reports?.map(r => r.id) || [];
+    const reportIds = reports?.map((r) => r.id) || [];
 
     if (reportIds.length === 0) {
       return {
@@ -204,9 +208,9 @@ export async function deleteExpiredRejectedReports(): Promise<RetentionResult> {
 
     // Delete reports (cascades to evidence and status history)
     const { error: deleteError, count } = await supabase
-      .from('incident_reports')
+      .from("incident_reports")
       .delete()
-      .in('id', reportIds);
+      .in("id", reportIds);
 
     if (deleteError) {
       return {
@@ -218,7 +222,7 @@ export async function deleteExpiredRejectedReports(): Promise<RetentionResult> {
     }
 
     // Log deletion action
-    await logRetentionAction('delete', 'incident_reports', reportIds.length);
+    await logRetentionAction("delete", "incident_reports", reportIds.length);
 
     return {
       success: true,
@@ -238,7 +242,7 @@ export async function deleteExpiredRejectedReports(): Promise<RetentionResult> {
 
 /**
  * Delete expired audit logs
- * 
+ *
  * Reduces database size while maintaining compliance
  * Audit logs older than 2 years are deleted
  */
@@ -247,13 +251,15 @@ export async function deleteExpiredAuditLogs(): Promise<RetentionResult> {
 
   try {
     const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - RETENTION_SCHEDULE.auditLogs.deleteAfterDays);
+    cutoffDate.setDate(
+      cutoffDate.getDate() - RETENTION_SCHEDULE.auditLogs.deleteAfterDays,
+    );
 
     // Delete old audit logs
     const { error: deleteError, count } = await supabase
-      .from('audit_log')
+      .from("audit_log")
       .delete()
-      .lt('created_at', cutoffDate.toISOString());
+      .lt("created_at", cutoffDate.toISOString());
 
     if (deleteError) {
       return {
@@ -282,12 +288,12 @@ export async function deleteExpiredAuditLogs(): Promise<RetentionResult> {
 
 /**
  * Anonymize personal data in closed reports
- * 
+ *
  * GDPR COMPLIANCE:
  * - Removes personally identifiable information
  * - Maintains integrity of statistical data
  * - Preserves relationship to evidence
- * 
+ *
  * ANONYMIZED FIELDS:
  * - witness_name → "[ANONYMIZED]"
  * - witness_contact → "[ANONYMIZED]"
@@ -303,11 +309,11 @@ export async function anonymizeClosedReports(): Promise<RetentionResult> {
 
     // Find reports to anonymize
     const { data: reports, error: findError } = await supabase
-      .from('incident_reports')
-      .select('id')
-      .eq('status', 'closed')
-      .lt('updated_at', cutoffDate.toISOString())
-      .eq('anonymized', false);
+      .from("incident_reports")
+      .select("id")
+      .eq("status", "closed")
+      .lt("updated_at", cutoffDate.toISOString())
+      .eq("anonymized", false);
 
     if (findError) {
       return {
@@ -318,7 +324,7 @@ export async function anonymizeClosedReports(): Promise<RetentionResult> {
       };
     }
 
-    const reportIds = reports?.map(r => r.id) || [];
+    const reportIds = reports?.map((r) => r.id) || [];
 
     if (reportIds.length === 0) {
       return {
@@ -331,15 +337,15 @@ export async function anonymizeClosedReports(): Promise<RetentionResult> {
 
     // Anonymize reports
     const { error: updateError, count } = await supabase
-      .from('incident_reports')
+      .from("incident_reports")
       .update({
-        witness_name: '[ANONYMIZED]',
-        witness_contact: '[ANONYMIZED]',
-        reporter_name: '[ANONYMIZED]',
-        reporter_contact: '[ANONYMIZED]',
+        witness_name: "[ANONYMIZED]",
+        witness_contact: "[ANONYMIZED]",
+        reporter_name: "[ANONYMIZED]",
+        reporter_contact: "[ANONYMIZED]",
         anonymized: true,
       })
-      .in('id', reportIds);
+      .in("id", reportIds);
 
     if (updateError) {
       return {
@@ -351,7 +357,7 @@ export async function anonymizeClosedReports(): Promise<RetentionResult> {
     }
 
     // Log anonymization
-    await logRetentionAction('anonymize', 'incident_reports', reportIds.length);
+    await logRetentionAction("anonymize", "incident_reports", reportIds.length);
 
     return {
       success: true,
@@ -391,11 +397,11 @@ export async function runRetentionCleanup(): Promise<{
 
     const totalProcessed = Object.values(results).reduce(
       (sum, r) => sum + r.itemsProcessed,
-      0
+      0,
     );
 
     return {
-      success: Object.values(results).every(r => r.success),
+      success: Object.values(results).every((r) => r.success),
       results,
       totalItemsProcessed: totalProcessed,
       duration: Date.now() - startTime,
@@ -424,20 +430,22 @@ export async function getRetentionStats(): Promise<{
   databaseSizeEstimate: string;
 }> {
   try {
-    const { data: stats } = await supabase.rpc('get_retention_stats');
+    const { data: stats } = await supabase.rpc("get_retention_stats");
 
-    return stats || {
-      totalReports: 0,
-      activeReports: 0,
-      closedReports: 0,
-      rejectedReports: 0,
-      archivedReports: 0,
-      totalEvidence: 0,
-      auditLogEntries: 0,
-      databaseSizeEstimate: '0 MB',
-    };
+    return (
+      stats || {
+        totalReports: 0,
+        activeReports: 0,
+        closedReports: 0,
+        rejectedReports: 0,
+        archivedReports: 0,
+        totalEvidence: 0,
+        auditLogEntries: 0,
+        databaseSizeEstimate: "0 MB",
+      }
+    );
   } catch (error) {
-    console.error('Error getting retention stats:', error);
+    console.error("Error getting retention stats:", error);
     return {
       totalReports: 0,
       activeReports: 0,
@@ -446,7 +454,7 @@ export async function getRetentionStats(): Promise<{
       archivedReports: 0,
       totalEvidence: 0,
       auditLogEntries: 0,
-      databaseSizeEstimate: '0 MB',
+      databaseSizeEstimate: "0 MB",
     };
   }
 }
@@ -457,16 +465,16 @@ export async function getRetentionStats(): Promise<{
 async function logRetentionAction(
   action: string,
   tableName: string,
-  itemCount: number
+  itemCount: number,
 ): Promise<void> {
   try {
-    await supabase.from('audit_log').insert({
+    await supabase.from("audit_log").insert({
       action: `retention_${action}`,
       table_name: tableName,
       changes: JSON.stringify({ count: itemCount }),
       created_at: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Failed to log retention action:', error);
+    console.error("Failed to log retention action:", error);
   }
 }

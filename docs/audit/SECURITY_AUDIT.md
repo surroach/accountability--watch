@@ -32,10 +32,11 @@ The authentication guard uses two-level verification:
 1. **Add token refresh mechanism**
    - Currently relies on Supabase auto-refresh
    - Consider: Explicit refresh before critical operations
-   
+
 2. **Log access attempts**
    - Track who accessed admin panel and when
    - Create audit log table:
+
    ```sql
    CREATE TABLE public.admin_access_log (
      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,11 +58,13 @@ The authentication guard uses two-level verification:
 ### Code Quality
 
 **Strengths:**
+
 - Clear error handling
 - Proper TypeScript types
 - Accessible error messages
 
 **Minor improvements:**
+
 - Add comment explaining why ssr: false is required
 - Consider adding user email to redirect message
 
@@ -78,12 +81,14 @@ The dashboard displays only aggregated, anonymized data.
 ### ✅ Privacy Checks Passed
 
 **What's public:**
+
 - [x] Total count of reports (by city and month)
 - [x] Incident type breakdowns (counts only, no report detail)
 - [x] Trend analysis (% change up/down, percentage)
 - [x] Geographic distribution (city-level only, no coordinates)
 
 **What's NEVER public:**
+
 - [x] Officer names, badge numbers, photos
 - [x] Reporter names or contact info
 - [x] Witness details
@@ -108,6 +113,7 @@ $$;
 ```
 
 **Security model:**
+
 - Function uses `SECURITY DEFINER` with service role context
 - Returns only aggregated data (no way to reverse-engineer individual records)
 - No individual report data leaks through function
@@ -115,6 +121,7 @@ $$;
 ### ⚠️ Privacy Risks Identified & Mitigated
 
 **Risk #1: Timing attacks**
+
 - **Scenario:** Attacker watches report count spike to infer incident timing
 - **Mitigation:** Aggregate data is 1 hour delayed (recommended, not implemented)
 - **Recommendation:** Add caching or 1-hour delay:
@@ -123,6 +130,7 @@ $$;
   ```
 
 **Risk #2: City-level deanonymization**
+
 - **Scenario:** In small cities, unique report details could identify reporter
 - **Mitigation:** Dashboard shows "Unspecified" for null cities, aggregates small groups
 - **Recommendation:** Suppress city counts < 3 reports:
@@ -131,6 +139,7 @@ $$;
   ```
 
 **Risk #3: Export data misuse**
+
 - **Scenario:** User downloads CSV and attempts to correlate with other databases
 - **Mitigation:** Terms of use prohibit re-identification
 - **Recommendation:** Add watermark to exports with usage restrictions
@@ -174,6 +183,7 @@ The app uses two Supabase keys:
    - Copy new anon key
 
 2. **Update frontend (.env):**
+
    ```bash
    VITE_SUPABASE_PUBLISHABLE_KEY="new-key-here"
    VITE_SUPABASE_URL="https://..."
@@ -194,11 +204,13 @@ The app uses two Supabase keys:
 **Current keys expire:** 2100-08-21 (75 years from now)
 
 **Recommendation for production:**
+
 - Set custom expiry when key created
 - Rotate keys before expiry
 - Implement monitoring for expiration dates
 
 **Implementation:**
+
 ```bash
 # Check current key expiry in Supabase Dashboard
 # Settings → API → Keys → View Details
@@ -237,25 +249,30 @@ toast.success("Status updated");
 ### ⚠️ Error Handling Improvements
 
 **Issue #1: Generic "Please try again" message**
+
 - **Current:** "Could not submit. Please try again."
 - **Problem:** User doesn't know what failed
 - **Fix:**
   ```typescript
   const getErrorMessage = (err: any) => {
-    if (err?.code === 'PGRST301') return "Access denied - check your permissions";
-    if (err?.message?.includes('CORS')) return "Server connection blocked - refresh page";
-    if (err?.code === '23505') return "Report code already exists (very rare) - try again";
+    if (err?.code === "PGRST301")
+      return "Access denied - check your permissions";
+    if (err?.message?.includes("CORS"))
+      return "Server connection blocked - refresh page";
+    if (err?.code === "23505")
+      return "Report code already exists (very rare) - try again";
     return err?.message || "Failed to submit. Check your connection.";
   };
   ```
 
 **Issue #2: File upload errors not descriptive**
+
 - **Current:** "Upload failed for filename"
 - **Fix:** Include size and reason:
   ```typescript
-  if (upErr?.message?.includes('payload too large')) {
+  if (upErr?.message?.includes("payload too large")) {
     toast.error(`${file.name} exceeds storage limit`);
-  } else if (upErr?.message?.includes('MIME')) {
+  } else if (upErr?.message?.includes("MIME")) {
     toast.error(`${file.name} - file type not allowed`);
   } else {
     toast.error(`${file.name} - upload failed: ${upErr.message}`);
@@ -263,6 +280,7 @@ toast.success("Status updated");
   ```
 
 **Issue #3: No retry mechanism**
+
 - **Current:** User must reload and resubmit entire form
 - **Fix:** Add exponential backoff:
   ```typescript
@@ -272,7 +290,7 @@ toast.success("Status updated");
         return await supabase.from("incident_reports").insert(data);
       } catch (err) {
         if (i < maxRetries - 1) {
-          await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
+          await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, i)));
           continue;
         }
         throw err;
@@ -284,6 +302,7 @@ toast.success("Status updated");
 ### Recommended Enhancements
 
 **1. Add error boundary component**
+
 ```typescript
 // Create src/components/ErrorBoundary.tsx
 export class ErrorBoundary extends React.Component {
@@ -299,6 +318,7 @@ export class ErrorBoundary extends React.Component {
 ```
 
 **2. Add user context to errors**
+
 ```typescript
 // Help users debug
 const debugInfo = {
@@ -311,6 +331,7 @@ console.error("Submission failed", { debugInfo, error });
 ```
 
 **3. Add offline detection**
+
 ```typescript
 if (!navigator.onLine) {
   toast.error("You're offline - check your internet connection");
@@ -325,6 +346,7 @@ if (!navigator.onLine) {
 ### Edge Case #1: Anonymous Urgent Report
 
 **Test steps:**
+
 1. Submit report with:
    - [x] "Submit anonymously" checked
    - [x] "Mark as urgent" checked
@@ -334,6 +356,7 @@ if (!navigator.onLine) {
    - Can still be viewed by admins
 
 **Expected database state:**
+
 ```sql
 SELECT report_code, urgent_flag, submission_mode, reporter_name, reporter_contact
 FROM public.incident_reports
@@ -346,6 +369,7 @@ LIMIT 1;
 ### Edge Case #2: Maximum Size Files
 
 **Test steps:**
+
 1. Upload file exactly 25 MB
    - **Expected:** Accepted
 2. Upload file 25.1 MB
@@ -356,14 +380,16 @@ LIMIT 1;
 ### Edge Case #3: Special Characters in Location
 
 **Test steps:**
+
 1. Location field: `"Location / with "quotes" & <symbols>"`
 2. Submit report
 3. View in admin panel
 4. **Expected:** Characters displayed correctly, not escaped/broken
 
 **Database check:**
+
 ```sql
-SELECT location_text FROM public.incident_reports 
+SELECT location_text FROM public.incident_reports
 WHERE location_text LIKE '%/%'
 LIMIT 1;
 -- Should show raw text, not HTML entities
@@ -372,11 +398,12 @@ LIMIT 1;
 ### Edge Case #4: Very Long Description
 
 **Test steps:**
+
 1. Description: 5000 characters (max allowed)
 2. Submit report
 3. View in admin panel
 4. Export CSV
-5. **Expected:** 
+5. **Expected:**
    - Displays correctly in modal (wrapped text)
    - CSV export escapes quotes properly
    - No truncation
@@ -384,12 +411,14 @@ LIMIT 1;
 ### Edge Case #5: Multiple Reports in Quick Succession
 
 **Test steps:**
+
 1. Submit report A (success)
 2. Immediately submit report B (before page reload)
 3. Verify both have unique report codes
 4. Check database for both records
 
 **Expected:**
+
 ```sql
 SELECT COUNT(*) FROM public.incident_reports
 WHERE created_at > now() - interval '10 seconds';
@@ -399,6 +428,7 @@ WHERE created_at > now() - interval '10 seconds';
 ### Edge Case #6: Timezone Edge Cases
 
 **Test steps:**
+
 1. Submit incident at 11:59 PM local time
    - **Expected:** Stored as same instant in UTC
 2. Check admin panel timestamp
@@ -407,8 +437,9 @@ WHERE created_at > now() - interval '10 seconds';
    - **Expected:** Shows their local time (different hour)
 
 **Database verification:**
+
 ```sql
-SELECT 
+SELECT
   incident_at AT TIME ZONE 'UTC' as utc_time,
   incident_at AT TIME ZONE 'Asia/Kolkata' as ist_time
 FROM public.incident_reports
@@ -418,12 +449,14 @@ ORDER BY created_at DESC LIMIT 1;
 ### Edge Case #7: Concurrent Report Status Updates
 
 **Test steps:**
+
 1. Open report in two admin windows (or tabs)
 2. Change status from "New" → "Under Review" in tab 1
 3. Attempt to change status in tab 2
 4. **Expected:** One succeeds, other shows updated value
 
 **Data integrity check:**
+
 ```sql
 -- Verify only one status change per report per second
 SELECT report_id, COUNT(*) as changes_per_second
@@ -436,6 +469,7 @@ HAVING COUNT(*) > 1;
 ### Edge Case #8: GPS Coordinate Boundaries
 
 **Test steps:**
+
 1. Upload image with GPS: 0°, 0° (equator/prime meridian)
    - **Expected:** Accepted and stored
 2. Upload image with GPS: -90°, -180° (south pole, date line)
@@ -444,6 +478,7 @@ HAVING COUNT(*) > 1;
    - **Expected:** Rejected or corrected by EXIF parser
 
 **Database check:**
+
 ```sql
 SELECT gps_latitude, gps_longitude
 FROM public.report_evidence
@@ -457,6 +492,7 @@ LIMIT 5;
 **Current issue:** Reports can be hard-deleted, no audit trail
 
 **Recommended fix:**
+
 ```sql
 -- Add soft delete column
 ALTER TABLE public.incident_reports
@@ -488,6 +524,7 @@ CREATE POLICY "admin_view_deleted" ON public.incident_reports
 **Current issue:** User could submit same report twice by clicking button multiple times
 
 **Recommended fix:**
+
 ```typescript
 // Add optimistic UI update
 const [submitting, setSubmitting] = useState(false);
@@ -506,7 +543,7 @@ async function onSubmit() {
 const idempotencyKey = `${userId}-${timestamp}`;
 await supabase.from("incident_reports").insert({
   ...data,
-  idempotency_key: idempotencyKey // Unique constraint prevents duplicates
+  idempotency_key: idempotencyKey, // Unique constraint prevents duplicates
 });
 ```
 
@@ -514,13 +551,13 @@ await supabase.from("incident_reports").insert({
 
 ## Summary: All Security Tasks Completed
 
-| Task | Status | Summary |
-|------|--------|---------|
-| #6 Admin Auth | ✅ SECURE | Two-level JWT + role validation, proper SSR disabled |
-| #7 Dashboard Privacy | ✅ SECURE | Only aggregated data, no PII exposed |
-| #10 API Key Rotation | 📋 DOCUMENTED | Monthly rotation plan created, key expiry noted |
-| #11 Error Handling | ✅ IMPROVED | Enhanced error messages, added retry suggestion |
-| #14 Edge Cases | 📋 TESTED | All 10 edge cases documented with test steps |
+| Task                 | Status        | Summary                                              |
+| -------------------- | ------------- | ---------------------------------------------------- |
+| #6 Admin Auth        | ✅ SECURE     | Two-level JWT + role validation, proper SSR disabled |
+| #7 Dashboard Privacy | ✅ SECURE     | Only aggregated data, no PII exposed                 |
+| #10 API Key Rotation | 📋 DOCUMENTED | Monthly rotation plan created, key expiry noted      |
+| #11 Error Handling   | ✅ IMPROVED   | Enhanced error messages, added retry suggestion      |
+| #14 Edge Cases       | 📋 TESTED     | All 10 edge cases documented with test steps         |
 
 ---
 
@@ -537,4 +574,3 @@ await supabase.from("incident_reports").insert({
 - [ ] Perform penetration test (optional)
 - [ ] Get legal review of privacy policy
 - [ ] Deploy with monitoring enabled
-

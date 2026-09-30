@@ -5,8 +5,22 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { Download, FileJson, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+} from "recharts";
+import {
+  Download,
+  FileJson,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+} from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -14,9 +28,20 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Public dashboard — Accountability Watch" },
-      { name: "description", content: "Anonymized, aggregate counts of reported incidents by city and by month. No individual case detail is public." },
-      { property: "og:title", content: "Public dashboard — Accountability Watch" },
-      { property: "og:description", content: "Anonymized, aggregate counts of reported incidents by city and by month." },
+      {
+        name: "description",
+        content:
+          "Anonymized, aggregate counts of reported incidents by city and by month. No individual case detail is public.",
+      },
+      {
+        property: "og:title",
+        content: "Public dashboard — Accountability Watch",
+      },
+      {
+        property: "og:description",
+        content:
+          "Anonymized, aggregate counts of reported incidents by city and by month.",
+      },
     ],
   }),
   component: Dashboard,
@@ -43,31 +68,40 @@ function Dashboard() {
       if (from) args.from_date = new Date(from).toISOString();
       if (to) args.to_date = new Date(to).toISOString();
       if (city) args.city_filter = `%${city}%`;
-      const { data, error } = await supabase.rpc("public_incident_stats", args as never);
+      const { data, error } = await supabase.rpc(
+        "public_incident_stats",
+        args as never,
+      );
       if (error) throw error;
       const row = Array.isArray(data) ? data[0] : data;
-      
+
       const total_reports = Number(row?.total_reports ?? 0);
       const by_city = (row?.by_city as any) ?? [];
       const by_month = (row?.by_month as any) ?? [];
-      
+
       // Calculate trend: compare first half to second half of months
-      let trend: { direction: "up" | "down" | "stable"; percentage: number } | undefined;
+      let trend:
+        { direction: "up" | "down" | "stable"; percentage: number } | undefined;
       if (by_month.length >= 2) {
         const midpoint = Math.ceil(by_month.length / 2);
-        const firstHalf = by_month.slice(0, midpoint).reduce((sum, m) => sum + m.count, 0);
-        const secondHalf = by_month.slice(midpoint).reduce((sum, m) => sum + m.count, 0);
-        
+        const firstHalf = by_month
+          .slice(0, midpoint)
+          .reduce((sum, m) => sum + m.count, 0);
+        const secondHalf = by_month
+          .slice(midpoint)
+          .reduce((sum, m) => sum + m.count, 0);
+
         if (firstHalf > 0) {
           const percentChange = ((secondHalf - firstHalf) / firstHalf) * 100;
-          const direction = percentChange > 5 ? "up" : percentChange < -5 ? "down" : "stable";
+          const direction =
+            percentChange > 5 ? "up" : percentChange < -5 ? "down" : "stable";
           trend = {
             direction,
             percentage: Math.abs(Math.round(percentChange)),
           };
         }
       }
-      
+
       return {
         total_reports,
         by_city,
@@ -143,7 +177,7 @@ function Dashboard() {
       pdf.text(
         `Generated: ${new Date().toLocaleString()}${from ? ` | From: ${from}` : ""}${to ? ` | To: ${to}` : ""}`,
         10,
-        28
+        28,
       );
 
       // Add chart image
@@ -164,9 +198,17 @@ function Dashboard() {
       pdf.setFontSize(10);
       pdf.text(`Total Reports: ${data?.total_reports || 0}`, 10, position);
       position += 8;
-      pdf.text(`Cities Represented: ${data?.by_city?.length || 0}`, 10, position);
+      pdf.text(
+        `Cities Represented: ${data?.by_city?.length || 0}`,
+        10,
+        position,
+      );
       position += 8;
-      pdf.text(`Months with Reports: ${data?.by_month?.length || 0}`, 10, position);
+      pdf.text(
+        `Months with Reports: ${data?.by_month?.length || 0}`,
+        10,
+        position,
+      );
 
       // Add disclaimer
       position += 15;
@@ -174,13 +216,13 @@ function Dashboard() {
       pdf.text(
         "Reports here are unverified allegations submitted by members of the public. Publication of",
         10,
-        position
+        position,
       );
       position += 5;
       pdf.text(
         "aggregate counts does not constitute a finding of misconduct against any individual.",
         10,
-        position
+        position,
       );
 
       const timestamp = new Date().toISOString().split("T")[0];
@@ -195,24 +237,38 @@ function Dashboard() {
       <p className="mb-3 font-display text-xs uppercase tracking-widest">
         <span className="highlight-lime">Public data</span>
       </p>
-      <h1 className="font-display text-4xl font-bold md:text-5xl">Aggregate dashboard</h1>
+      <h1 className="font-display text-4xl font-bold md:text-5xl">
+        Aggregate dashboard
+      </h1>
       <p className="mt-3 max-w-2xl text-muted-foreground">
-        Anonymized counts only. No officer names, photos, badge numbers, or individual case detail
-        appear here. For research and journalism use.
+        Anonymized counts only. No officer names, photos, badge numbers, or
+        individual case detail appear here. For research and journalism use.
       </p>
 
       <div className="mt-8 grid gap-4 rounded-3xl border-2 border-ink bg-background p-5 md:grid-cols-3">
         <div>
           <Label className="font-display text-xs">From</Label>
-          <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <Input
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+          />
         </div>
         <div>
           <Label className="font-display text-xs">To</Label>
-          <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+          <Input
+            type="date"
+            value={to}
+            onChange={(e) => setTo(e.target.value)}
+          />
         </div>
         <div>
           <Label className="font-display text-xs">City contains</Label>
-          <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Delhi" />
+          <Input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="e.g. Delhi"
+          />
         </div>
       </div>
 
@@ -236,31 +292,39 @@ function Dashboard() {
       </div>
 
       <div className="mt-8 grid gap-6 md:grid-cols-3">
-        <Stat 
-          label="Total reports" 
-          value={isLoading ? "…" : String(data?.total_reports ?? 0)} 
+        <Stat
+          label="Total reports"
+          value={isLoading ? "…" : String(data?.total_reports ?? 0)}
           variant="ink"
           trend={data?.trend}
         />
-        <Stat 
-          label="Cities represented" 
-          value={isLoading ? "…" : String(data?.by_city?.length ?? 0)} 
+        <Stat
+          label="Cities represented"
+          value={isLoading ? "…" : String(data?.by_city?.length ?? 0)}
         />
-        <Stat 
-          label="Months with reports" 
-          value={isLoading ? "…" : String(data?.by_month?.length ?? 0)} 
+        <Stat
+          label="Months with reports"
+          value={isLoading ? "…" : String(data?.by_month?.length ?? 0)}
         />
       </div>
 
-      <div ref={chartRef} className="mt-8 grid gap-6 lg:grid-cols-2 bg-white p-6 rounded-2xl">
+      <div
+        ref={chartRef}
+        className="mt-8 grid gap-6 lg:grid-cols-2 bg-white p-6 rounded-2xl"
+      >
         <div className="card-white p-6">
           <h3 className="mb-4 font-display text-lg font-bold">By city</h3>
           {data && data.by_city.length > 0 ? (
             <ul className="divide-y divide-border">
               {data.by_city.map((r) => (
-                <li key={r.city} className="flex items-center justify-between py-3">
+                <li
+                  key={r.city}
+                  className="flex items-center justify-between py-3"
+                >
                   <span className="font-display text-sm">{r.city}</span>
-                  <span className="font-mono text-sm font-bold tabular-nums text-foreground">{r.count}</span>
+                  <span className="font-mono text-sm font-bold tabular-nums text-foreground">
+                    {r.count}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -284,14 +348,20 @@ function Dashboard() {
                     dataKey="month"
                     stroke="var(--color-muted-foreground)"
                     strokeOpacity={0.4}
-                    tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
+                    tick={{
+                      fill: "var(--color-muted-foreground)",
+                      fontSize: 11,
+                    }}
                     tickLine={false}
                     axisLine={false}
                   />
                   <YAxis
                     stroke="var(--color-muted-foreground)"
                     strokeOpacity={0.4}
-                    tick={{ fill: "var(--color-muted-foreground)", fontSize: 11 }}
+                    tick={{
+                      fill: "var(--color-muted-foreground)",
+                      fontSize: 11,
+                    }}
                     tickLine={false}
                     axisLine={false}
                     allowDecimals={false}
@@ -309,7 +379,11 @@ function Dashboard() {
                     itemStyle={{ color: "var(--color-foreground)" }}
                     labelStyle={{ fontWeight: 600 }}
                   />
-                  <Bar dataKey="count" fill="var(--color-ink)" radius={[3, 3, 0, 0]} />
+                  <Bar
+                    dataKey="count"
+                    fill="var(--color-ink)"
+                    radius={[3, 3, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -320,13 +394,16 @@ function Dashboard() {
       </div>
 
       <p className="mt-8 rounded-2xl border border-border/60 bg-muted/40 p-4 text-xs text-muted-foreground">
-        Reports here are unverified allegations submitted by members of the public. Publication of
-        aggregate counts does not constitute a finding of misconduct against any individual.
+        Reports here are unverified allegations submitted by members of the
+        public. Publication of aggregate counts does not constitute a finding of
+        misconduct against any individual.
       </p>
 
       {data && data.by_month.length > 1 && (
         <div className="mt-8 rounded-2xl border-2 border-border bg-card p-6">
-          <h3 className="font-display text-lg font-bold mb-4">Insights & patterns</h3>
+          <h3 className="font-display text-lg font-bold mb-4">
+            Insights & patterns
+          </h3>
           <div className="grid gap-4 md:grid-cols-3">
             <InsightCard
               title="Trend direction"
@@ -372,30 +449,40 @@ function Dashboard() {
   );
 }
 
-function Stat({ 
-  label, 
-  value, 
+function Stat({
+  label,
+  value,
   variant = "white",
   trend,
-}: { 
-  label: string
-  value: string
-  variant?: "white" | "ink"
-  trend?: { direction: "up" | "down" | "stable"; percentage: number }
+}: {
+  label: string;
+  value: string;
+  variant?: "white" | "ink";
+  trend?: { direction: "up" | "down" | "stable"; percentage: number };
 }) {
   return (
     <div className={`${variant === "ink" ? "card-ink" : "card-white"} p-6`}>
-      <p className={`font-display text-xs uppercase tracking-widest ${variant === "ink" ? "text-white/60" : "text-muted-foreground"}`}>{label}</p>
+      <p
+        className={`font-display text-xs uppercase tracking-widest ${variant === "ink" ? "text-white/60" : "text-muted-foreground"}`}
+      >
+        {label}
+      </p>
       <div className="mt-2 flex items-end gap-2">
         <p className="font-display text-4xl font-bold">{value}</p>
         {trend && (
-          <div className={`mb-1 flex items-center gap-1 text-xs font-semibold ${
-            trend.direction === "up" ? "text-foreground/70" :
-            trend.direction === "down" ? "text-foreground/70" :
-            "text-muted-foreground"
-          }`}>
+          <div
+            className={`mb-1 flex items-center gap-1 text-xs font-semibold ${
+              trend.direction === "up"
+                ? "text-foreground/70"
+                : trend.direction === "down"
+                  ? "text-foreground/70"
+                  : "text-muted-foreground"
+            }`}
+          >
             {trend.direction === "up" && <TrendingUp className="h-3.5 w-3.5" />}
-            {trend.direction === "down" && <TrendingDown className="h-3.5 w-3.5" />}
+            {trend.direction === "down" && (
+              <TrendingDown className="h-3.5 w-3.5" />
+            )}
             {trend.direction === "stable" && <Minus className="h-3.5 w-3.5" />}
             <span>{trend.percentage}%</span>
           </div>
@@ -406,7 +493,11 @@ function Stat({
 }
 
 function EmptyState() {
-  return <p className="py-8 text-center text-sm text-muted-foreground">No data for this filter yet.</p>;
+  return (
+    <p className="py-8 text-center text-sm text-muted-foreground">
+      No data for this filter yet.
+    </p>
+  );
 }
 
 function InsightCard({

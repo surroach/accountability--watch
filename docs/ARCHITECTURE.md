@@ -70,6 +70,7 @@ This document describes the design and structure of Accountability Watch.
 **Technology**: React 19 + TanStack Start + TypeScript
 
 **Responsibilities**:
+
 - Render pages and components
 - Handle user interactions
 - Submit forms to API
@@ -77,6 +78,7 @@ This document describes the design and structure of Accountability Watch.
 - Client-side validation (before sending to server)
 
 **Pages**:
+
 - `/` - Homepage with features
 - `/report` - Anonymous incident report form
 - `/about` - Project explanation
@@ -85,6 +87,7 @@ This document describes the design and structure of Accountability Watch.
 - `/admin/*` - Admin panel (protected)
 
 **Key Components**:
+
 - `ReportForm` - Input validation and submission
 - `Dashboard` - Metrics and charts
 - `AdminPanel` - Moderation interface
@@ -95,6 +98,7 @@ This document describes the design and structure of Accountability Watch.
 **Technology**: TanStack Start (Node.js + React SSR)
 
 **Responsibilities**:
+
 - Handle HTTP requests
 - Authenticate and authorize users
 - Execute business logic
@@ -102,6 +106,7 @@ This document describes the design and structure of Accountability Watch.
 - Return responses
 
 **Key Features**:
+
 - Server-Side Rendering (SSR) for better performance/SEO
 - Full-stack TypeScript type safety
 - File-based routing
@@ -202,17 +207,19 @@ This document describes the design and structure of Accountability Watch.
 **Purpose**: SQL query execution and connection management
 
 **Components**:
+
 - Query builders (type-safe SQL)
 - Connection pooling
 - Transaction management
 - Error handling
 
 **Direct Database Access**:
+
 ```typescript
 // Example from route handler
 const reports = await db.query(
-  'SELECT * FROM incident_reports WHERE status = ?',
-  ['pending_moderation']
+  "SELECT * FROM incident_reports WHERE status = ?",
+  ["pending_moderation"],
 );
 ```
 
@@ -221,6 +228,7 @@ const reports = await db.query(
 **Purpose**: Persistent data storage
 
 **Tables**:
+
 - `incident_reports` - Core incident data
 - `report_evidence` - Uploaded file metadata
 - `report_status_history` - Audit trail
@@ -228,6 +236,7 @@ const reports = await db.query(
 - `audit_log` - System-wide audit trail
 
 **Features**:
+
 - ACID transactions
 - Referential integrity
 - Full-text search (FTS5)
@@ -386,6 +395,7 @@ Frontend: Update UI, show confirmation
 ### Current Design
 
 Suitable for:
+
 - College projects
 - Research use
 - Prototype systems
@@ -394,6 +404,7 @@ Suitable for:
 ### For Production at Scale
 
 Would need:
+
 - PostgreSQL (replicated)
 - Connection pooling (PgBouncer, pgpool)
 - Load balancing

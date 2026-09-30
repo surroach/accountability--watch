@@ -3,9 +3,11 @@
 ## Phase 1: Database & Backend Setup (Supabase)
 
 ### ✅ Execute SQL Fixes
+
 **File:** `FIX_ALL_CRITICAL.sql`
 
 Steps:
+
 1. Go to https://app.supabase.com/project/mtholttdmrjptulqcfyk/sql
 2. Paste entire contents of `FIX_ALL_CRITICAL.sql`
 3. Click "Run" button
@@ -13,6 +15,7 @@ Steps:
 5. Check status: Should see "Query executed successfully"
 
 ### ✅ Configure CORS
+
 **URL:** https://app.supabase.com/project/mtholttdmrjptulqcfyk/settings/api
 
 1. Scroll to "CORS" section
@@ -24,6 +27,7 @@ Steps:
 5. Changes take effect immediately
 
 ### ✅ Verify Storage Bucket
+
 **URL:** https://app.supabase.com/project/mtholttdmrjptulqcfyk/storage/buckets
 
 1. Click "evidence" bucket
@@ -36,6 +40,7 @@ Steps:
 ## Phase 2: Frontend Build & Configuration
 
 ### ✅ Updated Files
+
 - ✅ `src/routes/report.tsx` - Fixed 5 bugs:
   1. Timezone bug in date handling (line 371)
   2. File size validation on frontend (line 192)
@@ -48,6 +53,7 @@ Steps:
 - ✅ `.env` - Added `VITE_QUICK_EXIT_URL` configuration
 
 ### ✅ Build Verification
+
 ```bash
 cd /path/to/accountability-watch
 npm run build
@@ -61,6 +67,7 @@ Completed ✅ - Build succeeded without errors.
 ## Phase 3: Manual Testing Checklist
 
 ### Test 1: Anonymous Report Submission
+
 **Goal:** Verify basic form submission works end-to-end
 
 1. Navigate to `http://localhost:8080/report`
@@ -96,6 +103,7 @@ Completed ✅ - Build succeeded without errors.
 ---
 
 ### Test 2: Identified Report Submission
+
 **Goal:** Verify form with contact info works
 
 1. Navigate to `http://localhost:8080/report`
@@ -114,6 +122,7 @@ Completed ✅ - Build succeeded without errors.
 ---
 
 ### Test 3: File Upload & Metadata
+
 **Goal:** Verify file handling and EXIF extraction
 
 1. Navigate to `/report`
@@ -132,6 +141,7 @@ Completed ✅ - Build succeeded without errors.
 ---
 
 ### Test 4: Form Validation
+
 **Goal:** Verify client-side validation works
 
 1. Step 1 (What happened):
@@ -151,6 +161,7 @@ Completed ✅ - Build succeeded without errors.
 ---
 
 ### Test 5: Dashboard (Public)
+
 **Goal:** Verify aggregate data display
 
 1. Navigate to `http://localhost:8080/dashboard`
@@ -176,13 +187,15 @@ Completed ✅ - Build succeeded without errors.
 ---
 
 ### Test 6: Admin Panel
+
 **Goal:** Verify admin access and report viewing
 
 **Prerequisites:**
+
 - Create a Supabase user account
 - Add row to `user_roles` table manually:
   ```sql
-  INSERT INTO public.user_roles (user_id, role) 
+  INSERT INTO public.user_roles (user_id, role)
   VALUES ('USER_ID_HERE', 'admin');
   ```
 
@@ -210,12 +223,14 @@ Completed ✅ - Build succeeded without errors.
 ---
 
 ### Test 7: Moderation Queue
+
 **Goal:** Verify moderation flow
 
 **Prerequisites:**
+
 - Add user with `legal_partner` role:
   ```sql
-  INSERT INTO public.user_roles (user_id, role) 
+  INSERT INTO public.user_roles (user_id, role)
   VALUES ('USER_ID_HERE', 'legal_partner');
   ```
 
@@ -239,6 +254,7 @@ Completed ✅ - Build succeeded without errors.
 ---
 
 ### Test 8: Error Handling & Edge Cases
+
 **Goal:** Verify error messages are helpful
 
 1. **Network error:**
@@ -267,29 +283,29 @@ In Supabase SQL Editor, run these to confirm all fixes applied:
 
 ```sql
 -- Check RLS policies
-SELECT * FROM pg_policies 
-  WHERE tablename IN ('incident_reports', 'report_evidence') 
+SELECT * FROM pg_policies
+  WHERE tablename IN ('incident_reports', 'report_evidence')
   ORDER BY tablename, policyname;
 -- Should see: allow_anon_insert_reports, allow_anon_insert_evidence, admin_view_reports, allow_anon_read_evidence, allow_admin_read_evidence
 
 -- Check storage policies
-SELECT * FROM pg_policies 
-  WHERE schemaname = 'storage' 
+SELECT * FROM pg_policies
+  WHERE schemaname = 'storage'
   ORDER BY tablename, policyname;
 -- Should see: allow_anon_upload_evidence, allow_anon_read_evidence, allow_admin_read_evidence, allow_admin_delete_evidence
 
 -- Check constraints
-SELECT constraint_name, table_name 
-  FROM information_schema.table_constraints 
-  WHERE table_schema = 'public' 
-    AND constraint_type = 'CHECK' 
+SELECT constraint_name, table_name
+  FROM information_schema.table_constraints
+  WHERE table_schema = 'public'
+    AND constraint_type = 'CHECK'
   ORDER BY table_name;
 -- Should include: chk_consent_given, chk_description_nonempty, chk_sha256_valid, chk_city_length, chk_badge_length
 
 -- Check indexes
-SELECT indexname 
-  FROM pg_indexes 
-  WHERE schemaname = 'public' 
+SELECT indexname
+  FROM pg_indexes
+  WHERE schemaname = 'public'
     AND tablename IN ('incident_reports', 'report_evidence');
 -- Should include: idx_incident_reports_city_created, idx_report_evidence_report_id_created, idx_incident_reports_incident_at
 
@@ -297,9 +313,9 @@ SELECT indexname
 INSERT INTO public.incident_reports (
   incident_at, location_text, description, consent_given
 ) VALUES (
-  NOW(), 
-  'Test location', 
-  'Test description with sufficient length for validation', 
+  NOW(),
+  'Test location',
+  'Test description with sufficient length for validation',
   true
 ) RETURNING id, report_code;
 -- Should succeed and return new record with auto-generated report_code (AW-XXXXX)
@@ -310,24 +326,28 @@ INSERT INTO public.incident_reports (
 ## Phase 5: Security Spot-Check
 
 ### ✅ Authentication
+
 - [ ] Unauthenticated user cannot access `/admin`
 - [ ] Unauthenticated user cannot view report details
 - [ ] Admin token expires correctly
 - [ ] Expired token redirects to `/auth`
 
 ### ✅ Authorization
+
 - [ ] Legal partner can view reports but NOT delete
 - [ ] Admin can view and delete reports
 - [ ] Anonymous users can submit but NOT view other reports
 - [ ] Missing `user_roles` entry blocks access (access pending screen)
 
 ### ✅ Data Protection
+
 - [ ] Officer names not visible in public dashboard
 - [ ] Badge numbers not visible publicly
 - [ ] Reporter contact info only visible to admins
 - [ ] Anonymous submissions don't show contact details in admin view
 
 ### ✅ File Handling
+
 - [ ] Files > 25 MB rejected on frontend AND backend
 - [ ] Invalid MIME types rejected
 - [ ] File hashes stored and match uploads
@@ -354,21 +374,21 @@ ls -lh .output/public/assets/ | grep -E "\.(js|css)$"
 
 ## Summary: Bugs Fixed
 
-| # | Bug | File | Status |
-|---|-----|------|--------|
-| 1 | Timezone shift in date submission | report.tsx:371 | ✅ FIXED |
-| 2 | No frontend file size validation | report.tsx:192 | ✅ FIXED |
-| 3 | Evidence upload error handling poor | report.tsx:410 | ✅ FIXED |
-| 4 | Quick exit hardcoded to weather.com | report.tsx:127 | ✅ FIXED |
-| 5 | Missing contact field validation | report.tsx:step3Schema | ✅ FIXED |
-| 6 | No incident date bounds validation | report.tsx:step1Schema | ✅ FIXED |
-| 7 | CSV export formatting bug | dashboard.tsx:105 | ✅ FIXED |
-| 8 | RLS policies too restrictive | DEPLOY_ALL.sql | ✅ TO APPLY |
-| 9 | CORS not configured | Supabase Settings | ✅ TO APPLY |
-| 10 | Storage policies incomplete | DEPLOY_ALL.sql | ✅ TO APPLY |
-| 11 | No storage admin read access | DEPLOY_ALL.sql | ✅ TO APPLY |
-| 12 | Missing SHA-256 constraint | DEPLOY_ALL.sql | ✅ TO APPLY |
-| 13 | Missing performance indexes | DEPLOY_ALL.sql | ✅ TO APPLY |
+| #   | Bug                                 | File                   | Status      |
+| --- | ----------------------------------- | ---------------------- | ----------- |
+| 1   | Timezone shift in date submission   | report.tsx:371         | ✅ FIXED    |
+| 2   | No frontend file size validation    | report.tsx:192         | ✅ FIXED    |
+| 3   | Evidence upload error handling poor | report.tsx:410         | ✅ FIXED    |
+| 4   | Quick exit hardcoded to weather.com | report.tsx:127         | ✅ FIXED    |
+| 5   | Missing contact field validation    | report.tsx:step3Schema | ✅ FIXED    |
+| 6   | No incident date bounds validation  | report.tsx:step1Schema | ✅ FIXED    |
+| 7   | CSV export formatting bug           | dashboard.tsx:105      | ✅ FIXED    |
+| 8   | RLS policies too restrictive        | DEPLOY_ALL.sql         | ✅ TO APPLY |
+| 9   | CORS not configured                 | Supabase Settings      | ✅ TO APPLY |
+| 10  | Storage policies incomplete         | DEPLOY_ALL.sql         | ✅ TO APPLY |
+| 11  | No storage admin read access        | DEPLOY_ALL.sql         | ✅ TO APPLY |
+| 12  | Missing SHA-256 constraint          | DEPLOY_ALL.sql         | ✅ TO APPLY |
+| 13  | Missing performance indexes         | DEPLOY_ALL.sql         | ✅ TO APPLY |
 
 ---
 
@@ -388,23 +408,26 @@ ls -lh .output/public/assets/ | grep -E "\.(js|css)$"
 ## Troubleshooting
 
 **If you see 401 Unauthorized:**
+
 - [ ] CORS configured? Check Supabase Settings
 - [ ] RLS policies applied? Check FIX_ALL_CRITICAL.sql
 - [ ] Anon key valid? Check .env matches Supabase
 - [ ] Incident_reports table exists? Run verification query
 
 **If file upload fails:**
+
 - [ ] Storage bucket "evidence" exists and is public?
 - [ ] File < 25 MB?
 - [ ] Storage policies applied from FIX_ALL_CRITICAL.sql?
 
 **If admin can't see reports:**
+
 - [ ] User has `admin` or `legal_partner` role in user_roles table?
 - [ ] RLS policies applied?
 - [ ] Authenticated as that user?
 
 **If dashboard shows no data:**
+
 - [ ] Any reports submitted?
 - [ ] Reports have status not "pending_moderation"?
 - [ ] City field populated in submissions?
-

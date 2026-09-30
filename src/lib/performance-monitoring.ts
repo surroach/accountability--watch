@@ -1,19 +1,19 @@
 /**
  * Performance Monitoring and Query Analysis for Accountability Watch
- * 
+ *
  * Tracks and analyzes database performance:
  * - Query execution times
  * - Index usage statistics
  * - Slow query detection
  * - Database optimization recommendations
- * 
+ *
  * TOOLS:
  * - SQLite EXPLAIN QUERY PLAN for execution analysis
  * - Performance metrics collection
  * - Bottleneck identification
  */
 
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Query performance metrics
@@ -34,10 +34,10 @@ export interface QueryMetrics {
  * Performance threshold configuration
  */
 export const PERFORMANCE_CONFIG = {
-  slowQueryThresholdMs: 1000,  // Queries >1s considered slow
-  dataCollectionInterval: 60000,  // Collect metrics every minute
-  retentionDays: 30,  // Keep metrics for 30 days
-  sampleRate: 0.1,  // Sample 10% of queries
+  slowQueryThresholdMs: 1000, // Queries >1s considered slow
+  dataCollectionInterval: 60000, // Collect metrics every minute
+  retentionDays: 30, // Keep metrics for 30 days
+  sampleRate: 0.1, // Sample 10% of queries
 };
 
 /**
@@ -51,12 +51,12 @@ let isMonitoring = false;
  */
 export function startPerformanceMonitoring(): void {
   if (isMonitoring) {
-    console.warn('Performance monitoring already active');
+    console.warn("Performance monitoring already active");
     return;
   }
 
   isMonitoring = true;
-  console.log('Performance monitoring started');
+  console.log("Performance monitoring started");
 
   // Periodic cleanup of old metrics
   setInterval(cleanupOldMetrics, PERFORMANCE_CONFIG.dataCollectionInterval);
@@ -67,7 +67,7 @@ export function startPerformanceMonitoring(): void {
  */
 export function stopPerformanceMonitoring(): void {
   isMonitoring = false;
-  console.log('Performance monitoring stopped');
+  console.log("Performance monitoring stopped");
 }
 
 /**
@@ -76,7 +76,7 @@ export function stopPerformanceMonitoring(): void {
 export async function recordQueryPerformance(
   query: string,
   executionTimeMs: number,
-  rowsAffected: number = 0
+  rowsAffected: number = 0,
 ): Promise<void> {
   if (!isMonitoring || Math.random() > PERFORMANCE_CONFIG.sampleRate) {
     return;
@@ -101,7 +101,7 @@ export async function recordQueryPerformance(
 
     // Log slow queries immediately
     if (metric.isSlowQuery) {
-      console.warn('Slow query detected:', {
+      console.warn("Slow query detected:", {
         query: metric.query,
         time: executionTimeMs,
         rows: rowsAffected,
@@ -111,13 +111,13 @@ export async function recordQueryPerformance(
       await logSlowQuery(metric);
     }
   } catch (error) {
-    console.error('Error recording query performance:', error);
+    console.error("Error recording query performance:", error);
   }
 }
 
 /**
  * Analyze query execution plan using SQLite EXPLAIN
- * 
+ *
  * EXPLAIN QUERY PLAN shows:
  * - Which indexes are used (or table scan)
  * - Join strategy
@@ -133,7 +133,7 @@ async function analyzeQueryPlan(query: string): Promise<{
     // Don't analyze INSERT/UPDATE/DELETE
     if (/^(INSERT|UPDATE|DELETE)/i.test(query)) {
       return {
-        plan: 'N/A for write operations',
+        plan: "N/A for write operations",
         indexesUsed: [],
         estimatedRows: 0,
       };
@@ -142,20 +142,20 @@ async function analyzeQueryPlan(query: string): Promise<{
     const explainQuery = `EXPLAIN QUERY PLAN ${query}`;
 
     // Execute explain query
-    const { data, error } = await supabase.rpc('exec_sql', {
+    const { data, error } = await supabase.rpc("exec_sql", {
       sql: explainQuery,
     });
 
     if (error || !data) {
       return {
-        plan: 'Unable to analyze plan',
+        plan: "Unable to analyze plan",
         indexesUsed: [],
         estimatedRows: 0,
       };
     }
 
     // Parse execution plan
-    const planText = data.map((row: any) => row.plan || row).join('\n');
+    const planText = data.map((row: any) => row.plan || row).join("\n");
     const indexesUsed = extractIndexesFromPlan(planText);
     const estimatedRows = extractEstimatedRowsFromPlan(planText);
 
@@ -166,7 +166,7 @@ async function analyzeQueryPlan(query: string): Promise<{
     };
   } catch (error) {
     return {
-      plan: 'Error analyzing plan',
+      plan: "Error analyzing plan",
       indexesUsed: [],
       estimatedRows: 0,
     };
@@ -219,13 +219,17 @@ export async function getPerformanceStats(): Promise<{
     };
   }
 
-  const times = metricsStore.map(m => m.executionTimeMs).sort((a, b) => a - b);
-  const slowCount = metricsStore.filter(m => m.isSlowQuery).length;
+  const times = metricsStore
+    .map((m) => m.executionTimeMs)
+    .sort((a, b) => a - b);
+  const slowCount = metricsStore.filter((m) => m.isSlowQuery).length;
 
   const stats = {
     totalQueries: metricsStore.length,
     slowQueries: slowCount,
-    averageExecutionTimeMs: Math.round(times.reduce((a, b) => a + b, 0) / times.length),
+    averageExecutionTimeMs: Math.round(
+      times.reduce((a, b) => a + b, 0) / times.length,
+    ),
     p95ExecutionTimeMs: times[Math.floor(times.length * 0.95)],
     p99ExecutionTimeMs: times[Math.floor(times.length * 0.99)],
     recommendations: generateRecommendations(metricsStore),
@@ -241,33 +245,45 @@ function generateRecommendations(metrics: QueryMetrics[]): string[] {
   const recommendations: string[] = [];
 
   // Check for slow queries
-  const slowQueries = metrics.filter(m => m.isSlowQuery);
+  const slowQueries = metrics.filter((m) => m.isSlowQuery);
   if (slowQueries.length > metrics.length * 0.1) {
-    recommendations.push('10%+ of queries are slow - review query patterns and add indexes');
+    recommendations.push(
+      "10%+ of queries are slow - review query patterns and add indexes",
+    );
   }
 
   // Check for table scans
-  const tableScans = metrics.filter(m => !m.indexesUsed || m.indexesUsed.length === 0);
+  const tableScans = metrics.filter(
+    (m) => !m.indexesUsed || m.indexesUsed.length === 0,
+  );
   if (tableScans.length > metrics.length * 0.2) {
-    recommendations.push('Many queries perform table scans - consider adding indexes on frequently filtered columns');
+    recommendations.push(
+      "Many queries perform table scans - consider adding indexes on frequently filtered columns",
+    );
   }
 
   // Check for high row scan rates
   const highRowScans = metrics.filter(
-    m => m.estimatedRowsScanned && m.estimatedRowsScanned > 10000
+    (m) => m.estimatedRowsScanned && m.estimatedRowsScanned > 10000,
   );
   if (highRowScans.length > metrics.length * 0.05) {
-    recommendations.push('Some queries scan many rows - optimize WHERE clauses or add composite indexes');
+    recommendations.push(
+      "Some queries scan many rows - optimize WHERE clauses or add composite indexes",
+    );
   }
 
   // Check for missing LIMIT on SELECT queries
-  const unlimitedSelects = metrics.filter(m => /^SELECT/i.test(m.query) && !/LIMIT\s+\d+/i.test(m.query));
+  const unlimitedSelects = metrics.filter(
+    (m) => /^SELECT/i.test(m.query) && !/LIMIT\s+\d+/i.test(m.query),
+  );
   if (unlimitedSelects.length > 5) {
-    recommendations.push('Many SELECT queries lack LIMIT - consider pagination to reduce data transfer');
+    recommendations.push(
+      "Many SELECT queries lack LIMIT - consider pagination to reduce data transfer",
+    );
   }
 
   if (recommendations.length === 0) {
-    recommendations.push('Performance is within acceptable ranges');
+    recommendations.push("Performance is within acceptable ranges");
   }
 
   return recommendations;
@@ -278,7 +294,7 @@ function generateRecommendations(metrics: QueryMetrics[]): string[] {
  */
 export function getSlowQueries(limit: number = 10): QueryMetrics[] {
   return metricsStore
-    .filter(m => m.isSlowQuery)
+    .filter((m) => m.isSlowQuery)
     .sort((a, b) => b.executionTimeMs - a.executionTimeMs)
     .slice(0, limit);
 }
@@ -302,7 +318,7 @@ export function findMissingIndexOpportunities(): Array<{
       if (metric.executionTimeMs > PERFORMANCE_CONFIG.slowQueryThresholdMs) {
         opportunities.push({
           query: metric.query,
-          reason: 'Slow query with no indexes',
+          reason: "Slow query with no indexes",
           suggestedIndex: suggestIndexForQuery(metric.query),
         });
       }
@@ -322,7 +338,7 @@ function suggestIndexForQuery(query: string): string {
   const whereMatch = query.match(/WHERE\s+(.+?)(?:GROUP|ORDER|LIMIT|$)/i);
 
   if (!tableMatch) {
-    return 'Unable to suggest index';
+    return "Unable to suggest index";
   }
 
   const table = tableMatch[1];
@@ -344,8 +360,8 @@ function suggestIndexForQuery(query: string): string {
  */
 async function logSlowQuery(metric: QueryMetrics): Promise<void> {
   try {
-    await supabase.from('audit_log').insert({
-      action: 'slow_query_detected',
+    await supabase.from("audit_log").insert({
+      action: "slow_query_detected",
       changes: JSON.stringify({
         query: metric.query,
         executionTimeMs: metric.executionTimeMs,
@@ -354,7 +370,7 @@ async function logSlowQuery(metric: QueryMetrics): Promise<void> {
       created_at: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Failed to log slow query:', error);
+    console.error("Failed to log slow query:", error);
   }
 }
 
@@ -362,10 +378,15 @@ async function logSlowQuery(metric: QueryMetrics): Promise<void> {
  * Clean up old metrics
  */
 function cleanupOldMetrics(): void {
-  const cutoffTime = Date.now() - PERFORMANCE_CONFIG.retentionDays * 24 * 60 * 60 * 1000;
+  const cutoffTime =
+    Date.now() - PERFORMANCE_CONFIG.retentionDays * 24 * 60 * 60 * 1000;
 
   const initialLength = metricsStore.length;
-  metricsStore.splice(0, metricsStore.findIndex(m => m.timestamp > cutoffTime) || metricsStore.length);
+  metricsStore.splice(
+    0,
+    metricsStore.findIndex((m) => m.timestamp > cutoffTime) ||
+      metricsStore.length,
+  );
 
   const removed = initialLength - metricsStore.length;
   if (removed > 0) {
@@ -378,10 +399,10 @@ function cleanupOldMetrics(): void {
  */
 function sanitizeQuery(query: string): string {
   return query
-    .replace(/('.*?')/g, "'***'")  // Remove string literals
-    .replace(/(\d{3}[- ]?\d{3}[- ]?\d{4})/g, '***-***-****')  // Remove phone numbers
-    .replace(/[\w.-]+@[\w.-]+/g, '***@***')  // Remove emails
-    .substring(0, 500);  // Limit length
+    .replace(/('.*?')/g, "'***'") // Remove string literals
+    .replace(/(\d{3}[- ]?\d{3}[- ]?\d{4})/g, "***-***-****") // Remove phone numbers
+    .replace(/[\w.-]+@[\w.-]+/g, "***@***") // Remove emails
+    .substring(0, 500); // Limit length
 }
 
 /**
@@ -396,16 +417,19 @@ export function exportMetrics(): {
     metrics: [...metricsStore],
     stats: {
       totalQueries: metricsStore.length,
-      slowQueries: metricsStore.filter(m => m.isSlowQuery).length,
+      slowQueries: metricsStore.filter((m) => m.isSlowQuery).length,
       averageExecutionTimeMs: Math.round(
-        metricsStore.reduce((sum, m) => sum + m.executionTimeMs, 0) / metricsStore.length || 0
+        metricsStore.reduce((sum, m) => sum + m.executionTimeMs, 0) /
+          metricsStore.length || 0,
       ),
-      p95ExecutionTimeMs: metricsStore.sort((a, b) => a.executionTimeMs - b.executionTimeMs)[
-        Math.floor(metricsStore.length * 0.95)
-      ]?.executionTimeMs || 0,
-      p99ExecutionTimeMs: metricsStore.sort((a, b) => a.executionTimeMs - b.executionTimeMs)[
-        Math.floor(metricsStore.length * 0.99)
-      ]?.executionTimeMs || 0,
+      p95ExecutionTimeMs:
+        metricsStore.sort((a, b) => a.executionTimeMs - b.executionTimeMs)[
+          Math.floor(metricsStore.length * 0.95)
+        ]?.executionTimeMs || 0,
+      p99ExecutionTimeMs:
+        metricsStore.sort((a, b) => a.executionTimeMs - b.executionTimeMs)[
+          Math.floor(metricsStore.length * 0.99)
+        ]?.executionTimeMs || 0,
       recommendations: generateRecommendations(metricsStore),
     },
     recommendations: generateRecommendations(metricsStore),
@@ -417,5 +441,5 @@ export function exportMetrics(): {
  */
 export function resetMetrics(): void {
   metricsStore.length = 0;
-  console.log('Performance metrics reset');
+  console.log("Performance metrics reset");
 }

@@ -3,10 +3,31 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
-import { Download, LogOut, RefreshCw, ShieldAlert, Eye, AlertCircle, MapPin, Clock, Zap } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Download,
+  LogOut,
+  RefreshCw,
+  ShieldAlert,
+  Eye,
+  AlertCircle,
+  MapPin,
+  Clock,
+  Zap,
+} from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/admin")({
@@ -89,7 +110,10 @@ function AdminPage() {
       .select("*")
       .order("created_at", { ascending: false });
     if (error) {
-      if (error.code === "PGRST301" || error.message.toLowerCase().includes("permission")) {
+      if (
+        error.code === "PGRST301" ||
+        error.message.toLowerCase().includes("permission")
+      ) {
         setHasAccess(false);
       } else {
         toast.error(error.message);
@@ -101,7 +125,9 @@ function AdminPage() {
     setLoading(false);
   }
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    refresh();
+  }, []);
 
   const filtered = useMemo(() => {
     return reports.filter((r) => {
@@ -120,7 +146,10 @@ function AdminPage() {
   }, [reports, query, statusFilter]);
 
   async function updateStatus(id: string, status: Report["status"]) {
-    const { error } = await supabase.from("incident_reports").update({ status }).eq("id", id);
+    const { error } = await supabase
+      .from("incident_reports")
+      .update({ status })
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success("Status updated");
     setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
@@ -137,7 +166,9 @@ function AdminPage() {
   }
 
   async function downloadEvidence(ev: Evidence) {
-    const { data, error } = await supabase.storage.from("evidence").createSignedUrl(ev.storage_path, 300);
+    const { data, error } = await supabase.storage
+      .from("evidence")
+      .createSignedUrl(ev.storage_path, 300);
     if (error || !data) return toast.error("Could not generate download link");
     window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
@@ -145,18 +176,30 @@ function AdminPage() {
   function exportCsv() {
     const rows = filtered;
     const cols = [
-      "report_code", "created_at", "incident_at", "city", "location_text", "status",
-      "description", "injury_details", "badge_or_unit",
-      "witness_name", "witness_contact", "reporter_name", "reporter_contact",
+      "report_code",
+      "created_at",
+      "incident_at",
+      "city",
+      "location_text",
+      "status",
+      "description",
+      "injury_details",
+      "badge_or_unit",
+      "witness_name",
+      "witness_contact",
+      "reporter_name",
+      "reporter_contact",
     ];
     const esc = (v: unknown) => {
       const s = v == null ? "" : String(v);
       return `"${s.replace(/"/g, '""')}"`;
     };
     const lines = [cols.join(",")].concat(
-      rows.map((r) => cols.map((c) => esc((r as any)[c])).join(","))
+      rows.map((r) => cols.map((c) => esc((r as any)[c])).join(",")),
     );
-    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([lines.join("\n")], {
+      type: "text/csv;charset=utf-8",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -179,10 +222,14 @@ function AdminPage() {
           </div>
           <h1 className="font-display text-2xl font-bold">Access pending</h1>
           <p className="mt-3 text-muted-foreground">
-            You're signed in, but your account hasn't been granted admin or legal-partner access
-            yet. Contact your platform admin to be added.
+            You're signed in, but your account hasn't been granted admin or
+            legal-partner access yet. Contact your platform admin to be added.
           </p>
-          <Button onClick={signOut} variant="outline" className="mt-6 rounded-full">
+          <Button
+            onClick={signOut}
+            variant="outline"
+            className="mt-6 rounded-full"
+          >
             Sign out
           </Button>
         </div>
@@ -197,19 +244,37 @@ function AdminPage() {
           <p className="mb-2 font-display text-xs uppercase tracking-widest">
             <span className="highlight-lime">Admin console</span>
           </p>
-          <h1 className="font-display text-3xl font-bold md:text-4xl">Reports</h1>
+          <h1 className="font-display text-3xl font-bold md:text-4xl">
+            Reports
+          </h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            All submitted reports with full detail. Handle in accordance with your organization's data protocol.
+            All submitted reports with full detail. Handle in accordance with
+            your organization's data protocol.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={refresh} className="rounded-full">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refresh}
+            className="rounded-full"
+          >
             <RefreshCw className="h-4 w-4" /> Refresh
           </Button>
-          <Button variant="outline" size="sm" onClick={exportCsv} className="rounded-full">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={exportCsv}
+            className="rounded-full"
+          >
             <Download className="h-4 w-4" /> Export CSV
           </Button>
-          <Button variant="outline" size="sm" onClick={signOut} className="rounded-full">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={signOut}
+            className="rounded-full"
+          >
             <LogOut className="h-4 w-4" /> Sign out
           </Button>
         </div>
@@ -229,7 +294,9 @@ function AdminPage() {
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             {statuses.map((s) => (
-              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -248,42 +315,79 @@ function AdminPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="p-10 text-center text-muted-foreground">Loading…</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={5} className="p-10 text-center text-muted-foreground">No reports found.</td></tr>
-            ) : filtered.map((r) => (
-              <tr key={r.id} className="border-t border-border/60 hover:bg-muted/40">
-                <Td>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs">{r.report_code}</span>
-                    {r.urgent_flag && (
-                      <Badge variant="destructive" className="text-xs">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        Urgent
-                      </Badge>
-                    )}
-                  </div>
-                </Td>
-                <Td>
-                  <div>{new Date(r.incident_at).toLocaleString()}</div>
-                  <div className="text-xs text-muted-foreground">{r.location_text}</div>
-                </Td>
-                <Td>{r.city ?? "—"}</Td>
-                <Td>
-                  <Select value={r.status} onValueChange={(v) => updateStatus(r.id, v as Report["status"])}>
-                    <SelectTrigger className="h-8 w-[190px] text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {statuses.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </Td>
-                <Td className="text-right">
-                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => openReport(r)}>
-                    <Eye className="h-4 w-4" /> View
-                  </Button>
-                </Td>
+              <tr>
+                <td
+                  colSpan={5}
+                  className="p-10 text-center text-muted-foreground"
+                >
+                  Loading…
+                </td>
               </tr>
-            ))}
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="p-10 text-center text-muted-foreground"
+                >
+                  No reports found.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((r) => (
+                <tr
+                  key={r.id}
+                  className="border-t border-border/60 hover:bg-muted/40"
+                >
+                  <Td>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs">{r.report_code}</span>
+                      {r.urgent_flag && (
+                        <Badge variant="destructive" className="text-xs">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          Urgent
+                        </Badge>
+                      )}
+                    </div>
+                  </Td>
+                  <Td>
+                    <div>{new Date(r.incident_at).toLocaleString()}</div>
+                    <div className="text-xs text-muted-foreground">
+                      {r.location_text}
+                    </div>
+                  </Td>
+                  <Td>{r.city ?? "—"}</Td>
+                  <Td>
+                    <Select
+                      value={r.status}
+                      onValueChange={(v) =>
+                        updateStatus(r.id, v as Report["status"])
+                      }
+                    >
+                      <SelectTrigger className="h-8 w-[190px] text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statuses.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </Td>
+                  <Td className="text-right">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-full"
+                      onClick={() => openReport(r)}
+                    >
+                      <Eye className="h-4 w-4" /> View
+                    </Button>
+                  </Td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -298,19 +402,25 @@ function AdminPage() {
                 </DialogTitle>
               </DialogHeader>
               <div className="space-y-4 text-sm">
-                <Detail label="Incident at">{new Date(open.incident_at).toLocaleString()}</Detail>
+                <Detail label="Incident at">
+                  {new Date(open.incident_at).toLocaleString()}
+                </Detail>
                 <Detail label="Location">{open.location_text}</Detail>
                 <Detail label="City">{open.city ?? "—"}</Detail>
                 {open.incident_type && (
                   <Detail label="Incident Type">
                     <Badge variant="secondary" className="text-xs">
-                      {INCIDENT_TYPE_LABELS[open.incident_type] || open.incident_type}
+                      {INCIDENT_TYPE_LABELS[open.incident_type] ||
+                        open.incident_type}
                     </Badge>
                   </Detail>
                 )}
                 {open.urgent_flag && (
                   <Detail label="Priority">
-                    <Badge variant="destructive" className="text-xs font-semibold">
+                    <Badge
+                      variant="destructive"
+                      className="text-xs font-semibold"
+                    >
                       🚨 URGENT
                     </Badge>
                   </Detail>
@@ -318,7 +428,9 @@ function AdminPage() {
                 {open.submission_mode && (
                   <Detail label="Submission Mode">
                     <Badge variant="outline" className="text-xs">
-                      {open.submission_mode === "anonymous" ? "Anonymous" : "Identified"}
+                      {open.submission_mode === "anonymous"
+                        ? "Anonymous"
+                        : "Identified"}
                     </Badge>
                   </Detail>
                 )}
@@ -332,29 +444,57 @@ function AdminPage() {
                     </Badge>
                   </Detail>
                 )}
-                <Detail label="Description"><p className="whitespace-pre-wrap">{open.description}</p></Detail>
-                <Detail label="Injury details">{open.injury_details ?? "—"}</Detail>
-                <Detail label="Badge / unit (as reported, unverified)">
-                  <span className="rounded-md bg-lime px-2 py-0.5">{open.badge_or_unit ?? "—"}</span>
+                <Detail label="Description">
+                  <p className="whitespace-pre-wrap">{open.description}</p>
                 </Detail>
-                <Detail label="Witness">{open.witness_name ?? "—"} {open.witness_contact && `· ${open.witness_contact}`}</Detail>
-                <Detail label="Reporter">{open.reporter_name ?? "—"} {open.reporter_contact && `· ${open.reporter_contact}`}</Detail>
-                <Detail label="Submitted">{new Date(open.created_at).toLocaleString()}</Detail>
+                <Detail label="Injury details">
+                  {open.injury_details ?? "—"}
+                </Detail>
+                <Detail label="Badge / unit (as reported, unverified)">
+                  <span className="rounded-md bg-lime px-2 py-0.5">
+                    {open.badge_or_unit ?? "—"}
+                  </span>
+                </Detail>
+                <Detail label="Witness">
+                  {open.witness_name ?? "—"}{" "}
+                  {open.witness_contact && `· ${open.witness_contact}`}
+                </Detail>
+                <Detail label="Reporter">
+                  {open.reporter_name ?? "—"}{" "}
+                  {open.reporter_contact && `· ${open.reporter_contact}`}
+                </Detail>
+                <Detail label="Submitted">
+                  {new Date(open.created_at).toLocaleString()}
+                </Detail>
 
                 <div>
-                  <p className="font-display text-xs uppercase tracking-widest text-muted-foreground">Evidence</p>
+                  <p className="font-display text-xs uppercase tracking-widest text-muted-foreground">
+                    Evidence
+                  </p>
                   {evidence.length === 0 ? (
                     <p className="mt-2 text-muted-foreground">No files.</p>
                   ) : (
                     <ul className="mt-2 space-y-2">
                       {evidence.map((ev) => (
-                        <li key={ev.id} className="flex flex-col gap-2 rounded-xl border border-border/60 p-3">
+                        <li
+                          key={ev.id}
+                          className="flex flex-col gap-2 rounded-xl border border-border/60 p-3"
+                        >
                           <div className="flex items-center justify-between">
                             <div className="min-w-0">
-                              <p className="truncate font-mono text-xs">{ev.file_name}</p>
-                              <p className="truncate text-[10px] text-muted-foreground">SHA-256: {ev.sha256}</p>
+                              <p className="truncate font-mono text-xs">
+                                {ev.file_name}
+                              </p>
+                              <p className="truncate text-[10px] text-muted-foreground">
+                                SHA-256: {ev.sha256}
+                              </p>
                             </div>
-                            <Button size="sm" variant="outline" className="rounded-full" onClick={() => downloadEvidence(ev)}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-full"
+                              onClick={() => downloadEvidence(ev)}
+                            >
                               <Download className="h-4 w-4" /> Open
                             </Button>
                           </div>
@@ -363,14 +503,19 @@ function AdminPage() {
                               {ev.gps_latitude && ev.gps_longitude && (
                                 <div className="flex items-center gap-1">
                                   <MapPin className="h-3.5 w-3.5" />
-                                  <span>GPS: {ev.gps_latitude.toFixed(4)}°, {ev.gps_longitude.toFixed(4)}°</span>
+                                  <span>
+                                    GPS: {ev.gps_latitude.toFixed(4)}°,{" "}
+                                    {ev.gps_longitude.toFixed(4)}°
+                                  </span>
                                 </div>
                               )}
                               {ev.media_timestamp && (
                                 <div className="flex items-center gap-1">
                                   <Clock className="h-3.5 w-3.5" />
                                   <span>
-                                    {new Date(ev.media_timestamp).toLocaleString()}
+                                    {new Date(
+                                      ev.media_timestamp,
+                                    ).toLocaleString()}
                                   </span>
                                 </div>
                               )}
@@ -390,16 +535,42 @@ function AdminPage() {
   );
 }
 
-function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  return <th className={`p-3 text-left font-display text-xs uppercase tracking-wider ${className}`}>{children}</th>;
+function Th({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <th
+      className={`p-3 text-left font-display text-xs uppercase tracking-wider ${className}`}
+    >
+      {children}
+    </th>
+  );
 }
-function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Td({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return <td className={`p-3 align-top ${className}`}>{children}</td>;
 }
-function Detail({ label, children }: { label: string; children: React.ReactNode }) {
+function Detail({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
-      <p className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="font-display text-[10px] uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
       <div className="mt-1">{children}</div>
     </div>
   );

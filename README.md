@@ -30,15 +30,17 @@ Accountability Watch enables anonymous incident reporting with role-based modera
 
 ## What is Accountability Watch?
 
-Accountability Watch is a web-based platform designed to collect and securely store documentation of alleged police misconduct during protests. 
+Accountability Watch is a web-based platform designed to collect and securely store documentation of alleged police misconduct during protests.
 
 **The problem it addresses:**
+
 - Incidents at protests often go undocumented, making it difficult for legal aid organizations to investigate allegations
 - Evidence can be lost, photos deleted, or details forgotten
 - Individuals reporting misconduct face safety and privacy concerns
 - There is no centralized, anonymous way for civil-rights researchers and journalists to track patterns
 
 **Who it's for:**
+
 - **Citizens & Witnesses**: Document incidents privately without identification
 - **Legal Aid Partners**: Access vetted reports for investigation and legal referral
 - **Civil-Rights Researchers**: Analyze aggregate incident data (anonymized)
@@ -46,6 +48,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 - **Administrators**: Moderate reports and manage the platform
 
 **What it does:**
+
 1. Accepts anonymous incident reports with evidence (photos, videos)
 2. Stores reports privately in a secure database with cryptographic integrity verification
 3. Provides role-based access for moderation and review
@@ -57,6 +60,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 ## Features
 
 ### For Reporters
+
 - 📝 **Anonymous Submission** - No account or login required
 - 📸 **Evidence Upload** - Attach photos, videos, documents (SHA-256 verification)
 - 🕐 **Automatic Timestamping** - Records exact incident time and date
@@ -64,6 +68,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 - 🔍 **Report Tracking** - Check report status without account
 
 ### For Legal Partners
+
 - ✅ **Moderation Queue** - Review pending reports
 - 📋 **Case Details** - Full incident information, evidence, timelines
 - 🔐 **Secure Access** - Role-based authorization
@@ -71,6 +76,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 - 📊 **Incident Analytics** - View trends and patterns
 
 ### For Administrators
+
 - 🎛️ **Dashboard** - System overview and metrics
 - 👥 **User Management** - Role assignment and access control
 - 🔧 **Configuration** - System settings and moderation rules
@@ -78,6 +84,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 - 📈 **Performance Monitoring** - Query optimization and system health
 
 ### Technical Features
+
 - 🔍 **Full-Text Search** - SQLite FTS5 for finding reports by keywords
 - 🛡️ **Rate Limiting** - Protection against brute-force attacks
 - 🔐 **Encryption** - AES-256-GCM for sensitive personal data
@@ -118,6 +125,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 ```
 
 **Report lifecycle:**
+
 1. **Submission**: User files anonymous report (3 min, no account)
 2. **Storage**: Report encrypted, timestamped, hashed for integrity
 3. **Moderation**: Legal partners review and approve/reject
@@ -130,6 +138,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 ## Getting Started
 
 ### Prerequisites
+
 - **Node.js** 18 or later
 - **npm** or **yarn**
 
@@ -156,6 +165,7 @@ The application opens at `http://localhost:5173`
 ### Environment Setup
 
 See `.env.example` for required variables. Key configuration:
+
 - `VITE_SUPABASE_URL` - Backend service URL (optional - for legal partner access)
 - `VITE_SUPABASE_PUBLISHABLE_KEY` - Frontend authentication key (optional)
 - `VITE_QUICK_EXIT_URL` - Quick exit button destination
@@ -166,17 +176,17 @@ All environment variables are optional for local development with SQLite.
 
 ## Technology Stack
 
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| **Frontend** | React 19 + TanStack Start | SSR UI framework |
-| **Styling** | Tailwind CSS | Responsive design |
-| **Language** | TypeScript 5+ | Type-safe code |
-| **Database** | SQLite | Local persistent storage |
-| **Authentication** | Role-based (Admin, Legal, Moderator) | Access control |
-| **UI Components** | Radix UI | Accessible component library |
-| **Forms** | React Hook Form + Zod | Form validation |
-| **Testing** | Vitest | Unit test framework |
-| **Build** | Vite | Fast development & production build |
+| Component          | Technology                           | Purpose                             |
+| ------------------ | ------------------------------------ | ----------------------------------- |
+| **Frontend**       | React 19 + TanStack Start            | SSR UI framework                    |
+| **Styling**        | Tailwind CSS                         | Responsive design                   |
+| **Language**       | TypeScript 5+                        | Type-safe code                      |
+| **Database**       | SQLite                               | Local persistent storage            |
+| **Authentication** | Role-based (Admin, Legal, Moderator) | Access control                      |
+| **UI Components**  | Radix UI                             | Accessible component library        |
+| **Forms**          | React Hook Form + Zod                | Form validation                     |
+| **Testing**        | Vitest                               | Unit test framework                 |
+| **Build**          | Vite                                 | Fast development & production build |
 
 ---
 
@@ -248,6 +258,7 @@ All environment variables are optional for local development with SQLite.
 ## Database
 
 Accountability Watch uses **SQLite** for persistent storage. This provides:
+
 - ✅ No external database infrastructure required
 - ✅ ACID transactions for data consistency
 - ✅ Full-text search (FTS5) for semantic queries
@@ -256,25 +267,30 @@ Accountability Watch uses **SQLite** for persistent storage. This provides:
 ### Schema Overview
 
 **incident_reports**
+
 - Core table for incident documentation
 - Fields: location, description, injury details, timestamp, status
 - Foreign key relationships to evidence and history
 
 **report_evidence**
+
 - Stores metadata about uploaded files
 - Fields: filename, content type, SHA-256 hash, GPS data
 - Maintains referential integrity to incident_reports
 
 **report_status_history**
+
 - Audit trail of status changes
 - Tracks moderation decisions and timestamps
 - Links to user roles for accountability
 
 **user_roles**
+
 - Permission assignments (admin, legal_partner, moderator)
 - Maps users to access levels
 
 **audit_log**
+
 - Complete record of all system actions
 - Tracks who did what and when
 - Essential for compliance
@@ -349,15 +365,15 @@ Total: **85+ test cases** covering core functionality
 
 ## Documentation
 
-| Document | Purpose |
-|----------|---------|
-| [`docs/START_HERE.md`](./docs/START_HERE.md) | 5-minute quick start |
-| [`docs/PROJECT_STRUCTURE.md`](./docs/PROJECT_STRUCTURE.md) | Folder organization |
-| [`docs/DATABASE.md`](./docs/DATABASE.md) | Schema, relationships, queries |
-| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | System design and data flow |
-| [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md) | Viva/defense preparation |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Development guidelines |
-| [`SECURITY.md`](./SECURITY.md) | Vulnerability reporting |
+| Document                                                           | Purpose                        |
+| ------------------------------------------------------------------ | ------------------------------ |
+| [`docs/START_HERE.md`](./docs/START_HERE.md)                       | 5-minute quick start           |
+| [`docs/PROJECT_STRUCTURE.md`](./docs/PROJECT_STRUCTURE.md)         | Folder organization            |
+| [`docs/DATABASE.md`](./docs/DATABASE.md)                           | Schema, relationships, queries |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)                   | System design and data flow    |
+| [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md) | Viva/defense preparation       |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md)                             | Development guidelines         |
+| [`SECURITY.md`](./SECURITY.md)                                     | Vulnerability reporting        |
 
 ---
 
@@ -388,7 +404,7 @@ This is a **college Computer Science project**, not a production civic infrastru
 ✅ Prototype and proof-of-concept  
 ✅ Understanding civic tech design  
 ✅ Learning security patterns  
-✅ Demonstrating TypeScript best practices  
+✅ Demonstrating TypeScript best practices
 
 This is **NOT** meant to replace actual incident reporting systems used by real civil-rights organizations.
 
@@ -457,6 +473,7 @@ npm install
 ### Tests Fail
 
 Ensure Node.js 18+ is installed:
+
 ```bash
 node --version
 ```
@@ -464,6 +481,7 @@ node --version
 ###Port Already in Use
 
 Development server defaults to port 5173. To change:
+
 ```bash
 npm run dev -- --port 3000
 ```
@@ -476,6 +494,7 @@ npm run dev -- --port 3000
 **Focus**: Civic technology, security, data protection  
 **Duration**: Multi-phase implementation  
 **Key Concepts Demonstrated**:
+
 - Full-stack TypeScript application
 - Cryptographic security (encryption, hashing)
 - Database design and optimization
@@ -484,6 +503,7 @@ npm run dev -- --port 3000
 - Professional documentation
 
 **Defense Topics**:
+
 - Why SQLite for this use case
 - Security design decisions (AES-256-GCM, rate limiting)
 - Database optimization (indexes, transactions)

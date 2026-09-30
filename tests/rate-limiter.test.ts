@@ -1,11 +1,11 @@
 /**
  * Rate Limiter Tests
- * 
+ *
  * Validates token bucket algorithm and rate limit enforcement
  * Tests sliding window counter for accuracy
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import {
   checkRateLimit,
   RATE_LIMIT_CONFIG,
@@ -16,26 +16,26 @@ import {
   SlidingWindowRateLimiter,
   rateLimitMiddleware,
   cleanupExpiredLimits,
-} from '@/lib/rate-limiter';
+} from "@/lib/rate-limiter";
 
-describe('Rate Limiter', () => {
+describe("Rate Limiter", () => {
   beforeEach(() => {
     resetAllRateLimits();
   });
 
-  describe('Basic Rate Limiting', () => {
-    it('should allow requests within limit', () => {
+  describe("Basic Rate Limiting", () => {
+    it("should allow requests within limit", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
 
       for (let i = 0; i < config.maxRequests; i++) {
-        const result = checkRateLimit('user-123', config);
+        const result = checkRateLimit("user-123", config);
         expect(result.allowed).toBe(true);
       }
     });
 
-    it('should deny requests exceeding limit', () => {
+    it("should deny requests exceeding limit", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // Max out the limit
       for (let i = 0; i < config.maxRequests; i++) {
@@ -48,9 +48,9 @@ describe('Rate Limiter', () => {
       expect(result.retryAfterSeconds).toBeDefined();
     });
 
-    it('should return remaining requests count', () => {
+    it("should return remaining requests count", () => {
       const config = RATE_LIMIT_CONFIG.SEARCH;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       const result1 = checkRateLimit(userId, config);
       expect(result1.remainingRequests).toBe(config.maxRequests - 1);
@@ -59,9 +59,9 @@ describe('Rate Limiter', () => {
       expect(result2.remainingRequests).toBe(config.maxRequests - 2);
     });
 
-    it('should refill tokens over time', async () => {
+    it("should refill tokens over time", async () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // Use all tokens
       for (let i = 0; i < config.maxRequests; i++) {
@@ -72,7 +72,7 @@ describe('Rate Limiter', () => {
       expect(result.allowed).toBe(false);
 
       // Wait 1 second (token refill should happen)
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       result = checkRateLimit(userId, config);
       // Should have at least some tokens refilled
@@ -81,10 +81,10 @@ describe('Rate Limiter', () => {
     });
   });
 
-  describe('Different Endpoints', () => {
-    it('should enforce LOGIN limits correctly', () => {
+  describe("Different Endpoints", () => {
+    it("should enforce LOGIN limits correctly", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // 5 attempts allowed, 6th should fail
       for (let i = 0; i < config.maxRequests; i++) {
@@ -96,9 +96,9 @@ describe('Rate Limiter', () => {
       expect(result.allowed).toBe(false);
     });
 
-    it('should enforce REPORT_SUBMIT limits', () => {
+    it("should enforce REPORT_SUBMIT limits", () => {
       const config = RATE_LIMIT_CONFIG.REPORT_SUBMIT;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // 10 submissions allowed
       expect(config.maxRequests).toBe(10);
@@ -112,8 +112,8 @@ describe('Rate Limiter', () => {
       expect(result.allowed).toBe(false);
     });
 
-    it('should have separate limits for different endpoints', () => {
-      const userId = 'user-123';
+    it("should have separate limits for different endpoints", () => {
+      const userId = "user-123";
 
       // Use up LOGIN limit
       for (let i = 0; i < RATE_LIMIT_CONFIG.LOGIN.maxRequests; i++) {
@@ -121,30 +121,34 @@ describe('Rate Limiter', () => {
       }
 
       // LOGIN should be limited
-      expect(checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN).allowed).toBe(false);
+      expect(checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN).allowed).toBe(
+        false,
+      );
 
       // But REPORT_SUBMIT should still work (different bucket)
-      expect(checkRateLimit(userId, RATE_LIMIT_CONFIG.REPORT_SUBMIT).allowed).toBe(true);
+      expect(
+        checkRateLimit(userId, RATE_LIMIT_CONFIG.REPORT_SUBMIT).allowed,
+      ).toBe(true);
     });
 
-    it('should have separate limits per user', () => {
+    it("should have separate limits per user", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
 
       // User 1 max out
       for (let i = 0; i < config.maxRequests; i++) {
-        checkRateLimit('user-1', config);
+        checkRateLimit("user-1", config);
       }
 
       // User 2 should be unaffected
-      const result = checkRateLimit('user-2', config);
+      const result = checkRateLimit("user-2", config);
       expect(result.allowed).toBe(true);
     });
   });
 
-  describe('Middleware', () => {
-    it('should return 429 when limit exceeded', async () => {
+  describe("Middleware", () => {
+    it("should return 429 when limit exceeded", async () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // Max out limit
       for (let i = 0; i < config.maxRequests; i++) {
@@ -155,23 +159,25 @@ describe('Rate Limiter', () => {
 
       expect(result.allowed).toBe(false);
       expect(result.statusCode).toBe(429);
-      expect(result.errorMessage).toContain('Rate limit exceeded');
+      expect(result.errorMessage).toContain("Rate limit exceeded");
     });
 
-    it('should include rate limit headers', async () => {
+    it("should include rate limit headers", async () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       const result = await rateLimitMiddleware(userId, config);
 
-      expect(result.headers['X-RateLimit-Limit']).toBe(String(config.maxRequests));
-      expect(result.headers['X-RateLimit-Remaining']).toBeDefined();
-      expect(result.headers['X-RateLimit-Reset']).toBeDefined();
+      expect(result.headers["X-RateLimit-Limit"]).toBe(
+        String(config.maxRequests),
+      );
+      expect(result.headers["X-RateLimit-Remaining"]).toBeDefined();
+      expect(result.headers["X-RateLimit-Reset"]).toBeDefined();
     });
 
-    it('should include Retry-After header when limited', async () => {
+    it("should include Retry-After header when limited", async () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // Max out limit
       for (let i = 0; i < config.maxRequests; i++) {
@@ -180,14 +186,14 @@ describe('Rate Limiter', () => {
 
       const result = await rateLimitMiddleware(userId, config);
 
-      expect(result.headers['Retry-After']).toBeDefined();
+      expect(result.headers["Retry-After"]).toBeDefined();
     });
   });
 
-  describe('Reset Functions', () => {
-    it('should reset rate limit for specific user', () => {
+  describe("Reset Functions", () => {
+    it("should reset rate limit for specific user", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // Max out
       for (let i = 0; i < config.maxRequests; i++) {
@@ -203,28 +209,32 @@ describe('Rate Limiter', () => {
       expect(checkRateLimit(userId, config).allowed).toBe(true);
     });
 
-    it('should reset all rate limits', () => {
-      const userId = 'user-123';
+    it("should reset all rate limits", () => {
+      const userId = "user-123";
 
       // Max out LOGIN
       for (let i = 0; i < RATE_LIMIT_CONFIG.LOGIN.maxRequests; i++) {
         checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN);
       }
 
-      expect(checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN).allowed).toBe(false);
+      expect(checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN).allowed).toBe(
+        false,
+      );
 
       // Reset all
       resetAllRateLimits();
 
       // Should work again
-      expect(checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN).allowed).toBe(true);
+      expect(checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN).allowed).toBe(
+        true,
+      );
     });
   });
 
-  describe('Status and Statistics', () => {
-    it('should get rate limit status', () => {
+  describe("Status and Statistics", () => {
+    it("should get rate limit status", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // No status before first request
       expect(getRateLimitStatus(userId, config)).toBeNull();
@@ -237,8 +247,8 @@ describe('Rate Limiter', () => {
       expect(status?.remainingRequests).toBe(config.maxRequests - 1);
     });
 
-    it('should provide rate limit statistics', () => {
-      const userId = 'user-123';
+    it("should provide rate limit statistics", () => {
+      const userId = "user-123";
 
       checkRateLimit(userId, RATE_LIMIT_CONFIG.LOGIN);
       checkRateLimit(userId, RATE_LIMIT_CONFIG.REPORT_SUBMIT);
@@ -247,14 +257,14 @@ describe('Rate Limiter', () => {
 
       expect(stats.totalKeys).toBeGreaterThanOrEqual(2);
       expect(stats.memoryUsageBytes).toBeGreaterThan(0);
-      expect(stats.activeEndpoints).toContain('rl:login');
+      expect(stats.activeEndpoints).toContain("rl:login");
     });
   });
 
-  describe('Cleanup', () => {
-    it('should cleanup expired entries', async () => {
+  describe("Cleanup", () => {
+    it("should cleanup expired entries", async () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       checkRateLimit(userId, config);
 
@@ -270,10 +280,10 @@ describe('Rate Limiter', () => {
     });
   });
 
-  describe('Sliding Window Rate Limiter', () => {
-    it('should track exact request count in window', () => {
+  describe("Sliding Window Rate Limiter", () => {
+    it("should track exact request count in window", () => {
       const limiter = new SlidingWindowRateLimiter(5, 60);
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // Allow 5 requests
       for (let i = 0; i < 5; i++) {
@@ -287,9 +297,9 @@ describe('Rate Limiter', () => {
       expect(limiter.getRemaining(userId)).toBe(0);
     });
 
-    it('should provide accurate remaining count', () => {
+    it("should provide accurate remaining count", () => {
       const limiter = new SlidingWindowRateLimiter(10, 60);
-      const userId = 'user-123';
+      const userId = "user-123";
 
       limiter.isAllowed(userId);
       limiter.isAllowed(userId);
@@ -297,24 +307,24 @@ describe('Rate Limiter', () => {
       expect(limiter.getRemaining(userId)).toBe(8);
     });
 
-    it('should support independent user buckets', () => {
+    it("should support independent user buckets", () => {
       const limiter = new SlidingWindowRateLimiter(5, 60);
 
       // User 1: use 3 requests
       for (let i = 0; i < 3; i++) {
-        limiter.isAllowed('user-1');
+        limiter.isAllowed("user-1");
       }
 
       // User 2: use 1 request
-      limiter.isAllowed('user-2');
+      limiter.isAllowed("user-2");
 
-      expect(limiter.getRemaining('user-1')).toBe(2);
-      expect(limiter.getRemaining('user-2')).toBe(4);
+      expect(limiter.getRemaining("user-1")).toBe(2);
+      expect(limiter.getRemaining("user-2")).toBe(4);
     });
 
-    it('should reset user bucket', () => {
+    it("should reset user bucket", () => {
       const limiter = new SlidingWindowRateLimiter(5, 60);
-      const userId = 'user-123';
+      const userId = "user-123";
 
       // Use all requests
       for (let i = 0; i < 5; i++) {
@@ -331,21 +341,21 @@ describe('Rate Limiter', () => {
     });
   });
 
-  describe('Security', () => {
-    it('should not leak information between users', () => {
+  describe("Security", () => {
+    it("should not leak information between users", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
 
-      const user1Result = checkRateLimit('user-1', config);
-      const user2Result = checkRateLimit('user-2', config);
+      const user1Result = checkRateLimit("user-1", config);
+      const user2Result = checkRateLimit("user-2", config);
 
       // Both should have independent limits
       expect(user1Result.remainingRequests).toBe(config.maxRequests - 1);
       expect(user2Result.remainingRequests).toBe(config.maxRequests - 1);
     });
 
-    it('should handle rapid requests gracefully', () => {
+    it("should handle rapid requests gracefully", () => {
       const config = RATE_LIMIT_CONFIG.LOGIN;
-      const userId = 'user-123';
+      const userId = "user-123";
 
       const results = [];
 
@@ -366,20 +376,24 @@ describe('Rate Limiter', () => {
     });
   });
 
-  describe('Configuration', () => {
-    it('should have reasonable defaults', () => {
-      expect(RATE_LIMIT_CONFIG.LOGIN.maxRequests).toBeLessThan(RATE_LIMIT_CONFIG.REPORT_SUBMIT.maxRequests);
-      expect(RATE_LIMIT_CONFIG.PASSWORD_RESET.windowSeconds).toBeGreaterThan(RATE_LIMIT_CONFIG.LOGIN.windowSeconds);
+  describe("Configuration", () => {
+    it("should have reasonable defaults", () => {
+      expect(RATE_LIMIT_CONFIG.LOGIN.maxRequests).toBeLessThan(
+        RATE_LIMIT_CONFIG.REPORT_SUBMIT.maxRequests,
+      );
+      expect(RATE_LIMIT_CONFIG.PASSWORD_RESET.windowSeconds).toBeGreaterThan(
+        RATE_LIMIT_CONFIG.LOGIN.windowSeconds,
+      );
     });
 
-    it('should support custom configurations', () => {
+    it("should support custom configurations", () => {
       const customConfig = {
         maxRequests: 3,
         windowSeconds: 10,
-        keyPrefix: 'custom_limit',
+        keyPrefix: "custom_limit",
       };
 
-      const userId = 'user-123';
+      const userId = "user-123";
 
       for (let i = 0; i < customConfig.maxRequests; i++) {
         expect(checkRateLimit(userId, customConfig).allowed).toBe(true);

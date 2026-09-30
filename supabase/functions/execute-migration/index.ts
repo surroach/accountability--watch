@@ -1,11 +1,11 @@
-import { serve } from "https://deno.land/std@0.208.0/http/server.ts"
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
+import { serve } from "https://deno.land/std@0.208.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
 
 // This edge function executes the SQL migration for Accountability Watch
 // It uses the service role key to execute privileged SQL
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // FIX_ALL_CRITICAL.sql statements
 const SQL_STATEMENTS = `
@@ -61,13 +61,13 @@ ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
 serve(async (req) => {
   // Only allow POST requests
   if (req.method !== "POST") {
-    return new Response("Method not allowed", { status: 405 })
+    return new Response("Method not allowed", { status: 405 });
   }
 
   // Verify authorization
-  const authHeader = req.headers.get("Authorization")
+  const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return new Response("Unauthorized", { status: 401 })
+    return new Response("Unauthorized", { status: 401 });
   }
 
   try {
@@ -77,44 +77,43 @@ serve(async (req) => {
         autoRefreshToken: false,
         persistSession: false,
       },
-    })
+    });
 
-    console.log("🔧 Executing SQL migration...")
+    console.log("🔧 Executing SQL migration...");
 
     // Split statements properly
-    const statements = SQL_STATEMENTS
-      .split(";")
-      .map(s => s.trim())
-      .filter(s => s && !s.startsWith("--"))
+    const statements = SQL_STATEMENTS.split(";")
+      .map((s) => s.trim())
+      .filter((s) => s && !s.startsWith("--"));
 
-    const results: any[] = []
+    const results: any[] = [];
 
     // Execute each statement
     for (const statement of statements) {
       try {
         const { data, error } = await supabase.rpc("exec_sql_statement", {
           sql: statement,
-        })
+        });
 
         if (error) {
-          console.warn(`Statement failed: ${error.message}`)
+          console.warn(`Statement failed: ${error.message}`);
           results.push({
             sql: statement.substring(0, 50),
             error: error.message,
-          })
+          });
         } else {
-          console.log(`✅ ${statement.substring(0, 50)}...`)
+          console.log(`✅ ${statement.substring(0, 50)}...`);
           results.push({
             sql: statement.substring(0, 50),
             success: true,
-          })
+          });
         }
       } catch (err: any) {
-        console.error(`Error executing statement: ${err.message}`)
+        console.error(`Error executing statement: ${err.message}`);
         results.push({
           sql: statement.substring(0, 50),
           error: err.message,
-        })
+        });
       }
     }
 
@@ -128,10 +127,10 @@ serve(async (req) => {
       {
         headers: { "Content-Type": "application/json" },
         status: 200,
-      }
-    )
+      },
+    );
   } catch (error: any) {
-    console.error("Migration error:", error)
+    console.error("Migration error:", error);
     return new Response(
       JSON.stringify({
         error: error.message,
@@ -140,7 +139,7 @@ serve(async (req) => {
       {
         headers: { "Content-Type": "application/json" },
         status: 500,
-      }
-    )
+      },
+    );
   }
-})
+});

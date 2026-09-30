@@ -1,12 +1,12 @@
 /**
  * Session Management for Accountability Watch
- * 
+ *
  * Manages user sessions with timeout and token refresh:
  * - Session expiration after inactivity
  * - Automatic token refresh
  * - Cross-tab session synchronization
  * - Secure session storage
- * 
+ *
  * SECURITY PRINCIPLES:
  * - Tokens stored in memory (not localStorage to prevent XSS theft)
  * - Session ID verified server-side on each request
@@ -20,15 +20,15 @@
 export const SESSION_CONFIG = {
   // Inactivity timeout - user automatically logged out after this duration
   inactivityTimeoutSeconds: 15 * 60, // 15 minutes
-  
+
   // Token refresh interval - refresh token before it expires
   tokenRefreshIntervalSeconds: 5 * 60, // 5 minutes
-  
+
   // Maximum absolute session duration (regardless of activity)
   maxSessionDurationSeconds: 8 * 60 * 60, // 8 hours
-  
+
   // Session storage key
-  sessionStorageKey: 'accountability_session',
+  sessionStorageKey: "accountability_session",
 };
 
 /**
@@ -38,12 +38,12 @@ export interface Session {
   id: string;
   userId: string;
   email: string;
-  role: 'admin' | 'legal_partner' | 'moderator' | 'user';
+  role: "admin" | "legal_partner" | "moderator" | "user";
   token: string;
   refreshToken: string;
-  createdAt: number;  // Timestamp in ms
-  lastActivityAt: number;  // Timestamp in ms
-  expiresAt: number;  // Timestamp in ms
+  createdAt: number; // Timestamp in ms
+  lastActivityAt: number; // Timestamp in ms
+  expiresAt: number; // Timestamp in ms
   ipAddress?: string;
   userAgent?: string;
 }
@@ -79,11 +79,11 @@ class SessionManager {
   createSession(
     userId: string,
     email: string,
-    role: 'admin' | 'legal_partner' | 'moderator' | 'user',
+    role: "admin" | "legal_partner" | "moderator" | "user",
     token: string,
     refreshToken: string,
     ipAddress?: string,
-    userAgent?: string
+    userAgent?: string,
   ): Session {
     const now = Date.now();
     const session: Session = {
@@ -134,24 +134,28 @@ class SessionManager {
   /**
    * Refresh authentication token before expiration
    */
-  async refreshToken(): Promise<{ success: boolean; newToken?: string; error?: string }> {
+  async refreshToken(): Promise<{
+    success: boolean;
+    newToken?: string;
+    error?: string;
+  }> {
     if (!this.state.session) {
-      return { success: false, error: 'No active session' };
+      return { success: false, error: "No active session" };
     }
 
     if (this.state.isRefreshing) {
-      return { success: false, error: 'Token refresh already in progress' };
+      return { success: false, error: "Token refresh already in progress" };
     }
 
     try {
       this.state.isRefreshing = true;
 
       // Call refresh endpoint (should be implemented in your auth service)
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
+      const response = await fetch("/api/auth/refresh", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.state.session.refreshToken}`,
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${this.state.session.refreshToken}`,
         },
       });
 
@@ -167,13 +171,14 @@ class SessionManager {
       const newToken = data.token || data.access_token;
 
       if (!newToken) {
-        return { success: false, error: 'No token in refresh response' };
+        return { success: false, error: "No token in refresh response" };
       }
 
       // Update session with new token
       this.state.session.token = newToken;
       if (data.refreshToken || data.refresh_token) {
-        this.state.session.refreshToken = data.refreshToken || data.refresh_token;
+        this.state.session.refreshToken =
+          data.refreshToken || data.refresh_token;
       }
 
       this.storeSession(this.state.session);
@@ -220,12 +225,14 @@ class SessionManager {
   logout(): void {
     // Notify server of logout
     if (this.state.session) {
-      fetch('/api/auth/logout', {
-        method: 'POST',
+      fetch("/api/auth/logout", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${this.state.session.token}`,
+          Authorization: `Bearer ${this.state.session.token}`,
         },
-      }).catch(err => console.error('Error notifying server of logout:', err));
+      }).catch((err) =>
+        console.error("Error notifying server of logout:", err),
+      );
     }
 
     // Clear local state
@@ -267,8 +274,8 @@ class SessionManager {
     const now = Date.now();
     const remainingMs = Math.min(
       this.state.session.expiresAt - now,
-      (SESSION_CONFIG.inactivityTimeoutSeconds * 1000) -
-        (now - this.state.session.lastActivityAt)
+      SESSION_CONFIG.inactivityTimeoutSeconds * 1000 -
+        (now - this.state.session.lastActivityAt),
     );
 
     return Math.max(0, Math.floor(remainingMs / 1000));
@@ -284,9 +291,12 @@ class SessionManager {
 
   private storeSession(session: Session): void {
     try {
-      sessionStorage.setItem(SESSION_CONFIG.sessionStorageKey, JSON.stringify(session));
+      sessionStorage.setItem(
+        SESSION_CONFIG.sessionStorageKey,
+        JSON.stringify(session),
+      );
     } catch (error) {
-      console.error('Failed to store session:', error);
+      console.error("Failed to store session:", error);
     }
   }
 
@@ -294,7 +304,7 @@ class SessionManager {
     try {
       sessionStorage.removeItem(SESSION_CONFIG.sessionStorageKey);
     } catch (error) {
-      console.error('Failed to clear stored session:', error);
+      console.error("Failed to clear stored session:", error);
     }
   }
 
@@ -303,7 +313,7 @@ class SessionManager {
       const stored = sessionStorage.getItem(SESSION_CONFIG.sessionStorageKey);
       if (stored) {
         const session: Session = JSON.parse(stored);
-        
+
         // Check if session is still valid
         if (Date.now() < session.expiresAt) {
           this.state.session = session;
@@ -315,7 +325,7 @@ class SessionManager {
         }
       }
     } catch (error) {
-      console.error('Failed to restore session:', error);
+      console.error("Failed to restore session:", error);
       this.clearStoredSession();
     }
   }
@@ -327,12 +337,14 @@ class SessionManager {
     const refreshDelay = SESSION_CONFIG.tokenRefreshIntervalSeconds * 1000;
 
     this.state.refreshTimer = setTimeout(() => {
-      this.refreshToken().then(() => {
-        // Restart refresh timer
-        this.startRefreshTimer();
-      }).catch(err => {
-        console.error('Token refresh failed:', err);
-      });
+      this.refreshToken()
+        .then(() => {
+          // Restart refresh timer
+          this.startRefreshTimer();
+        })
+        .catch((err) => {
+          console.error("Token refresh failed:", err);
+        });
     }, refreshDelay);
   }
 
@@ -342,7 +354,7 @@ class SessionManager {
     const inactivityDelay = SESSION_CONFIG.inactivityTimeoutSeconds * 1000;
 
     this.state.inactivityTimer = setTimeout(() => {
-      console.warn('Session expired due to inactivity');
+      console.warn("Session expired due to inactivity");
       this.logout();
     }, inactivityDelay);
   }
@@ -367,32 +379,42 @@ class SessionManager {
   }
 
   private notifyListeners(session: Session | null): void {
-    this.listeners.forEach(callback => {
+    this.listeners.forEach((callback) => {
       try {
         callback(session);
       } catch (error) {
-        console.error('Error in session listener:', error);
+        console.error("Error in session listener:", error);
       }
     });
   }
 
   private setupEventListeners(): void {
     // Track user activity
-    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    const activityEvents = [
+      "mousedown",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "click",
+    ];
 
-    activityEvents.forEach(event => {
-      document.addEventListener(event, () => {
-        this.updateActivity();
-      }, { passive: true });
+    activityEvents.forEach((event) => {
+      document.addEventListener(
+        event,
+        () => {
+          this.updateActivity();
+        },
+        { passive: true },
+      );
     });
 
     // Handle tab/window close
-    window.addEventListener('beforeunload', () => {
+    window.addEventListener("beforeunload", () => {
       // Could send logout signal here if needed
     });
 
     // Handle visibility changes (user switching tabs)
-    document.addEventListener('visibilitychange', () => {
+    document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         // User switched away - pause activity tracking
         this.clearInactivityTimer();
@@ -418,8 +440,12 @@ export function useSession(): {
   timeRemaining: number;
   logout: () => void;
 } {
-  const [session, setSession] = React.useState<Session | null>(sessionManager.getSession());
-  const [timeRemaining, setTimeRemaining] = React.useState(sessionManager.getTimeRemaining());
+  const [session, setSession] = React.useState<Session | null>(
+    sessionManager.getSession(),
+  );
+  const [timeRemaining, setTimeRemaining] = React.useState(
+    sessionManager.getTimeRemaining(),
+  );
 
   React.useEffect(() => {
     // Subscribe to session changes
@@ -445,4 +471,4 @@ export function useSession(): {
 }
 
 // Import React for hook (normally would be at top, but placed here for clarity)
-import React from 'react';
+import React from "react";
