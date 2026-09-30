@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Shield body -->
+  <path d="M16 2L4 7v9c0 6.627 5.144 11.96 12 13 6.856-1.04 12-6.373 12-13V7L16 2z" fill="#0a0a0a"/>
+  <!-- Lime accent top-right dot -->
+  <circle cx="26" cy="6" r="4" fill="#a3e635"/>
+  <!-- Document icon inside shield -->
+  <rect x="11" y="10" width="10" height="13" rx="1.5" fill="#a3e635" opacity="0.15"/>
+  <rect x="11" y="10" width="10" height="13" rx="1.5" stroke="#a3e635" stroke-width="1.2"/>
+  <!-- Document lines -->
+  <line x1="13.5" y1="14" x2="18.5" y2="14" stroke="#a3e635" stroke-width="1.1" stroke-linecap="round"/>
+  <line x1="13.5" y1="16.5" x2="18.5" y2="16.5" stroke="#a3e635" stroke-width="1.1" stroke-linecap="round"/>
+  <line x1="13.5" y1="19" x2="16.5" y2="19" stroke="#a3e635" stroke-width="1.1" stroke-linecap="round"/>
+  <!-- Dog-ear fold -->
+  <path d="M18.5 10v2.5H21" stroke="#a3e635" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

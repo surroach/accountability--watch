@@ -7,18 +7,25 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
+node_modules/
+
+# Build outputs
 dist
 dist-ssr
 .output
 .vinxi
 .tanstack/**
 .nitro
-*.local
-
-# Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+*.local
+
+# Environment files
+.env
+.env.local
+.env.*.local
 
 # Editor directories and files
 .vscode/*
@@ -30,3 +37,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Temporary files
+.trash/
+.lovable/
+TRASH_CLEANUP_SUMMARY.md
+
+# OS specific
+Thumbs.db
+*.pem
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Build artifacts
+.wrangler
+.tanstack

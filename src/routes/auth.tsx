@@ -26,8 +26,11 @@ function AuthPage() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/admin" });
+    // getUser() validates the JWT against Supabase Auth rather than just
+    // reading from localStorage.  This prevents a tampered or expired token
+    // stored in localStorage from silently bypassing the login screen.
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) navigate({ to: "/admin" });
     });
   }, [navigate]);
 

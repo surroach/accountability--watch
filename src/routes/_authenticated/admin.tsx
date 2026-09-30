@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Download, LogOut, RefreshCw, ShieldAlert, Eye } from "lucide-react";
+import { Download, LogOut, RefreshCw, ShieldAlert, Eye, AlertCircle, MapPin, Clock, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -33,6 +34,10 @@ type Report = {
   reporter_contact: string | null;
   status: "new" | "under_review" | "referred" | "closed";
   created_at: string;
+  urgent_flag?: boolean;
+  incident_type?: string | null;
+  submission_mode?: string;
+  is_moderated?: boolean;
 };
 
 type Evidence = {
@@ -43,6 +48,10 @@ type Evidence = {
   size_bytes: number | null;
   content_type: string | null;
   created_at: string;
+  gps_latitude?: number | null;
+  gps_longitude?: number | null;
+  gps_accuracy_meters?: number | null;
+  media_timestamp?: string | null;
 };
 
 const statuses = [
@@ -51,6 +60,17 @@ const statuses = [
   { value: "referred", label: "Referred to Legal Aid" },
   { value: "closed", label: "Closed" },
 ] as const;
+
+const INCIDENT_TYPE_LABELS: Record<string, string> = {
+  excessive_force: "Excessive Force",
+  unlawful_detention: "Unlawful Detention",
+  property_damage: "Property Damage",
+  harassment: "Harassment",
+  wrongful_arrest: "Wrongful Arrest",
+  illegal_search: "Illegal Search",
+  lack_of_due_process: "Lack of Due Process",
+  other: "Other",
+};
 
 function AdminPage() {
   const navigate = useNavigate();
@@ -233,7 +253,17 @@ function AdminPage() {
               <tr><td colSpan={5} className="p-10 text-center text-muted-foreground">No reports found.</td></tr>
             ) : filtered.map((r) => (
               <tr key={r.id} className="border-t border-border/60 hover:bg-muted/40">
-                <Td><span className="font-mono text-xs">{r.report_code}</span></Td>
+                <Td>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs">{r.report_code}</span>
+                    {r.urgent_flag && (
+                      <Badge variant="destructive" className="text-xs">
+                        <AlertCircle className="h-3 w-3 mr-1" />
+                        Urgent
+                      </Badge>
+                    )}
+                  </div>
+                </Td>
                 <Td>
                   <div>{new Date(r.incident_at).toLocaleString()}</div>
                   <div className="text-xs text-muted-foreground">{r.location_text}</div>
@@ -271,6 +301,37 @@ function AdminPage() {
                 <Detail label="Incident at">{new Date(open.incident_at).toLocaleString()}</Detail>
                 <Detail label="Location">{open.location_text}</Detail>
                 <Detail label="City">{open.city ?? "—"}</Detail>
+                {open.incident_type && (
+                  <Detail label="Incident Type">
+                    <Badge variant="secondary" className="text-xs">
+                      {INCIDENT_TYPE_LABELS[open.incident_type] || open.incident_type}
+                    </Badge>
+                  </Detail>
+                )}
+                {open.urgent_flag && (
+                  <Detail label="Priority">
+                    <Badge variant="destructive" className="text-xs font-semibold">
+                      🚨 URGENT
+                    </Badge>
+                  </Detail>
+                )}
+                {open.submission_mode && (
+                  <Detail label="Submission Mode">
+                    <Badge variant="outline" className="text-xs">
+                      {open.submission_mode === "anonymous" ? "Anonymous" : "Identified"}
+                    </Badge>
+                  </Detail>
+                )}
+                {open.is_moderated !== undefined && (
+                  <Detail label="Moderation Status">
+                    <Badge
+                      variant={open.is_moderated ? "default" : "secondary"}
+                      className="text-xs"
+                    >
+                      {open.is_moderated ? "✓ Moderated" : "Pending Moderation"}
+                    </Badge>
+                  </Detail>
+                )}
                 <Detail label="Description"><p className="whitespace-pre-wrap">{open.description}</p></Detail>
                 <Detail label="Injury details">{open.injury_details ?? "—"}</Detail>
                 <Detail label="Badge / unit (as reported, unverified)">
@@ -287,14 +348,34 @@ function AdminPage() {
                   ) : (
                     <ul className="mt-2 space-y-2">
                       {evidence.map((ev) => (
-                        <li key={ev.id} className="flex items-center justify-between rounded-xl border border-border/60 p-3">
-                          <div className="min-w-0">
-                            <p className="truncate font-mono text-xs">{ev.file_name}</p>
-                            <p className="truncate text-[10px] text-muted-foreground">SHA-256: {ev.sha256}</p>
+                        <li key={ev.id} className="flex flex-col gap-2 rounded-xl border border-border/60 p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0">
+                              <p className="truncate font-mono text-xs">{ev.file_name}</p>
+                              <p className="truncate text-[10px] text-muted-foreground">SHA-256: {ev.sha256}</p>
+                            </div>
+                            <Button size="sm" variant="outline" className="rounded-full" onClick={() => downloadEvidence(ev)}>
+                              <Download className="h-4 w-4" /> Open
+                            </Button>
                           </div>
-                          <Button size="sm" variant="outline" className="rounded-full" onClick={() => downloadEvidence(ev)}>
-                            <Download className="h-4 w-4" /> Open
-                          </Button>
+                          {(ev.gps_latitude || ev.media_timestamp) && (
+                            <div className="text-xs text-muted-foreground space-y-1 border-t border-border/30 pt-2">
+                              {ev.gps_latitude && ev.gps_longitude && (
+                                <div className="flex items-center gap-1">
+                                  <MapPin className="h-3.5 w-3.5" />
+                                  <span>GPS: {ev.gps_latitude.toFixed(4)}°, {ev.gps_longitude.toFixed(4)}°</span>
+                                </div>
+                              )}
+                              {ev.media_timestamp && (
+                                <div className="flex items-center gap-1">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  <span>
+                                    {new Date(ev.media_timestamp).toLocaleString()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </li>
                       ))}
                     </ul>

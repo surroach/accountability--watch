@@ -13,24 +13,11 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-function Sparkle({ className = "" }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
-      <path d="M12 2l2 8 8 2-8 2-2 8-2-8-8-2 8-2 2-8z" fill="currentColor" />
-    </svg>
-  );
-}
-
 function Home() {
   return (
     <div className="mx-auto max-w-6xl px-5">
-      {/* Hero */}
-      <section className="relative py-16 md:py-24 text-center">
-        <Sparkle className="absolute left-6 top-10 h-5 w-5 text-lime" />
-        <Sparkle className="absolute right-10 top-24 h-4 w-4 text-lime" />
-        <span className="absolute right-20 top-8 h-2 w-2 rounded-full bg-ink" />
-        <span className="absolute left-16 bottom-8 h-2 w-2 rounded-full bg-ink" />
-
+      {/* Hero — single primary action, nothing competing above the fold */}
+      <section className="py-14 md:py-20 text-center">
         <p className="mb-5 inline-block font-display text-xs uppercase tracking-widest">
           <span className="highlight-lime">Civil-rights accountability</span>
         </p>
@@ -42,44 +29,54 @@ function Home() {
           A private, timestamped record of alleged police misconduct at protests — for legal aid,
           civil-rights groups, and journalists working in aggregate. Not for public identification.
         </p>
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+
+        {/* Single unmistakable primary CTA */}
+        <div className="mt-10">
           <Link
             to="/report"
-            className="inline-flex items-center gap-2 rounded-full bg-ink px-6 py-3 font-display text-sm font-semibold text-ink-foreground hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-full bg-ink px-8 py-4 font-display text-base font-semibold text-ink-foreground hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
-            File a report <ArrowRight className="h-4 w-4" />
+            Report an incident <ArrowRight className="h-5 w-5" />
           </Link>
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2 rounded-full border-2 border-ink px-6 py-3 font-display text-sm font-semibold hover:bg-lime"
-          >
-            See public data
+          <p className="mt-4 text-sm text-muted-foreground">
+            Takes about 3 minutes. Anonymous by default. No account required.
+          </p>
+        </div>
+
+        {/* Secondary navigation — below the fold trigger, visually quiet */}
+        <div className="mt-6 flex items-center justify-center gap-5">
+          <Link to="/dashboard" className="font-display text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            View public data
+          </Link>
+          <span className="text-border" aria-hidden>·</span>
+          <Link to="/about" className="font-display text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            How this works
           </Link>
         </div>
 
         {/* Partner strip */}
-        <div className="mt-14 border-y border-border/60 py-6">
+        <div className="mt-12 border-y border-border/60 py-5">
           <p className="font-display text-xs uppercase tracking-widest text-muted-foreground">
             Working with legal aid & civil-rights partners
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 font-display text-sm text-muted-foreground/80">
+          <div className="mt-3 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 font-display text-sm text-muted-foreground/80">
             <span>PUCL</span>
-            <span>·</span>
+            <span aria-hidden>·</span>
             <span>HRLN</span>
-            <span>·</span>
+            <span aria-hidden>·</span>
             <span>Amnesty</span>
-            <span>·</span>
+            <span aria-hidden>·</span>
             <span>CPA</span>
-            <span>·</span>
+            <span aria-hidden>·</span>
             <span>SHRC</span>
-            <span>·</span>
+            <span aria-hidden>·</span>
             <span>Legal Aid Network</span>
           </div>
         </div>
       </section>
 
       {/* How it works */}
-      <section className="py-16">
+      <section className="py-14">
         <div className="mb-10 text-center">
           <p className="font-display text-xs uppercase tracking-widest">
             <span className="highlight-lime">How it works</span>
@@ -122,7 +119,7 @@ function Home() {
       </section>
 
       {/* Boundaries */}
-      <section className="my-12 rounded-4xl border-2 border-ink bg-lime p-8 md:p-12">
+      <section className="my-10 rounded-4xl border-2 border-ink bg-lime p-8 md:p-12">
         <p className="font-display text-xs uppercase tracking-widest">
           <span className="rounded-md bg-ink px-2 py-1 text-ink-foreground">Our boundaries</span>
         </p>
@@ -150,7 +147,7 @@ function Home() {
             Anonymized counts by location and date. Journalists and researchers can see patterns
             without exposing individuals — on either side of an incident.
           </p>
-          <Link to="/dashboard" className="mt-5 inline-flex items-center gap-1 font-display text-sm underline">
+          <Link to="/dashboard" className="mt-5 inline-flex items-center gap-1 font-display text-sm underline underline-offset-4">
             View dashboard <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
@@ -163,14 +160,14 @@ function Home() {
             Signed-in legal aid organisations can view full case detail, update status, and export
             data for referral. Access is logged and auditable.
           </p>
-          <Link to="/auth" className="mt-5 inline-flex items-center gap-1 font-display text-sm text-lime underline">
+          <Link to="/auth" className="mt-5 inline-flex items-center gap-1 font-display text-sm text-lime underline underline-offset-4">
             Partner sign-in <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="my-16 text-center">
+      {/* Bottom CTA — reinforces the top without adding noise */}
+      <section className="my-14 text-center">
         <h2 className="font-display text-3xl font-bold md:text-4xl">
           Have something to <span className="highlight-lime">report?</span>
         </h2>
@@ -179,9 +176,9 @@ function Home() {
         </p>
         <Link
           to="/report"
-          className="mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3 font-display font-semibold text-ink-foreground hover:opacity-90"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-ink px-8 py-4 font-display text-base font-semibold text-ink-foreground hover:opacity-90"
         >
-          File a report <ArrowRight className="h-4 w-4" />
+          Report an incident <ArrowRight className="h-5 w-5" />
         </Link>
       </section>
     </div>
