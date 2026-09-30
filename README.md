@@ -1,8 +1,8 @@
 # 🛡️ Accountability Watch
 
-**Civic tech platform for documenting police misconduct at protests.**
+**A civic technology platform for documenting alleged police misconduct at protests.**
 
-Secure anonymous incident reporting system with legal aid integration. Built with TypeScript, SQLite, and comprehensive security controls.
+Accountability Watch enables anonymous incident reporting with role-based moderation and secure evidence storage. Built for legal aid organizations, civil-rights researchers, and journalists.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
@@ -10,340 +10,492 @@ Secure anonymous incident reporting system with legal aid integration. Built wit
 
 ---
 
-## 📚 Quick Navigation
+## 📖 Contents
 
-**Just getting started?**
-→ Read [`docs/START_HERE.md`](./docs/START_HERE.md) (5 min read)
+- [What is Accountability Watch?](#what-is-accountability-watch)
+- [Features](#features)
+- [How it works](#how-it-works)
+- [Getting started](#getting-started)
+- [Technology stack](#technology-stack)
+- [Architecture](#architecture)
+- [Database](#database)
+- [Security](#security)
+- [Testing](#testing)
+- [Documentation](#documentation)
+- [Limitations](#limitations)
+- [Development](#development)
+- [License](#license)
 
-**Want to understand the architecture?**
-→ Read [`docs/PROJECT_STRUCTURE.md`](./docs/PROJECT_STRUCTURE.md) (folder layout)
+---
 
-**Need integration examples?**
-→ Read [`docs/PHASE_2_3_INTEGRATION_GUIDE.md`](./docs/PHASE_2_3_INTEGRATION_GUIDE.md)
+## What is Accountability Watch?
 
-**Preparing for college defense?**
-→ Read [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md)
+Accountability Watch is a web-based platform designed to collect and securely store documentation of alleged police misconduct during protests. 
 
-**Ready to deploy?**
-→ Read [`docs/PRODUCTION_DEPLOYMENT.md`](./docs/PRODUCTION_DEPLOYMENT.md)
+**The problem it addresses:**
+- Incidents at protests often go undocumented, making it difficult for legal aid organizations to investigate allegations
+- Evidence can be lost, photos deleted, or details forgotten
+- Individuals reporting misconduct face safety and privacy concerns
+- There is no centralized, anonymous way for civil-rights researchers and journalists to track patterns
 
-**Full documentation?**
-→ Browse [`docs/README.md`](./docs/README.md)
+**Who it's for:**
+- **Citizens & Witnesses**: Document incidents privately without identification
+- **Legal Aid Partners**: Access vetted reports for investigation and legal referral
+- **Civil-Rights Researchers**: Analyze aggregate incident data (anonymized)
+- **Journalists**: Track patterns of misconduct across time and location
+- **Administrators**: Moderate reports and manage the platform
 
-## 🚀 Quick Start
+**What it does:**
+1. Accepts anonymous incident reports with evidence (photos, videos)
+2. Stores reports privately in a secure database with cryptographic integrity verification
+3. Provides role-based access for moderation and review
+4. Allows legal partners to export cases for referral
+5. Publishes aggregate, anonymized statistics
+
+---
+
+## Features
+
+### For Reporters
+- 📝 **Anonymous Submission** - No account or login required
+- 📸 **Evidence Upload** - Attach photos, videos, documents (SHA-256 verification)
+- 🕐 **Automatic Timestamping** - Records exact incident time and date
+- 🔒 **Privacy by Default** - Personal information encrypted and not exposed
+- 🔍 **Report Tracking** - Check report status without account
+
+### For Legal Partners
+- ✅ **Moderation Queue** - Review pending reports
+- 📋 **Case Details** - Full incident information, evidence, timelines
+- 🔐 **Secure Access** - Role-based authorization
+- 📤 **Export & Referral** - Download cases for legal action
+- 📊 **Incident Analytics** - View trends and patterns
+
+### For Administrators
+- 🎛️ **Dashboard** - System overview and metrics
+- 👥 **User Management** - Role assignment and access control
+- 🔧 **Configuration** - System settings and moderation rules
+- 📋 **Audit Log** - Complete record of all platform actions
+- 📈 **Performance Monitoring** - Query optimization and system health
+
+### Technical Features
+- 🔍 **Full-Text Search** - SQLite FTS5 for finding reports by keywords
+- 🛡️ **Rate Limiting** - Protection against brute-force attacks
+- 🔐 **Encryption** - AES-256-GCM for sensitive personal data
+- ⏱️ **Session Management** - 15-minute timeout with auto-refresh
+- 📊 **Query Performance Monitoring** - Database optimization insights
+- 🔄 **Duplicate Detection** - Identifies potential duplicate reports
+- 📅 **Automated Data Retention** - GDPR-compliant cleanup policies
+- 💾 **Atomic Transactions** - Ensures data consistency
+
+---
+
+## How It Works
+
+```
+┌─────────────────┐
+│  Citizen/Witness│
+└────────┬────────┘
+         │
+         ▼ Anonymous report + evidence
+┌──────────────────────────┐
+│  Report Submission Form  │
+│ (No login required)      │
+└────────┬─────────────────┘
+         │
+         ▼ Validate & store
+┌──────────────────────────┐
+│  SQLite Database         │
+│  (Encrypted fields)      │
+└────────┬─────────────────┘
+         │
+         ├──────────────────────┐
+         │                      │
+         ▼ (if claimed)         ▼ (public access)
+   ┌──────────────┐        ┌─────────────────┐
+   │ Legal Partner│        │ Dashboard       │
+   │ (Moderation) │        │ (Aggregate data)│
+   └──────────────┘        └─────────────────┘
+```
+
+**Report lifecycle:**
+1. **Submission**: User files anonymous report (3 min, no account)
+2. **Storage**: Report encrypted, timestamped, hashed for integrity
+3. **Moderation**: Legal partners review and approve/reject
+4. **Tracking**: User can check status via report code
+5. **Referral**: Legal team exports approved cases
+6. **Analytics**: Aggregate statistics published publicly (anonymized)
+
+---
+
+## Getting Started
 
 ### Prerequisites
-- Node.js 18+
-- npm or yarn
+- **Node.js** 18 or later
+- **npm** or **yarn**
 
-### Setup
+### Installation
 
 ```bash
-# 1. Install dependencies
+# Clone the repository
+git clone https://github.com/surroach/accountability-watch.git
+cd accountability-watch
+
+# Install dependencies
 npm install
 
-# 2. Configure environment
-cp config/.env.example .env
-# Edit .env with your settings
+# Create environment file
+cp .env.example .env
+# Edit .env with your configuration
 
-# 3. Start development server
+# Start development server
 npm run dev
-# Opens at http://localhost:8080
-
-# 4. Run tests
-npm run test
 ```
 
----
+The application opens at `http://localhost:5173`
 
-## 📊 What's Included
+### Environment Setup
 
-### 6 Core Security & Performance Modules
-✅ **Full-Text Search** - SQLite FTS5 semantic search  
-✅ **Rate Limiting** - Token bucket brute-force protection  
-✅ **Encryption** - AES-256-GCM for sensitive data  
-✅ **Session Management** - 15-min timeout, auto-refresh  
-✅ **Data Retention** - GDPR-compliant cleanup  
-✅ **Performance Monitoring** - Query analysis & optimization  
+See `.env.example` for required variables. Key configuration:
+- `VITE_SUPABASE_URL` - Backend service URL (optional - for legal partner access)
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Frontend authentication key (optional)
+- `VITE_QUICK_EXIT_URL` - Quick exit button destination
 
-### Admin Features
-✅ **Authorization Layer** - Role-based access control (4 roles)  
-✅ **Audit Dashboard** - Real-time event tracking & compliance  
-
-### Test Coverage
-✅ **50+ Test Cases** - Comprehensive test suites  
-✅ **1,400+ Lines** - Thoroughly tested edge cases  
-
-### Documentation
-✅ **1,400+ Lines** - Comprehensive guides  
-✅ **Integration Examples** - How to use each module  
-✅ **Deployment Guide** - Production ready checklist  
+All environment variables are optional for local development with SQLite.
 
 ---
 
-## 📁 Project Structure
+## Technology Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Frontend** | React 19 + TanStack Start | SSR UI framework |
+| **Styling** | Tailwind CSS | Responsive design |
+| **Language** | TypeScript 5+ | Type-safe code |
+| **Database** | SQLite | Local persistent storage |
+| **Authentication** | Role-based (Admin, Legal, Moderator) | Access control |
+| **UI Components** | Radix UI | Accessible component library |
+| **Forms** | React Hook Form + Zod | Form validation |
+| **Testing** | Vitest | Unit test framework |
+| **Build** | Vite | Fast development & production build |
+
+---
+
+## Architecture
+
+### System Overview
 
 ```
-src/lib/              # 6 core modules (1,980 lines)
-src/middleware/       # Authorization layer (340 lines)
-src/routes/          # Pages & components
-tests/               # 50+ comprehensive tests (1,400 lines)
-docs/                # Complete documentation (1,400+ lines)
-db/                  # Database schema
-supabase/            # Supabase configuration
+┌─────────────────────────────────────────────────────┐
+│ Client Browser                                       │
+│ (React SPA - TanStack Start)                         │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼ HTTP/HTTPS
+┌─────────────────────────────────────────────────────┐
+│ Application Server (TanStack Start)                  │
+│                                                      │
+│ ┌──────────────────────────────────────────────┐   │
+│ │ Routes                                       │   │
+│ │ • / - Home                                   │   │
+│ │ • /report - Anonymous submission             │   │
+│ │ • /dashboard - Public statistics             │   │
+│ │ • /admin/* - Admin & legal partner tools    │   │
+│ └──────────────────────────────────────────────┘   │
+│                                                      │
+│ ┌──────────────────────────────────────────────┐   │
+│ │ Middleware Layer                             │   │
+│ │ • Authentication & Authorization (RBAC)      │   │
+│ │ • Rate limiting                              │   │
+│ │ • Session management                         │   │
+│ │ • Audit logging                              │   │
+│ └──────────────────────────────────────────────┘   │
+│                                                      │
+│ ┌──────────────────────────────────────────────┐   │
+│ │ Business Logic (src/lib/)                    │   │
+│ │ • Encryption/Decryption                      │   │
+│ │ • Full-text search                           │   │
+│ │ • Duplicate detection                        │   │
+│ │ • Performance monitoring                      │   │
+│ │ • Data retention policies                     │   │
+│ │ • Transaction management                      │   │
+│ └──────────────────────────────────────────────┘   │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼ SQL/SQLite
+┌─────────────────────────────────────────────────────┐
+│ SQLite Database                                      │
+│ (Local file-based storage)                           │
+│                                                      │
+│ Tables:                                              │
+│ • incident_reports                                   │
+│ • report_evidence                                    │
+│ • report_status_history                              │
+│ • user_roles                                         │
+│ • audit_log                                          │
+└─────────────────────────────────────────────────────┘
 ```
 
-👉 See [`docs/PROJECT_STRUCTURE.md`](./docs/PROJECT_STRUCTURE.md) for detailed folder layout.
+### Key Components
+
+- **Routes** (`src/routes/`) - Page components and endpoints
+- **Middleware** (`src/middleware/`) - Authentication, authorization, rate limiting
+- **Libraries** (`src/lib/`) - Business logic and security functions
+- **Hooks** (`src/hooks/`) - React hooks for state management
+- **Components** (`src/components/`) - Reusable UI components
 
 ---
 
-## ⚡ Key Statistics
+## Database
 
-| Metric | Value |
-|--------|-------|
-| **Lines of Code** | 5,580+ |
-| **Test Cases** | 50+ |
-| **TypeScript** | 100% |
-| **ESLint Errors** | 0 |
-| **Test Coverage** | Comprehensive |
-| **Security Level** | Enterprise Grade |
-| **GDPR Compliant** | ✅ Yes |
-| **Production Ready** | ✅ Yes |
+Accountability Watch uses **SQLite** for persistent storage. This provides:
+- ✅ No external database infrastructure required
+- ✅ ACID transactions for data consistency
+- ✅ Full-text search (FTS5) for semantic queries
+- ✅ Simple file-based backups
+
+### Schema Overview
+
+**incident_reports**
+- Core table for incident documentation
+- Fields: location, description, injury details, timestamp, status
+- Foreign key relationships to evidence and history
+
+**report_evidence**
+- Stores metadata about uploaded files
+- Fields: filename, content type, SHA-256 hash, GPS data
+- Maintains referential integrity to incident_reports
+
+**report_status_history**
+- Audit trail of status changes
+- Tracks moderation decisions and timestamps
+- Links to user roles for accountability
+
+**user_roles**
+- Permission assignments (admin, legal_partner, moderator)
+- Maps users to access levels
+
+**audit_log**
+- Complete record of all system actions
+- Tracks who did what and when
+- Essential for compliance
+
+See [`docs/DATABASE.md`](./docs/DATABASE.md) for complete schema documentation with ER diagram.
 
 ---
 
-## 🔐 Security Features
+## Security
 
 ### Data Protection
-- 🔒 **AES-256-GCM Encryption** (NIST approved)
-- 🔐 **PBKDF2 Key Derivation** (100k iterations)
-- 🛡️ **Sensitive Field Encryption** (PII protection)
-- ✅ **Field-Level Hashing** (searchable encryption)
+
+- **AES-256-GCM Encryption**: Sensitive fields (reporter contact, witness info) encrypted at rest
+- **Cryptographic Hashing**: SHA-256 for evidence file integrity verification
+- **PBKDF2 Key Derivation**: 100,000 iterations for password-based encryption
 
 ### Access Control
-- 👤 **Role-Based Authorization** (Admin, Legal, Moderator, User)
-- 🔑 **Permission Verification** (every endpoint)
-- 🚫 **Rate Limiting** (5 login attempts/15 min)
-- 📋 **Complete Audit Trail** (2-year retention)
 
-### Compliance
-- ✅ **GDPR Compliant** (right to erasure)
-- 📊 **Automatic Data Cleanup** (retention policies)
-- 🔍 **Comprehensive Logging** (all actions tracked)
-- 📅 **Automatic Anonymization** (personal data removal)
+- **Role-Based Authorization**: Admin, Legal Partner, Moderator roles with granular permissions
+- **Session Management**: 15-minute inactivity timeout with auto-refresh
+- **Rate Limiting**: Token bucket algorithm prevents brute-force attacks (5 attempts per 15 min)
+- **Audit Logging**: Every action recorded with user and timestamp
+
+### Data Privacy
+
+- **Anonymous by Default**: Reports can be submitted without identification
+- **Encrypted Personal Data**: Contact information not stored in plaintext
+- **Data Retention Policies**: Automatic anonymization and deletion per GDPR principles
+- **No Public Exposure**: Individual reporter details never exposed publicly
+
+### Input Validation
+
+- Form validation using Zod schemas
+- SQL injection prevention via parameterized queries
+- File upload validation (type, size, metadata)
 
 ---
 
-## 🧪 Testing
+## Testing
 
-### Run All Tests
+### Test Suites
+
 ```bash
+# Run all tests
 npm run test
-```
 
-### Run Specific Test Suite
-```bash
+# Run specific suite
 npm run test -- tests/encryption.test.ts
 npm run test -- tests/rate-limiter.test.ts
 npm run test -- tests/db-transactions.test.ts
 npm run test -- tests/duplicate-detection.test.ts
-```
+npm run test -- tests/auth-flow.test.ts
 
-### Watch Mode
-```bash
+# Watch mode
 npm run test -- --watch
+
+# Coverage
+npm run test -- --coverage
 ```
 
-**Test Suites:**
-- 🔐 Encryption tests (18 cases) - AES-256-GCM, key derivation
-- ⏱️ Rate limiting tests (20 cases) - Token bucket, isolation
-- 💾 Transaction tests (15 cases) - Atomicity, rollback
-- 🔍 Duplicate detection tests (25+ cases) - Similarity scoring
+### Test Coverage
+
+- **Encryption** (18 cases) - AES-256-GCM, key derivation, tampering detection
+- **Rate Limiting** (20 cases) - Token bucket, concurrent requests, isolation
+- **Database Transactions** (15 cases) - Atomicity, rollback, multi-table consistency
+- **Duplicate Detection** (25+ cases) - Similarity scoring, edge cases
+- **Auth Flow** (8 cases) - Authorization, permission checks
+
+Total: **85+ test cases** covering core functionality
 
 ---
 
-## 📊 Available Commands
-
-```bash
-# Development
-npm run dev              # Start dev server
-npm run build           # Build for production
-npm run preview         # Preview production build
-
-# Quality
-npm run lint            # Check code quality
-npm run format          # Auto-format code
-npm run test            # Run all tests
-npm run test -- --watch # Watch mode
-
-# Production
-npm run build
-npm run preview
-```
-
----
-
-## 🏛️ Technology Stack
-
-| Technology | Purpose |
-|-----------|---------|
-| **TanStack Start** | React SSR framework |
-| **React 19** | UI library |
-| **TypeScript** | Type safety |
-| **Tailwind CSS** | Styling |
-| **Supabase** | Backend & database |
-| **SQLite** | Local database |
-| **Vitest** | Testing framework |
-
----
-
-## 📚 Documentation
-
-All documentation is in `docs/` folder:
+## Documentation
 
 | Document | Purpose |
 |----------|---------|
-| [`docs/START_HERE.md`](./docs/START_HERE.md) | Quick orientation |
+| [`docs/START_HERE.md`](./docs/START_HERE.md) | 5-minute quick start |
 | [`docs/PROJECT_STRUCTURE.md`](./docs/PROJECT_STRUCTURE.md) | Folder organization |
-| [`docs/IMPLEMENTATION_COMPLETE.md`](./docs/IMPLEMENTATION_COMPLETE.md) | Full project details |
-| [`docs/PHASE_2_3_INTEGRATION_GUIDE.md`](./docs/PHASE_2_3_INTEGRATION_GUIDE.md) | Integration examples |
-| [`docs/PRODUCTION_DEPLOYMENT.md`](./docs/PRODUCTION_DEPLOYMENT.md) | Production checklist |
-| [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md) | Viva preparation |
-| [`docs/DEEP_TECHNICAL_AUDIT.md`](./docs/DEEP_TECHNICAL_AUDIT.md) | Original audit findings |
-| [`docs/FINAL_CHECKLIST.md`](./docs/FINAL_CHECKLIST.md) | Submission checklist |
-
-👉 See [`docs/README.md`](./docs/README.md) for complete documentation index.
+| [`docs/DATABASE.md`](./docs/DATABASE.md) | Schema, relationships, queries |
+| [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md) | System design and data flow |
+| [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md) | Viva/defense preparation |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Development guidelines |
+| [`SECURITY.md`](./SECURITY.md) | Vulnerability reporting |
 
 ---
 
-## ✨ Core Features
+## Limitations
 
-### For Citizens
-📝 **Anonymous Reporting** - Submit without login  
-📸 **Evidence Upload** - Photos, videos, documents  
-⏰ **Auto Timestamping** - Exact incident time  
-🔍 **Report Tracking** - Check status anytime  
+### By Design
 
-### For Legal Partners
-✔️ **Moderation Queue** - Review & approve reports  
-📊 **Incident Details** - Complete information  
-🔒 **Lawyer-Only Access** - Secure viewing  
-📋 **Batch Actions** - Handle multiple reports  
+This is a **college Computer Science project**, not a production civic infrastructure system. Important limitations:
 
-### For Admins
-📊 **Full Dashboard** - All reports with metrics  
-👥 **User Management** - Access control  
-🔧 **System Configuration** - Setup & settings  
-📈 **Analytics** - Trends & statistics  
+- **No Deployed Instance**: This is local/research software, not a live public service
+- **SQLite Only**: Single-file database suitable for research, not distributed deployments
+- **Manual Moderation**: No automated machine learning for report classification
+- **Limited Scale**: Not designed for millions of concurrent users
+- **Research Use**: Designed for academic study, not real-world incident collection
 
-### Admin Tools (Phase 2 & 3)
-🔍 **Full-Text Search** - Find reports instantly  
-🛡️ **Rate Limiting** - Prevent abuse  
-🔐 **Data Encryption** - Protect PII  
-📋 **Audit Dashboard** - Track all actions  
-📊 **Performance Monitoring** - Optimize queries  
+### Known Constraints
 
----
+- Evidence storage is filesystem-based (no cloud integration)
+- No built-in notification system for legal partners
+- Moderation workflow is basic (approve/reject only)
+- Analytics are retrospective, not real-time
+- No mobile-optimized interface (responsive web only)
 
-## 🔒 Security Audit Results
+### This is Appropriate For
 
-✅ **Zero Critical Vulnerabilities**  
-✅ **AES-256-GCM Encryption** (NIST approved)  
-✅ **Rate Limiting** (brute-force protection)  
-✅ **Session Management** (hijacking prevention)  
-✅ **Role-Based Access Control** (authorization)  
-✅ **Audit Logging** (compliance trail)  
-✅ **GDPR Compliance** (data protection)  
-✅ **Input Validation** (SQL injection prevention)  
-✅ **CORS Protection** (cross-site attacks)  
-✅ **Security Headers** (client-side protection)  
+✅ College submissions and defense  
+✅ Research and academic study  
+✅ Prototype and proof-of-concept  
+✅ Understanding civic tech design  
+✅ Learning security patterns  
+✅ Demonstrating TypeScript best practices  
+
+This is **NOT** meant to replace actual incident reporting systems used by real civil-rights organizations.
 
 ---
 
-## 🚀 Deployment
+## Development
 
-### Supported Platforms
-- ✅ Cloudflare Workers
-- ✅ Vercel
-- ✅ Netlify
-- ✅ AWS Lambda
-- ✅ Any serverless platform
+### Available Scripts
 
-### Deployment Checklist
-See [`docs/PRODUCTION_DEPLOYMENT.md`](./docs/PRODUCTION_DEPLOYMENT.md) for:
-- Pre-deployment verification
-- Environment setup
-- Security hardening
-- Monitoring configuration
-- Disaster recovery
+```bash
+npm run dev       # Start development server
+npm run build     # Build for production
+npm run preview   # Preview production build
+npm run lint      # Check code quality
+npm run format    # Auto-format code
+npm run test      # Run tests
+```
 
----
+### Code Quality
 
-## 🎓 For College Project
+- **TypeScript**: 100% type coverage, zero `any` types
+- **ESLint**: Configured with strict rules
+- **Prettier**: Consistent formatting
+- **Tests**: 85+ test cases
 
-This is a BSc Computer Science project with:
-- Full implementation with TypeScript
-- Comprehensive test coverage
-- Complete documentation
-- Production deployment guide
-- College defense guide included
+### Project Structure
 
-👉 Start with [`docs/START_HERE.md`](./docs/START_HERE.md) then see [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md).
+```
+src/
+├── routes/           # Page components
+├── components/       # Reusable UI components
+├── lib/             # Business logic
+├── middleware/      # Auth, rate limiting
+├── hooks/           # React hooks
+└── integrations/    # Third-party integrations
 
----
+docs/
+├── DATABASE.md      # Schema documentation
+├── ARCHITECTURE.md  # System design
+├── COLLEGE_DEFENSE_GUIDE.md
+└── ...
 
-## 📞 Support & Resources
+tests/
+├── encryption.test.ts
+├── rate-limiter.test.ts
+├── db-transactions.test.ts
+├── duplicate-detection.test.ts
+└── auth-flow.test.ts
 
-**Getting Started**
-→ [`docs/START_HERE.md`](./docs/START_HERE.md)
-
-**Understanding Code**
-→ [`docs/PROJECT_STRUCTURE.md`](./docs/PROJECT_STRUCTURE.md)
-
-**Integration Help**
-→ [`docs/PHASE_2_3_INTEGRATION_GUIDE.md`](./docs/PHASE_2_3_INTEGRATION_GUIDE.md)
-
-**College Submission**
-→ [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md)
-
-**Production Deployment**
-→ [`docs/PRODUCTION_DEPLOYMENT.md`](./docs/PRODUCTION_DEPLOYMENT.md)
-
-**Full Documentation**
-→ [`docs/README.md`](./docs/README.md)
+db/
+└── schema.sql       # SQLite schema
+```
 
 ---
 
-## 📄 License
+## Troubleshooting
 
-MIT License - see [`LICENSE`](LICENSE) file.
+### Dependencies Won't Install
 
----
+```bash
+# Clear cache and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
 
-## 🎯 Status
+### Tests Fail
 
-✅ **Phase 1** - Complete (core platform)  
-✅ **Phase 2** - Complete (security & performance)  
-✅ **Phase 3** - Complete (enterprise features)  
-✅ **Testing** - Complete (50+ test cases)  
-✅ **Documentation** - Complete (1,400+ lines)  
-✅ **Production Ready** - YES  
+Ensure Node.js 18+ is installed:
+```bash
+node --version
+```
 
----
+###Port Already in Use
 
-## 👥 Contributing
-
-We welcome contributions! Please:
-1. Fork the repository
-2. Create a feature branch
-3. Write tests for your changes
-4. Update documentation
-5. Submit a pull request
-
-See code comments and `docs/` for guidelines.
+Development server defaults to port 5173. To change:
+```bash
+npm run dev -- --port 3000
+```
 
 ---
 
-**Start here**: [`docs/START_HERE.md`](./docs/START_HERE.md)
+## College Project Information
 
-**Status**: ✅ Production Ready | Ready for College ✓ | Fully Documented ✓
+**Project Type**: BSc Computer Science  
+**Focus**: Civic technology, security, data protection  
+**Duration**: Multi-phase implementation  
+**Key Concepts Demonstrated**:
+- Full-stack TypeScript application
+- Cryptographic security (encryption, hashing)
+- Database design and optimization
+- Role-based authorization patterns
+- Comprehensive testing practices
+- Professional documentation
+
+**Defense Topics**:
+- Why SQLite for this use case
+- Security design decisions (AES-256-GCM, rate limiting)
+- Database optimization (indexes, transactions)
+- Testing strategy for security-sensitive code
+- Limitations and future improvements
+
+See [`docs/COLLEGE_DEFENSE_GUIDE.md`](./docs/COLLEGE_DEFENSE_GUIDE.md) for detailed viva preparation.
+
+---
+
+## License
+
+MIT License - See [`LICENSE`](./LICENSE) file for details.
+
+This project is provided as-is for educational and research purposes.
