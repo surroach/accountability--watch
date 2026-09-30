@@ -2,14 +2,11 @@
 
 **Civic tech platform for documenting police misconduct at protests.**
 
-A secure, transparent, and anonymous incident reporting system with legal aid integration. Enterprise-grade security. GDPR compliant. Production-ready.
+Secure anonymous incident reporting system with legal aid integration. Built with TypeScript, SQLite, and comprehensive security controls.
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/typescript-5.0+-blue)](https://www.typescriptlang.org/)
-[![Status](https://img.shields.io/badge/status-production%20ready-brightgreen)]()
-[![Tests](https://img.shields.io/badge/tests-50%2B%20passing-brightgreen)]()
-[![Security](https://img.shields.io/badge/security-enterprise%20grade-brightgreen)]()
 
 ---
 
