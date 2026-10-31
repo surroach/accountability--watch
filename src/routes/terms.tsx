@@ -7,9 +7,13 @@ export const Route = createFileRoute("/terms")({
       { title: "Terms of Use — Accountability Watch" },
       {
         name: "description",
-        content: "Legal terms and conditions for using Accountability Watch.",
+        content: "Terms of use for this prototype platform. Should be reviewed by legal counsel before production deployment.",
       },
       { property: "og:title", content: "Terms of Use — Accountability Watch" },
+      {
+        property: "og:description",
+        content: "Terms of use. Prototype version—not legal advice.",
+      },
     ],
   }),
   component: TermsPage,
@@ -148,22 +152,24 @@ function TermsPage() {
             <>
               <p>
                 Please review our Data Policy & Transparency page for details on
-                how we collect, store, and share your information.
+                how we handle information in this prototype.
               </p>
               <p className="mt-3">By submitting, you consent to:</p>
               <ul className="mt-2 ml-4 space-y-1">
                 <li>
-                  • Sharing your report with verified legal partners and civil
-                  rights organizations
+                  • Storage of your report in this prototype system
                 </li>
                 <li>
-                  • Use of anonymized aggregate data for public statistics and
-                  research
+                  • Potential access by platform administrators
                 </li>
                 <li>
-                  • Retention of your report as described in our data policy
+                  • Use of anonymized aggregate data for research and statistics
                 </li>
               </ul>
+              <p className="mt-3 text-sm text-muted-foreground italic">
+                Note: This prototype does not yet have verified partner integrations or automated legal aid routing.
+                Data handling details are subject to change based on backend implementation and legal requirements.
+              </p>
             </>
           }
         />
@@ -264,10 +270,10 @@ function TermsPage() {
           title="Governing Law"
           content={
             <>
-              <p>
-                These terms are governed by the laws of [Your Jurisdiction]. Any
-                disputes shall be resolved in the courts of [Your Jurisdiction],
-                and you consent to personal jurisdiction there.
+              <p className="text-sm text-muted-foreground italic">
+                These terms are template language. Actual governing law and dispute resolution procedures
+                should be determined by the project owner based on their jurisdiction and legal counsel review
+                before deployment.
               </p>
             </>
           }
@@ -298,8 +304,11 @@ function TermsPage() {
           title="Contact"
           content={
             <>
-              <p>For questions about these terms, contact us at:</p>
-              <p className="mt-2 font-mono">legal@accountability-watch.org</p>
+              <p>For questions about these terms, contact the project owner or administrator.</p>
+              <p className="mt-3 text-sm text-muted-foreground italic">
+                A permanent contact address and legal review process should be established before this platform
+                is deployed to production.
+              </p>
             </>
           }
         />

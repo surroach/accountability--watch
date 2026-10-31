@@ -8,13 +8,13 @@ export const Route = createFileRoute("/resources")({
       {
         name: "description",
         content:
-          "Human-rights lawyers, state complaint bodies, and mental-health hotlines for people affected by police misconduct.",
+          "Directory of legal aid, human rights organizations, and mental health support. This prototype does not replace contacting authorities directly.",
       },
       { property: "og:title", content: "Resources — Accountability Watch" },
       {
         property: "og:description",
         content:
-          "Human-rights lawyers, complaint authorities, and mental-health support.",
+          "Directory of legal aid and support organizations. For immediate safety concerns, contact local emergency services.",
       },
     ],
   }),
@@ -43,12 +43,12 @@ const legal: Item[] = [
 const complaints: Item[] = [
   {
     name: "State Human Rights Commission (SHRC)",
-    note: "Statutory body for human-rights complaints.",
-    url: "https://nhrc.nic.in",
+    note: "Statutory body for human-rights complaints. URL varies by state—search your state SHRC online or check your state government website.",
+    // Note: SHRC URLs vary by state. Not listing federal NHRC URL to avoid confusion.
   },
   {
     name: "Police Complaints Authority",
-    note: "State-level oversight body for police conduct.",
+    note: "State-level oversight body for police conduct. Contact your state government for local contact details.",
   },
   {
     name: "National Human Rights Commission (NHRC)",

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import { ArrowLeft, Download, Trash2, Eye, EyeOff } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/admin-reports")({
   head: () => ({
@@ -151,16 +152,21 @@ function AdminReportsPage() {
   }
 
   function deleteReport(reportId: string) {
-    if (confirm("Are you sure you want to delete this report?")) {
-      const store = (window as any).__KIRO_REPORTS_STORE;
-      if (store && store.incident_reports) {
-        store.incident_reports = store.incident_reports.filter(
-          (r: Report) => r.id !== reportId,
-        );
-        loadReports();
-        setSelectedReport(null);
-      }
-    }
+    // H3: Disable deletion with explanation - local store deletion is unsafe for persistent data
+    toast.error("Report deletion is currently disabled for safety. Contact an admin to permanently remove records.");
+    return;
+    
+    // H3: Code kept for future review when backend deletion is available
+    // if (confirm("Are you sure you want to delete this report?")) {
+    //   const store = (window as any).__KIRO_REPORTS_STORE;
+    //   if (store && store.incident_reports) {
+    //     store.incident_reports = store.incident_reports.filter(
+    //       (r: Report) => r.id !== reportId,
+    //     );
+    //     loadReports();
+    //     setSelectedReport(null);
+    //   }
+    // }
   }
 
   const filteredReports = getFilteredReports();
@@ -288,6 +294,8 @@ function AdminReportsPage() {
                         variant="destructive"
                         size="sm"
                         onClick={() => deleteReport(selectedReport.id)}
+                        disabled={true}
+                        title="Report deletion is disabled for safety. Contact an admin to permanently remove records."
                       >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete

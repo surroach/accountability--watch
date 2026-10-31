@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, Clock, LogOut, AlertCircle } from "lucide-react";
+import { CheckCircle, XCircle, Clock, LogOut, AlertCircle, RefreshCw } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -60,31 +60,37 @@ function ModerationPage() {
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] =
     useState<string>("pending_moderation");
   const [urgentOnly, setUrgentOnly] = useState(false);
   const [open, setOpen] = useState<Report | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
-    const { data, error } = await supabase
+    setError(null);
+    const { data, error: dbError } = await supabase
       .from("incident_reports")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error) {
+    if (dbError) {
       if (
-        error.code === "PGRST301" ||
-        error.message.toLowerCase().includes("permission")
+        dbError.code === "PGRST301" ||
+        dbError.message.toLowerCase().includes("permission")
       ) {
         setHasAccess(false);
+        setError(null);
       } else {
-        toast.error(error.message);
+        setError(dbError.message);
+        toast.error(dbError.message);
       }
     } else {
       setHasAccess(true);
       setReports((data as Report[]) ?? []);
+      setError(null);
     }
     setLoading(false);
   }
@@ -111,11 +117,24 @@ function ModerationPage() {
   }, [reports, query, statusFilter, urgentOnly]);
 
   async function updateStatus(id: string, status: string) {
-    const { error } = await supabase
+    // H2: Prevent duplicate clicks while status action is in progress
+    if (updatingStatusId) {
+      toast.error("An update is already in progress. Please wait.");
+      return;
+    }
+
+    setUpdatingStatusId(id);
+    const { error: updateError } = await supabase
       .from("incident_reports")
       .update({ status, is_moderated: status === "moderation_approved" })
       .eq("id", id);
-    if (error) return toast.error(error.message);
+    
+    if (updateError) {
+      toast.error(`Failed to update status: ${updateError.message}`);
+      setUpdatingStatusId(null);
+      return;
+    }
+    
     toast.success("Status updated");
     setReports((prev) =>
       prev.map((r) =>
@@ -124,16 +143,21 @@ function ModerationPage() {
           : r,
       ),
     );
+    setUpdatingStatusId(null);
   }
 
   async function approveReport(id: string) {
     await updateStatus(id, "moderation_approved");
-    setOpen(null);
+    if (updatingStatusId === null) {  // Only close if update succeeded
+      setOpen(null);
+    }
   }
 
   async function rejectReport(id: string) {
     await updateStatus(id, "moderation_rejected");
-    setOpen(null);
+    if (updatingStatusId === null) {  // Only close if update succeeded
+      setOpen(null);
+    }
   }
 
   async function signOut() {
@@ -220,16 +244,44 @@ function ModerationPage() {
         </label>
       </div>
 
+      {error && (
+        <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/10 p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-display font-semibold text-sm text-destructive">
+                Could not load reports
+              </p>
+              <p className="mt-1 text-xs text-destructive/80">
+                {error}
+              </p>
+              <Button
+                onClick={refresh}
+                size="sm"
+                variant="outline"
+                className="mt-3"
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1" aria-hidden="true" /> Try again
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 rounded-2xl border border-border bg-card">
-        {loading ? (
+        {loading && (
           <div className="p-8 text-center text-muted-foreground">
-            Loading reports...
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-ink mb-3"></div>
+            <p className="text-sm">Loading reports...</p>
           </div>
-        ) : filtered.length === 0 ? (
+        )}
+        {!loading && filtered.length === 0 && (
           <div className="p-8 text-center text-muted-foreground">
-            No reports found
+            <p className="text-sm font-medium">No reports found</p>
+            <p className="text-xs mt-1">Try adjusting your search or filter criteria.</p>
           </div>
-        ) : (
+        )}
+        {!loading && filtered.length > 0 && (
           <div className="divide-y divide-border">
             {filtered.map((r) => (
               <button
@@ -276,11 +328,14 @@ function ModerationPage() {
                           : "text-amber-600"
                     }`}
                   >
+                    {/* H2: Neutral fallback for unfamiliar status */}
                     {r.status === "pending_moderation"
                       ? "Pending"
                       : r.status === "moderation_approved"
                         ? "Approved"
-                        : "Rejected"}
+                        : r.status === "moderation_rejected"
+                          ? "Rejected"
+                          : `Unknown (${r.status})`}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(r.created_at).toLocaleDateString()}
@@ -294,7 +349,7 @@ function ModerationPage() {
 
       {open && (
         <Dialog open={!!open} onOpenChange={() => setOpen(null)}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-[95vw] max-h-[85vh] overflow-y-auto md:max-w-2xl">
             <DialogHeader>
               <DialogTitle>{open.report_code}</DialogTitle>
             </DialogHeader>

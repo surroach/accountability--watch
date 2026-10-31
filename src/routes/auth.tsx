@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Eye, EyeOff, AlertCircle } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -27,6 +28,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     // getUser() validates the JWT against Supabase Auth rather than just
@@ -40,6 +43,7 @@ function AuthPage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
+    setError(null);
     try {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({
@@ -60,7 +64,9 @@ function AuthPage() {
         navigate({ to: "/admin" });
       }
     } catch (err: any) {
-      toast.error(err?.message ?? "Authentication failed");
+      const errorMsg = err?.message ?? "Authentication failed";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setBusy(false);
     }
@@ -68,16 +74,23 @@ function AuthPage() {
 
   async function signInWithGoogle() {
     setBusy(true);
+    setError(null);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
       if (result.error) {
-        toast.error(result.error.message ?? "Google sign-in failed");
+        const errorMsg = result.error.message ?? "Google sign-in failed";
+        setError(errorMsg);
+        toast.error(errorMsg);
         return;
       }
       if (result.redirected) return;
       navigate({ to: "/admin" });
+    } catch (err: any) {
+      const errorMsg = err?.message ?? "Google sign-in failed";
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setBusy(false);
     }
@@ -96,11 +109,19 @@ function AuthPage() {
           For vetted legal aid partners and platform administrators only.
         </p>
 
+        {/* I7: Cautionary note about frontend-only verification */}
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <p className="text-xs text-amber-900">
+            <strong>Note:</strong> Account access is verified on our server. Do not trust frontend-only access indicators.
+          </p>
+        </div>
+
         <button
           onClick={signInWithGoogle}
           disabled={busy}
           type="button"
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border-2 border-ink py-2.5 font-display text-sm font-semibold hover:bg-lime disabled:opacity-50"
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-full border-2 border-ink py-2.5 font-display text-sm font-semibold transition-colors duration-200 hover:bg-lime disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-busy={busy}
         >
           Continue with Google
         </button>
@@ -111,30 +132,79 @@ function AuthPage() {
           <span className="h-px flex-1 bg-border" />
         </div>
 
+        {/* I4: Accessible error display */}
+        {error && (
+          <div
+            className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3 flex items-start gap-3"
+            role="alert"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <div>
+              <p className="text-sm font-medium text-destructive">
+                {error}
+              </p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <Label className="font-display text-xs">Email</Label>
+            {/* I1: Label associated with input via htmlFor */}
+            <Label htmlFor="email" className="font-display text-xs">
+              Email
+            </Label>
             <Input
+              id="email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={busy}
+              aria-describedby={error ? "error-message" : undefined}
+              autoComplete={mode === "signin" ? "email" : "email"}
             />
           </div>
           <div>
-            <Label className="font-display text-xs">Password</Label>
-            <Input
-              type="password"
-              required
-              minLength={8}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            {/* I1: Label associated with input via htmlFor */}
+            <Label htmlFor="password" className="font-display text-xs">
+              Password
+            </Label>
+            {/* I3: Password visibility toggle */}
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={8}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={busy}
+                aria-describedby={error ? "error-message" : undefined}
+                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={busy}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground disabled:opacity-50 transition-colors"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           <Button
             type="submit"
             disabled={busy}
-            className="w-full rounded-full bg-ink py-6 font-display font-semibold text-ink-foreground"
+            className="w-full rounded-full bg-ink py-6 font-display font-semibold text-ink-foreground transition-all duration-200 hover:bg-ink/90 hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-busy={busy}
           >
             {busy
               ? "Please wait…"
@@ -148,7 +218,10 @@ function AuthPage() {
           {mode === "signin" ? "New here?" : "Have an account?"}{" "}
           <button
             type="button"
-            onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+            onClick={() => {
+              setMode(mode === "signin" ? "signup" : "signin");
+              setError(null);
+            }}
             className="underline"
           >
             {mode === "signin" ? "Create account" : "Sign in"}
