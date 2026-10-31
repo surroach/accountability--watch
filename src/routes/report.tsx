@@ -368,16 +368,21 @@ function Field({
 function UploadZone({
   files,
   fileMetadata,
+  previewUrls,
   onFilesChange,
+  onMetadataChange,
+  onPreviewUrlsChange,
 }: {
   files: File[];
   fileMetadata: Map<string, FileMeta>;
+  previewUrls: Map<string, string>;
   onFilesChange: (files: File[]) => void;
+  onMetadataChange: (metadata: Map<string, FileMeta>) => void;
+  onPreviewUrlsChange: (urls: Map<string, string>) => void;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
-  const previewUrlsRef = useRef<Set<string>>(new Set());
 
   // F1: Generate unique key for file (name + size + lastModified to handle true duplicates)
   function getFileKey(file: File): string {
@@ -441,6 +446,19 @@ function UploadZone({
         "GPS and timestamp metadata detected in some files. This metadata may contain sensitive location or timing information and will be included with your submission for verification purposes.",
       );
     }
+    
+    // F1: Create preview URLs for newly added images
+    const newUrls = new Map(previewUrls);
+    for (const f of next.filter(file => !files.find(x => getFileKey(x) === getFileKey(file)))) {
+      if (f.type.startsWith("image/")) {
+        const url = URL.createObjectURL(f);
+        newUrls.set(getFileKey(f), url);
+      }
+    }
+    onPreviewUrlsChange(newUrls);
+    
+    // F5: Update metadata map via state
+    onMetadataChange(new Map(fileMetadata));
   }
 
   const onDrop = useCallback(
@@ -454,35 +472,34 @@ function UploadZone({
 
   function removeFile(idx: number) {
     const removedFile = files[idx];
-    const removedUrl = previewUrl(removedFile);
+    const fileKey = getFileKey(removedFile);
+    const removedUrl = previewUrls.get(fileKey);
     
-    // F1: Revoke preview URL on removal
+    // F1: Revoke preview URL on removal - use the exact URL stored in state
     if (removedUrl) {
       URL.revokeObjectURL(removedUrl);
-      previewUrlsRef.current.delete(removedUrl);
+      const newUrls = new Map(previewUrls);
+      newUrls.delete(fileKey);
+      onPreviewUrlsChange(newUrls);
     }
     
     const next = files.filter((_, i) => i !== idx);
     onFilesChange(next);
     
     // F1: Use unique key for metadata cleanup
-    fileMetadata.delete(getFileKey(removedFile));
+    const newMetadata = new Map(fileMetadata);
+    newMetadata.delete(fileKey);
+    onMetadataChange(newMetadata);
   }
 
   function previewUrl(f: File): string | null {
-    if (f.type.startsWith("image/")) {
-      const url = URL.createObjectURL(f);
-      previewUrlsRef.current.add(url);
-      return url;
-    }
-    return null;
+    return previewUrls.get(getFileKey(f)) || null;
   }
 
   // F1: Cleanup preview URLs on unmount
   useEffect(() => {
     return () => {
-      previewUrlsRef.current.forEach(url => URL.revokeObjectURL(url));
-      previewUrlsRef.current.clear();
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
     };
   }, []);
 
@@ -523,7 +540,9 @@ function UploadZone({
           Photos, video, PDF — max 25 MB each
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          Files are hashed (SHA-256) and visible only to legal partners
+          {isUsingMockBackend()
+            ? "Files are not actually stored in demonstration mode."
+            : "Files are hashed (SHA-256) for integrity verification."}
         </p>
         <input
           ref={inputRef}
@@ -639,8 +658,8 @@ function ReportPage() {
 
   // Step 2 state
   const [files, setFiles] = useState<File[]>([]);
-  const [fileMetadata] = useState<Map<string, FileMeta>>(new Map());
-  const [previewUrls, setPreviewUrls] = useState<Set<string>>(new Set());
+  const [fileMetadata, setFileMetadata] = useState<Map<string, FileMeta>>(new Map());
+  const [previewUrls, setPreviewUrls] = useState<Map<string, string>>(new Map());
 
   // Step 3 state
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -798,12 +817,39 @@ function ReportPage() {
       toast.error("Please fix the highlighted fields before continuing.");
       return;
     }
-    // E4: When switching from anonymous to identified, don't block on contact field errors if they're empty
+    // Step 3 validation for contact fields when not anonymous
+    if (step === 3 && !isAnonymous) {
+      const result = step3Schema.safeParse({
+        witness_name: witnessName,
+        witness_contact: witnessContact,
+        reporter_name: reporterName,
+        reporter_contact: reporterContact,
+      });
+      if (!result.success) {
+        const errs: FieldErrors = {};
+        for (const issue of result.error.issues) {
+          const key = issue.path[0] as string;
+          if (!errs[key]) errs[key] = issue.message;
+        }
+        setErrors(errs);
+        
+        // Focus first invalid field
+        const firstErrorField = Object.keys(errs)[0];
+        if (firstErrorField) {
+          const fieldEl = document.getElementById(firstErrorField);
+          if (fieldEl) {
+            fieldEl.focus();
+            fieldEl.scrollIntoView({ behavior: "smooth", block: "center" });
+          }
+        }
+        toast.error("Please fix the highlighted fields before continuing.");
+        return;
+      }
+      setErrors({});
+    }
+    // When in anonymous mode, clear any contact field errors
     if (step === 3 && isAnonymous) {
-      // Skip contact validation in anonymous mode
-      setStep((s) => Math.min(s + 1, 4));
-      window.scrollTo({ top: 0, behavior: "instant" });
-      return;
+      setErrors({});
     }
     setStep((s) => Math.min(s + 1, 4));
     window.scrollTo({ top: 0, behavior: "instant" });
@@ -916,12 +962,13 @@ function ReportPage() {
 
       // Handle file uploads
       let uploadedCount = 0;
-      let uploadErrors: string[] = [];
+      let fullyAttachedCount = 0;
+      let uploadErrors: { file: string; stage: string; message: string }[] = [];
       
       for (const file of files) {
         try {
           if (file.size > 25 * 1024 * 1024) {
-            uploadErrors.push(`${file.name} exceeds 25 MB limit`);
+            uploadErrors.push({ file: file.name, stage: "size", message: "File exceeds 25 MB limit" });
             continue;
           }
 
@@ -929,38 +976,37 @@ function ReportPage() {
           const fileKey = `${file.name}|${file.size}|${file.lastModified}`;
           const meta = fileMetadata.get(fileKey);
           const sanitizedName = file.name.replace(/[^\w.\-]/g, "_");
-          const path = `${reportRecord.id}/${Date.now()}-${sanitizedName}`;
+          const storagePath = `${reportRecord.id}/${Date.now()}-${sanitizedName}`;
 
           // Improved error handling for file uploads
           const uploadResult = await supabase.storage
             .from("evidence")
-            .upload(path, file, {
+            .upload(storagePath, file, {
               contentType: file.type || "application/octet-stream",
               upsert: false,
             });
 
           const { error: upErr } = uploadResult;
           if (upErr) {
-            // F4: Show user-friendly error without exposing sensitive details
             if (upErr.message?.includes("quota")) {
-              uploadErrors.push(`${file.name}: Storage quota exceeded`);
+              uploadErrors.push({ file: file.name, stage: "upload", message: "Storage quota exceeded" });
             } else if (upErr.message?.includes("unauthorized")) {
-              uploadErrors.push(`${file.name}: Permission denied`);
+              uploadErrors.push({ file: file.name, stage: "upload", message: "Upload permission denied" });
             } else {
-              uploadErrors.push(`${file.name}: Upload failed`);
+              uploadErrors.push({ file: file.name, stage: "upload", message: "Upload failed" });
             }
             continue;
           }
 
           uploadedCount++;
 
-          // Create evidence record
+          // Create evidence record - file only counts as attached if this succeeds
           try {
             const evResult = await supabase
               .from("report_evidence")
               .insert({
                 report_id: reportRecord.id,
-                storage_path: path,
+                storage_path: storagePath,
                 file_name: sanitizedName,
                 content_type: file.type || "application/octet-stream",
                 size_bytes: file.size,
@@ -974,41 +1020,72 @@ function ReportPage() {
               .single();
 
             if (evResult.error) {
-              // F4: Log errors without exposing file details
-              uploadErrors.push(
-                `Evidence for ${file.name} uploaded but metadata record could not be saved`,
-              );
+              uploadErrors.push({
+                file: file.name,
+                stage: "metadata",
+                message: "File uploaded but metadata could not be saved"
+              });
+            } else {
+              // Only count as fully attached if both upload and metadata succeeded
+              fullyAttachedCount++;
             }
           } catch (evErr) {
-            // F4: Keep error handling without exposing sensitive details
-            uploadErrors.push(
-              `Evidence for ${file.name} uploaded but metadata could not be saved`,
-            );
+            uploadErrors.push({
+              file: file.name,
+              stage: "metadata",
+              message: "File uploaded but metadata could not be saved"
+            });
           }
         } catch (fileErr) {
-          // F4: Handle errors gracefully
-          const msg = fileErr instanceof Error ? "Upload processing failed" : "Upload processing failed";
-          uploadErrors.push(`${file.name}: ${msg}`);
+          uploadErrors.push({
+            file: file.name,
+            stage: "processing",
+            message: "File processing failed"
+          });
         }
       }
 
-      // F3: Report success with file status (show exactly which files failed without exposing details)
-      if (uploadErrors.length > 0) {
-        if (uploadedCount > 0) {
-          toast.success(
-            `Report submitted! ${uploadedCount} of ${files.length} file${files.length !== 1 ? "s" : ""} uploaded. Reference: ${reportRecord.report_code}`
-          );
-        } else if (files.length > 0) {
-          toast.warning(`Report submitted, but file uploads failed. Reference: ${reportRecord.report_code}. You can retry uploading files later.`);
+      // Report honest outcomes - separate report from file attachment status
+      const isMockBackend = isUsingMockBackend();
+      
+      if (files.length > 0) {
+        if (fullyAttachedCount === files.length && uploadErrors.length === 0) {
+          // All files successfully attached
+          if (isMockBackend) {
+            toast.success(
+              `Demo report submitted. ${fullyAttachedCount} file${fullyAttachedCount !== 1 ? "s" : ""} processed locally (not stored). Reference: ${reportRecord.report_code}`
+            );
+          } else {
+            toast.success(
+              `Report submitted with ${fullyAttachedCount} file${fullyAttachedCount !== 1 ? "s" : ""}. Reference: ${reportRecord.report_code}`
+            );
+          }
+        } else if (fullyAttachedCount > 0) {
+          // Some files attached
+          const failedCount = files.length - fullyAttachedCount;
+          if (isMockBackend) {
+            toast.warning(
+              `Demo report submitted with ${fullyAttachedCount} of ${files.length} files processed locally. ${failedCount} file${failedCount !== 1 ? "s" : ""} failed. Reference: ${reportRecord.report_code}`
+            );
+          } else {
+            toast.warning(
+              `Report submitted with ${fullyAttachedCount} of ${files.length} files. Reference: ${reportRecord.report_code}. ${failedCount} file${failedCount !== 1 ? "s" : ""} could not be attached.`
+            );
+          }
+        } else {
+          // No files attached
+          if (isMockBackend) {
+            toast.warning(`Demo report submitted without files. Reference: ${reportRecord.report_code}. File processing failed.`);
+          } else {
+            toast.warning(`Report submitted without files. Reference: ${reportRecord.report_code}. File uploads failed.`);
+          }
+        }
+      } else {
+        if (isMockBackend) {
+          toast.success(`Demo report submitted (local mode). Reference: ${reportRecord.report_code}`);
         } else {
           toast.success(`Report submitted! Reference: ${reportRecord.report_code}`);
         }
-      } else if (files.length > 0) {
-        toast.success(
-          `Report submitted with ${uploadedCount} file${uploadedCount !== 1 ? "s" : ""}. Reference: ${reportRecord.report_code}`
-        );
-      } else {
-        toast.success(`Report submitted! Reference: ${reportRecord.report_code}`);
       }
 
       // E5: Mark submission complete so unsaved warning doesn't appear
@@ -1277,7 +1354,10 @@ function ReportPage() {
             <UploadZone
               files={files}
               fileMetadata={fileMetadata}
+              previewUrls={previewUrls}
               onFilesChange={setFiles}
+              onMetadataChange={setFileMetadata}
+              onPreviewUrlsChange={setPreviewUrls}
             />
           </div>
         )}
@@ -1352,15 +1432,18 @@ function ReportPage() {
                     <Field 
                       label="Witness contact"
                       hint="Phone or email"
+                      error={errors.witness_contact}
                       id="witness_contact"
                     >
                       <Input
                         id="witness_contact"
                         value={witnessContact}
                         onChange={(e) => setWitnessContact(e.target.value)}
+                        onBlur={() => validateField("witness_contact", witnessContact)}
                         placeholder="Phone or email"
-                        aria-describedby="witness_contact-hint"
-                        className="text-base sm:text-sm"
+                        aria-invalid={!!errors.witness_contact}
+                        aria-describedby={errors.witness_contact ? "witness_contact-error" : "witness_contact-hint"}
+                        className={errors.witness_contact ? "border-destructive focus-visible:ring-destructive text-base sm:text-sm" : "text-base sm:text-sm"}
                       />
                     </Field>
                   </div>
@@ -1388,15 +1471,18 @@ function ReportPage() {
                     <Field 
                       label="Your contact"
                       hint="Phone or email"
+                      error={errors.reporter_contact}
                       id="reporter_contact"
                     >
                       <Input
                         id="reporter_contact"
                         value={reporterContact}
                         onChange={(e) => setReporterContact(e.target.value)}
+                        onBlur={() => validateField("reporter_contact", reporterContact)}
                         placeholder="Phone or email"
-                        aria-describedby="reporter_contact-hint"
-                        className="text-base sm:text-sm"
+                        aria-invalid={!!errors.reporter_contact}
+                        aria-describedby={errors.reporter_contact ? "reporter_contact-error" : "reporter_contact-hint"}
+                        className={errors.reporter_contact ? "border-destructive focus-visible:ring-destructive text-base sm:text-sm" : "text-base sm:text-sm"}
                       />
                     </Field>
                   </div>

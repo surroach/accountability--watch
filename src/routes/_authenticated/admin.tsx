@@ -108,27 +108,34 @@ function AdminPage() {
   async function refresh() {
     setLoading(true);
     setError(null);
-    const { data, error: dbError } = await supabase
-      .from("incident_reports")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (dbError) {
-      if (
-        dbError.code === "PGRST301" ||
-        dbError.message.toLowerCase().includes("permission")
-      ) {
-        setHasAccess(false);
-        setError(null);
+    try {
+      const { data, error: dbError } = await supabase
+        .from("incident_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+      
+      if (dbError) {
+        if (
+          dbError.code === "PGRST301" ||
+          dbError.message.toLowerCase().includes("permission")
+        ) {
+          setHasAccess(false);
+        } else {
+          setError(dbError.message);
+          toast.error(`Failed to load reports: ${dbError.message}`);
+        }
+        setReports([]);
       } else {
-        setError(dbError.message);
-        toast.error(`Failed to load reports: ${dbError.message}`);
+        setHasAccess(true);
+        setReports((data as Report[]) ?? []);
       }
-    } else {
-      setHasAccess(true);
-      setReports((data as Report[]) ?? []);
-      setError(null);
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred");
+      toast.error(`Error loading reports: ${err?.message || "Unknown error"}`);
+      setReports([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
@@ -159,39 +166,67 @@ function AdminPage() {
     }
 
     setUpdatingStatusId(id);
-    const { error: updateError } = await supabase
-      .from("incident_reports")
-      .update({ status })
-      .eq("id", id);
-    
-    if (updateError) {
-      toast.error(`Failed to update status: ${updateError.message}`);
+    try {
+      const { error: updateError } = await supabase
+        .from("incident_reports")
+        .update({ status })
+        .eq("id", id);
+      
+      if (updateError) {
+        throw updateError;
+      }
+      
+      // H2: Only update state if operation succeeds
+      toast.success("Status updated");
+      setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    } catch (err: any) {
+      const errorMsg = err?.message || "Failed to update status";
+      toast.error(`${errorMsg}`);
+    } finally {
       setUpdatingStatusId(null);
-      return;
     }
-    
-    // H2: Only update state if operation succeeds
-    toast.success("Status updated");
-    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
-    setUpdatingStatusId(null);
   }
 
   async function openReport(r: Report) {
-    setOpen(r);
-    const { data } = await supabase
-      .from("report_evidence")
-      .select("*")
-      .eq("report_id", r.id)
-      .order("created_at");
-    setEvidence((data as Evidence[]) ?? []);
+    try {
+      setOpen(r);
+      const { data, error } = await supabase
+        .from("report_evidence")
+        .select("*")
+        .eq("report_id", r.id)
+        .order("created_at");
+      
+      if (error) {
+        throw error;
+      }
+      
+      setEvidence((data as Evidence[]) ?? []);
+    } catch (err: any) {
+      const errorMsg = err?.message || "Failed to load evidence";
+      toast.error(errorMsg);
+      setEvidence([]);
+    }
   }
 
   async function downloadEvidence(ev: Evidence) {
-    const { data, error } = await supabase.storage
-      .from("evidence")
-      .createSignedUrl(ev.storage_path, 300);
-    if (error || !data) return toast.error("Could not generate download link");
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    try {
+      const { data, error } = await supabase.storage
+        .from("evidence")
+        .createSignedUrl(ev.storage_path, 300);
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error("No download URL was generated");
+      }
+      
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (err: any) {
+      const errorMsg = err?.message || "Could not generate download link";
+      toast.error(errorMsg);
+    }
   }
 
   function exportCsv() {

@@ -121,6 +121,15 @@ function Dashboard() {
   const { data, isLoading, error, isError, refetch } = useQuery({
     queryKey: ["public-stats", from, to, debouncedCity],
     queryFn: async (): Promise<Stats> => {
+      // G3: Validate date range before querying
+      if (from && to) {
+        const fromDate = new Date(from);
+        const toDate = new Date(to);
+        if (fromDate > toDate) {
+          throw new Error("Start date cannot be after end date");
+        }
+      }
+      
       const args: Record<string, string> = {};
       if (from) args.from_date = new Date(from).toISOString();
       if (to) args.to_date = new Date(to).toISOString();
@@ -142,10 +151,7 @@ function Dashboard() {
       
       // Only calculate trend if we have at least 2 months of data
       if (by_month.length >= 2) {
-        // G3: Split into equal-length periods
-        // For even count: exactly half and half
-        // For odd count: use middle month in neither period, compare around it
-        // Actually, for clarity: use first half vs second half with equal distribution
+        // G3: Split into equal-length periods - first half vs second half
         const midpoint = Math.floor(by_month.length / 2);
         const firstHalf = by_month
           .slice(0, midpoint)

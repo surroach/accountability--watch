@@ -109,10 +109,10 @@ function AuthPage() {
           For vetted legal aid partners and platform administrators only.
         </p>
 
-        {/* I7: Cautionary note about frontend-only verification */}
+        {/* I7: Note about authentication context */}
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
           <p className="text-xs text-amber-900">
-            <strong>Note:</strong> Account access is verified on our server. Do not trust frontend-only access indicators.
+            <strong>Note:</strong> This is a prototype platform. Staff access is controlled by authentication, but production security depends on proper backend configuration.
           </p>
         </div>
 

@@ -429,11 +429,11 @@ function Footer() {
             </ul>
           </div>
 
-          {/* Partners */}
+          {/* Project Note */}
           <div>
             <h3 className="font-display font-bold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Project note</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              This is a prototype platform for documenting incidents. Reports are handled with care and shared only with authenticated legal partners.
+              This is a prototype platform for documenting incidents. Future versions may include legal partner integration, but current functionality is for demonstration only.
             </p>
           </div>
         </div>
@@ -444,7 +444,7 @@ function Footer() {
             © {currentYear} Accountability Watch.
           </p>
           <p className="text-xs max-w-sm leading-relaxed">
-            Officer names, photos, and badge numbers are not published. Individual case details are shared only with verified legal aid partners.
+            This is a prototype platform. Officer names, photos, and badge numbers are not published. For information on legal support, see the Resources page.
           </p>
         </div>
       </div>
