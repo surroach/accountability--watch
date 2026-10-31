@@ -406,8 +406,11 @@ function Footer() {
               </li>
               <li>
                 <a 
-                  href="#"
-                  className="text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink rounded px-1 py-0.5 inline-block transition-colors duration-200"
+                  href="# "
+                  className="text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink rounded px-1 py-0.5 inline-block transition-colors duration-200 cursor-not-allowed opacity-50"
+                  aria-label="Privacy policy - not yet available"
+                  tabIndex={-1}
+                  onClick={(e) => e.preventDefault()}
                 >
                   Privacy policy
                 </a>
@@ -415,7 +418,10 @@ function Footer() {
               <li>
                 <a 
                   href="#"
-                  className="text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink rounded px-1 py-0.5 inline-block transition-colors duration-200"
+                  className="text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink rounded px-1 py-0.5 inline-block transition-colors duration-200 cursor-not-allowed opacity-50"
+                  aria-label="Security - not yet available"
+                  tabIndex={-1}
+                  onClick={(e) => e.preventDefault()}
                 >
                   Security
                 </a>

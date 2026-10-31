@@ -111,7 +111,7 @@ function Dashboard() {
   const chartRef = useRef<HTMLDivElement>(null);
 
   // Debounce city filter to reduce query calls
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedCity(city);
     }, 300);

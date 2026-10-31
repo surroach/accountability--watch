@@ -58,7 +58,9 @@ describe("K3.2: Report Form Accessibility", () => {
     expect(emailLabel).toBeDefined();
 
     // Password field should have label
-    const passwordLabel = screen.queryByText(/password/i, { selector: "label" });
+    const passwordLabel = screen.queryByText(/password/i, {
+      selector: "label",
+    });
     expect(passwordLabel).toBeDefined();
   });
 

@@ -892,7 +892,7 @@ function ReportPage() {
 
       // F3: Insert report and check for submission success
       const { data: report, error } = await supabase
-        .from("reports")
+        .from("incident_reports")
         .insert([reportData])
         .select("id, report_code")
         .single();
@@ -1465,13 +1465,9 @@ function ReportPage() {
                   aria-label="Consent to terms"
                 />
                 <span className="text-xs sm:text-sm leading-relaxed">
-                  I understand this report may be shared with legal aid
-                  organisations and verified civil rights groups. In aggregate
-                  and anonymised form, insights may be shared with journalists
-                  and researchers. Identifying details about individual officers{" "}
-                  <span className="highlight-lime">will not be published</span>{" "}
-                  on this platform. I affirm this information is true to the
-                  best of my knowledge.
+                  {isUsingMockBackend()
+                    ? "I understand this is a working prototype with a local demonstration backend. No data is actually submitted to a real service. This test report demonstrates the reporting form and validation."
+                    : "I understand this report may be shared with legal aid organisations and verified civil rights groups. In aggregate and anonymised form, insights may be shared with journalists and researchers. Identifying details about individual officers will not be published on this platform."} I affirm this information is true to the best of my knowledge.
                   <Link
                     to="/terms"
                     className="mt-2 block text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
