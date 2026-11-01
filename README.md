@@ -1,5 +1,7 @@
 # 🛡️ Accountability Watch
 
+> 🚀 **Quick Start for Local Demo:** See [LOCAL_SETUP.md](LOCAL_SETUP.md) for Windows/Mac/Linux startup instructions and full demo walkthrough.
+
 **A civic technology platform for documenting alleged police misconduct at protests.**
 
 Accountability Watch enables anonymous incident reporting with role-based moderation and secure evidence storage. Built for legal aid organizations, civil-rights researchers, and journalists.

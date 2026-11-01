@@ -71,6 +71,15 @@ function Home() {
         {/* Secondary navigation — below the fold trigger, visually quiet */}
         <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-5">
           <Link
+            to="/saved-reports"
+            className="font-display text-xs sm:text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink rounded px-2 py-1 transition-colors duration-200"
+          >
+            View your reports
+          </Link>
+          <span className="hidden sm:inline text-border" aria-hidden="true">
+            ·
+          </span>
+          <Link
             to="/dashboard"
             className="font-display text-xs sm:text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink rounded px-2 py-1 transition-colors duration-200"
           >

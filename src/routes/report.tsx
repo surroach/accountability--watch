@@ -29,12 +29,10 @@ import {
 import { z } from "zod";
 import * as exifr from "exifr";
 
-// F3: Detect if using mock backend (local in-memory service)
+// F3: Detect if using local SQLite backend via API
+// Returns false now - we're using real local SQLite backend via /api/reports
 function isUsingMockBackend(): boolean {
-  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-  const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  // If no Supabase URL or key configured, using mock backend
-  return !supabaseUrl || !supabaseKey || supabaseUrl === "" || supabaseKey === "";
+  return false;
 }
 
 export const Route = createFileRoute("/report")({
@@ -540,9 +538,7 @@ function UploadZone({
           Photos, video, PDF — max 25 MB each
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {isUsingMockBackend()
-            ? "Files are not actually stored in demonstration mode."
-            : "Files are hashed (SHA-256) for integrity verification."}
+          Files are hashed (SHA-256) for integrity verification and saved locally.
         </p>
         <input
           ref={inputRef}
@@ -641,7 +637,7 @@ function UploadZone({
 }
 
 // ── Main page component ───────────────────────────────────────────────────────
-function ReportPage() {
+export function ReportPage() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const stepHeadingRef = useRef<HTMLHeadingElement>(null);
@@ -672,7 +668,7 @@ function ReportPage() {
   // Step 4 state
   const [consent, setConsent] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState<{ code: string } | null>(null);
+  const [submitted, setSubmitted] = useState<{ code: string; fileErrors?: Array<{ file: string; stage: string; message: string }> } | null>(null);
 
   // Inline validation errors (validate on blur / step advance)
   const [errors, setErrors] = useState<FieldErrors>({});
@@ -681,7 +677,7 @@ function ReportPage() {
   function resetForm() {
     // Revoke all preview URLs (E5)
     previewUrls.forEach(url => URL.revokeObjectURL(url));
-    setPreviewUrls(new Set());
+    setPreviewUrls(new Map());
     
     // Reset all form state
     setIncidentAt("");
@@ -918,7 +914,45 @@ function ReportPage() {
 
       const incidentDate = datetimeLocalToISO(incidentAt);
 
-      const reportData: Record<string, unknown> = {
+      // Prepare files data for upload
+      let filesData: Array<{
+        name: string;
+        type: string;
+        size: number;
+        base64: string;
+        sha256?: string;
+        gps_latitude?: number;
+        gps_longitude?: number;
+        gps_accuracy?: number;
+        media_timestamp?: string;
+      }> = [];
+
+      for (const file of files) {
+        try {
+          const buffer = await file.arrayBuffer();
+          const base64 = Buffer.from(buffer).toString('base64');
+          const hash = await sha256Hex(file);
+          const fileKey = `${file.name}|${file.size}|${file.lastModified}`;
+          const meta = fileMetadata.get(fileKey);
+
+          filesData.push({
+            name: file.name,
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+            base64,
+            sha256: hash,
+            gps_latitude: meta?.lat,
+            gps_longitude: meta?.lon,
+            gps_accuracy: meta?.accuracy,
+            media_timestamp: meta?.timestamp,
+          });
+        } catch (err) {
+          console.error('Error preparing file:', err);
+          // Continue with other files
+        }
+      }
+
+      const reportData = {
         incident_at: incidentDate,
         location_text: locationText?.trim() || "",
         city: city?.trim() || null,
@@ -934,162 +968,58 @@ function ReportPage() {
         witness_contact: isAnonymous ? null : witnessContact?.trim() || null,
         reporter_name: isAnonymous ? null : reporterName?.trim() || null,
         reporter_contact: isAnonymous ? null : reporterContact?.trim() || null,
+        files: filesData,
       };
 
-      // F3: Insert report and check for submission success
-      const { data: report, error } = await supabase
-        .from("incident_reports")
-        .insert([reportData])
-        .select("id, report_code")
-        .single();
+      // F3: Call local /api/reports endpoint
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reportData),
+      });
 
-      if (error) {
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
         // F4: Keep useful error messages without exposing sensitive details
-        if (error.message?.includes("duplicate")) {
-          throw new Error("A report with similar details was recently submitted. Please check if your report is already recorded before submitting again.");
-        }
-        if (error.message?.includes("connection") || error.message?.includes("timeout")) {
-          throw new Error("Network error. Please check your connection and try again.");
-        }
-        throw new Error(error?.message || "Failed to create report");
+        const errorMsg = result.error?.message || `Failed to submit report (${response.status})`;
+        throw new Error(errorMsg);
       }
 
-      if (!report) {
-        throw new Error("No report was created");
+      if (!result.data || !result.data.report_code) {
+        throw new Error("Report was not created");
       }
 
-      const reportRecord = report;
-
-      // Handle file uploads
-      let uploadedCount = 0;
-      let fullyAttachedCount = 0;
-      let uploadErrors: { file: string; stage: string; message: string }[] = [];
-      
-      for (const file of files) {
-        try {
-          if (file.size > 25 * 1024 * 1024) {
-            uploadErrors.push({ file: file.name, stage: "size", message: "File exceeds 25 MB limit" });
-            continue;
-          }
-
-          const hash = await sha256Hex(file);
-          const fileKey = `${file.name}|${file.size}|${file.lastModified}`;
-          const meta = fileMetadata.get(fileKey);
-          const sanitizedName = file.name.replace(/[^\w.\-]/g, "_");
-          const storagePath = `${reportRecord.id}/${Date.now()}-${sanitizedName}`;
-
-          // Improved error handling for file uploads
-          const uploadResult = await supabase.storage
-            .from("evidence")
-            .upload(storagePath, file, {
-              contentType: file.type || "application/octet-stream",
-              upsert: false,
-            });
-
-          const { error: upErr } = uploadResult;
-          if (upErr) {
-            if (upErr.message?.includes("quota")) {
-              uploadErrors.push({ file: file.name, stage: "upload", message: "Storage quota exceeded" });
-            } else if (upErr.message?.includes("unauthorized")) {
-              uploadErrors.push({ file: file.name, stage: "upload", message: "Upload permission denied" });
-            } else {
-              uploadErrors.push({ file: file.name, stage: "upload", message: "Upload failed" });
-            }
-            continue;
-          }
-
-          uploadedCount++;
-
-          // Create evidence record - file only counts as attached if this succeeds
-          try {
-            const evResult = await supabase
-              .from("report_evidence")
-              .insert({
-                report_id: reportRecord.id,
-                storage_path: storagePath,
-                file_name: sanitizedName,
-                content_type: file.type || "application/octet-stream",
-                size_bytes: file.size,
-                sha256: hash,
-                gps_latitude: meta?.lat ?? null,
-                gps_longitude: meta?.lon ?? null,
-                gps_accuracy_meters: meta?.accuracy ?? null,
-                media_timestamp: meta?.timestamp ?? null,
-              })
-              .select("id")
-              .single();
-
-            if (evResult.error) {
-              uploadErrors.push({
-                file: file.name,
-                stage: "metadata",
-                message: "File uploaded but metadata could not be saved"
-              });
-            } else {
-              // Only count as fully attached if both upload and metadata succeeded
-              fullyAttachedCount++;
-            }
-          } catch (evErr) {
-            uploadErrors.push({
-              file: file.name,
-              stage: "metadata",
-              message: "File uploaded but metadata could not be saved"
-            });
-          }
-        } catch (fileErr) {
-          uploadErrors.push({
-            file: file.name,
-            stage: "processing",
-            message: "File processing failed"
-          });
-        }
-      }
+      const reportRecord = result.data;
+      const fileErrors = result.fileErrors || [];
 
       // Report honest outcomes - separate report from file attachment status
-      const isMockBackend = isUsingMockBackend();
-      
       if (files.length > 0) {
-        if (fullyAttachedCount === files.length && uploadErrors.length === 0) {
+        const attachedCount = files.length - fileErrors.length;
+        
+        if (attachedCount === files.length && fileErrors.length === 0) {
           // All files successfully attached
-          if (isMockBackend) {
-            toast.success(
-              `Demo report submitted. ${fullyAttachedCount} file${fullyAttachedCount !== 1 ? "s" : ""} processed locally (not stored). Reference: ${reportRecord.report_code}`
-            );
-          } else {
-            toast.success(
-              `Report submitted with ${fullyAttachedCount} file${fullyAttachedCount !== 1 ? "s" : ""}. Reference: ${reportRecord.report_code}`
-            );
-          }
-        } else if (fullyAttachedCount > 0) {
+          toast.success(
+            `Report saved successfully. ${attachedCount} file${attachedCount !== 1 ? "s" : ""} attached. Reference: ${reportRecord.report_code}`
+          );
+        } else if (attachedCount > 0) {
           // Some files attached
-          const failedCount = files.length - fullyAttachedCount;
-          if (isMockBackend) {
-            toast.warning(
-              `Demo report submitted with ${fullyAttachedCount} of ${files.length} files processed locally. ${failedCount} file${failedCount !== 1 ? "s" : ""} failed. Reference: ${reportRecord.report_code}`
-            );
-          } else {
-            toast.warning(
-              `Report submitted with ${fullyAttachedCount} of ${files.length} files. Reference: ${reportRecord.report_code}. ${failedCount} file${failedCount !== 1 ? "s" : ""} could not be attached.`
-            );
-          }
+          const failedCount = fileErrors.length;
+          toast.warning(
+            `Report saved. ${attachedCount} of ${files.length} files attached. Reference: ${reportRecord.report_code}. ${failedCount} file${failedCount !== 1 ? "s" : ""} could not be attached.`
+          );
         } else {
           // No files attached
-          if (isMockBackend) {
-            toast.warning(`Demo report submitted without files. Reference: ${reportRecord.report_code}. File processing failed.`);
-          } else {
-            toast.warning(`Report submitted without files. Reference: ${reportRecord.report_code}. File uploads failed.`);
-          }
+          toast.warning(`Report saved without files. Reference: ${reportRecord.report_code}. Files could not be processed.`);
         }
       } else {
-        if (isMockBackend) {
-          toast.success(`Demo report submitted (local mode). Reference: ${reportRecord.report_code}`);
-        } else {
-          toast.success(`Report submitted! Reference: ${reportRecord.report_code}`);
-        }
+        toast.success(`Report saved successfully! Reference: ${reportRecord.report_code}`);
       }
 
       // E5: Mark submission complete so unsaved warning doesn't appear
-      setSubmitted({ code: reportRecord.report_code });
+      setSubmitted({ code: reportRecord.report_code, fileErrors: fileErrors.length > 0 ? fileErrors : undefined });
       setHasUnsavedChanges(false);
       window.scrollTo({ top: 0, behavior: "instant" });
     } catch (err) {
@@ -1103,46 +1033,46 @@ function ReportPage() {
 
   // ── Confirmation screen ───────────────────────────────────────────────────
   if (submitted) {
-    const isMock = isUsingMockBackend();
     return (
       <div className="mx-auto max-w-xl px-4 sm:px-5 py-12 sm:py-16">
-        {isMock && (
-          <div className="mb-6 rounded-lg bg-amber-50 border border-amber-200 p-4">
-            <p className="font-display text-xs font-semibold uppercase tracking-widest text-amber-900 mb-1">
-              ⚠ Demonstration Mode
-            </p>
-            <p className="text-xs text-amber-800">
-              This is a working prototype with a local-only demo backend. Reports are not actually submitted to a production service.
-            </p>
-          </div>
-        )}
         <div className="card-white p-6 sm:p-10">
           <div className="mb-4 sm:mb-5 inline-flex h-11 sm:h-12 w-11 sm:w-12 items-center justify-center rounded-2xl bg-lime">
             <ShieldCheck className="h-5 sm:h-6 w-5 sm:w-6" aria-hidden />
           </div>
           <h1 className="font-display text-xl sm:text-2xl font-bold">
-            {isMock ? "Demo report processed." : "Your report has been received."}
+            Your report has been received.
           </h1>
           <p className="mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground">
-            {isMock
-              ? "This is a test submission in demonstration mode. No data has been submitted to a real service."
-              : "It has been sealed with a tamper-evident timestamp and file hash. Our moderation team will review it before it contributes to aggregate statistics."
-            }
+            It has been saved locally and sealed with a tamper-evident timestamp and file hash.
           </p>
           <div className="mt-4 sm:mt-6 rounded-xl border border-border/60 bg-muted/40 p-3 sm:p-4">
             <p className="font-display text-xs uppercase tracking-widest text-muted-foreground">
-              {isMock ? "Demo reference number" : "Reference number"}
+              Reference number
             </p>
             <p className="mt-1 font-mono text-lg sm:text-xl font-bold tracking-wide break-all">
               {submitted.code}
             </p>
           </div>
           <p className="mt-3 sm:mt-4 text-xs text-muted-foreground">
-            {isMock
-              ? "In production, you would save this reference number for follow-up with legal partners."
-              : "Save this reference number. Legal partners can use it when following up with you directly. Your report details are only visible to verified organisations."
-            }
+            Save this reference number. You can use it to check the status of your report or for follow-up with organizations.
           </p>
+          {submitted.fileErrors && submitted.fileErrors.length > 0 && (
+            <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p className="font-display text-xs font-semibold uppercase tracking-widest text-amber-900 mb-2">
+                ⚠ File Attachment Issues
+              </p>
+              <ul className="space-y-2">
+                {submitted.fileErrors.map((err, idx) => (
+                  <li key={idx} className="text-xs text-amber-800">
+                    <p className="font-semibold">{err.file}</p>
+                    <p className="mt-0.5">
+                      Could not save file. {err.stage}: {err.message}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row sm:flex-wrap gap-3">
             <Link
               to="/"
@@ -1169,17 +1099,6 @@ function ReportPage() {
   return (
     <>
       <QuickExit />
-      {isUsingMockBackend() && (
-        <div className="sticky top-0 z-40 w-full bg-amber-50 border-b border-amber-200 px-4 sm:px-5 py-3">
-          <div className="mx-auto max-w-2xl flex items-start gap-2.5">
-            <AlertCircle className="h-4 w-4 text-amber-700 flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <div className="text-xs sm:text-sm text-amber-900">
-              <p className="font-semibold mb-0.5">Demonstration Mode</p>
-              <p>This is a working prototype with a local backend for testing. Reports submitted here are not sent to a real service. For production use, configure Supabase credentials in your environment.</p>
-            </div>
-          </div>
-        </div>
-      )}
       <div className="mx-auto max-w-2xl px-4 sm:px-5 py-8 sm:py-10">
         <Breadcrumb 
           items={[
@@ -1551,9 +1470,7 @@ function ReportPage() {
                   aria-label="Consent to terms"
                 />
                 <span className="text-xs sm:text-sm leading-relaxed">
-                  {isUsingMockBackend()
-                    ? "I understand this is a working prototype with a local demonstration backend. No data is actually submitted to a real service. This test report demonstrates the reporting form and validation."
-                    : "I understand this report may be shared with legal aid organisations and verified civil rights groups. In aggregate and anonymised form, insights may be shared with journalists and researchers. Identifying details about individual officers will not be published on this platform."} I affirm this information is true to the best of my knowledge.
+                  I understand this report will be saved locally and may be reviewed by administrators. In aggregate and anonymised form, insights may be shared with journalists and researchers. Identifying details about individual officers will not be published on this platform. I affirm this information is true to the best of my knowledge.
                   <Link
                     to="/terms"
                     className="mt-2 block text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
@@ -1571,13 +1488,12 @@ function ReportPage() {
                 disabled={submitting || !consent}
                 className="w-full sm:w-auto rounded-full bg-ink px-6 sm:px-7 py-3 sm:py-2.5 font-display text-sm sm:text-base font-semibold text-ink-foreground transition-all duration-200 hover:bg-ink/90 hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? "Submitting…" : isUsingMockBackend() ? "Submit demo report" : "Submit report"}
+                {submitting ? "Submitting…" : "Submit report"}
               </Button>
               <p className="text-xs text-muted-foreground">
-                {isUsingMockBackend() && "Demo · "}
                 {isAnonymous ? "Anonymous · " : ""}
                 {isUrgent ? "Urgent · " : ""}
-                {isUsingMockBackend() ? "Test only" : "A tamper-evident ID and timestamp will be created on submission."}
+                A tamper-evident ID and timestamp will be created on submission.
               </p>
             </div>
           </div>

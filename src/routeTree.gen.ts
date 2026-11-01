@@ -17,10 +17,12 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ResourcesRouteImport } from './routes/resources'
+import { Route as SavedReportsRouteImport } from './routes/saved-reports'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedModerationRouteImport } from './routes/_authenticated/moderation'
+import { Route as SavedReportsIdRouteImport } from './routes/saved-reports/$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,6 +63,11 @@ const ResourcesRoute = ResourcesRouteImport.update({
   path: '/resources',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SavedReportsRoute = SavedReportsRouteImport.update({
+  id: '/saved-reports',
+  path: '/saved-reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -81,6 +88,11 @@ const AuthenticatedModerationRoute = AuthenticatedModerationRouteImport.update({
   path: '/moderation',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const SavedReportsIdRoute = SavedReportsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SavedReportsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,10 +102,12 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/report': typeof ReportRoute
   '/resources': typeof ResourcesRoute
+  '/saved-reports': typeof SavedReportsRouteWithChildren
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/moderation': typeof AuthenticatedModerationRoute
+  '/saved-reports/$id': typeof SavedReportsIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -103,10 +117,12 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/report': typeof ReportRoute
   '/resources': typeof ResourcesRoute
+  '/saved-reports': typeof SavedReportsRouteWithChildren
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/moderation': typeof AuthenticatedModerationRoute
+  '/saved-reports/$id': typeof SavedReportsIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -118,10 +134,12 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/report': typeof ReportRoute
   '/resources': typeof ResourcesRoute
+  '/saved-reports': typeof SavedReportsRouteWithChildren
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/moderation': typeof AuthenticatedModerationRoute
+  '/saved-reports/$id': typeof SavedReportsIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -133,10 +151,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/report'
     | '/resources'
+    | '/saved-reports'
     | '/terms'
     | '/transparency'
     | '/admin'
     | '/moderation'
+    | '/saved-reports/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -146,10 +166,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/report'
     | '/resources'
+    | '/saved-reports'
     | '/terms'
     | '/transparency'
     | '/admin'
     | '/moderation'
+    | '/saved-reports/$id'
   id:
     | '__root__'
     | '/'
@@ -160,10 +182,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/report'
     | '/resources'
+    | '/saved-reports'
     | '/terms'
     | '/transparency'
     | '/_authenticated/admin'
     | '/_authenticated/moderation'
+    | '/saved-reports/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -175,6 +199,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   ReportRoute: typeof ReportRoute
   ResourcesRoute: typeof ResourcesRoute
+  SavedReportsRoute: typeof SavedReportsRouteWithChildren
   TermsRoute: typeof TermsRoute
   TransparencyRoute: typeof TransparencyRoute
 }
@@ -237,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/saved-reports': {
+      id: '/saved-reports'
+      path: '/saved-reports'
+      fullPath: '/saved-reports'
+      preLoaderRoute: typeof SavedReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -265,6 +297,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModerationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/saved-reports/$id': {
+      id: '/saved-reports/$id'
+      path: '/$id'
+      fullPath: '/saved-reports/$id'
+      preLoaderRoute: typeof SavedReportsIdRouteImport
+      parentRoute: typeof SavedReportsRoute
+    }
   }
 }
 
@@ -281,6 +320,18 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
 const AuthenticatedRouteRouteWithChildren =
   AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
+interface SavedReportsRouteChildren {
+  SavedReportsIdRoute: typeof SavedReportsIdRoute
+}
+
+const SavedReportsRouteChildren: SavedReportsRouteChildren = {
+  SavedReportsIdRoute: SavedReportsIdRoute,
+}
+
+const SavedReportsRouteWithChildren = SavedReportsRoute._addFileChildren(
+  SavedReportsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
@@ -290,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ReportRoute: ReportRoute,
   ResourcesRoute: ResourcesRoute,
+  SavedReportsRoute: SavedReportsRouteWithChildren,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,
 }

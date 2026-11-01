@@ -54,3 +54,32 @@ coverage/
 # Build artifacts
 .wrangler
 .tanstack
+
+# Local database and attachments
+db/accountability.db
+db/*.db-wal
+db/*.db-shm
+
+# Local development files and test artifacts
+start.bat
+start.ps1
+start-*.ps1
+test-output*.txt
+demo-mode-test-output*.txt
+evidence-*.txt
+reset-test-check.txt
+
+# Documentation from development/verification (reference only)
+ACTUAL_CHECK_RESULTS.md
+BROWSER_TEST_RESULTS.md
+DATABASE_RESTORATION_COMPLETE.md
+FINAL_HANDOVER.md
+FINAL_ISOLATION_TEST_SUMMARY.md
+FINAL_VERIFICATION.md
+ISOLATED_TEST_VERIFICATION.md
+PUSH_VERIFICATION.md
+TEST_RESULTS_FINAL.md
+VERIFICATION_RESULTS.md
+VERIFICATION_SUMMARY.md
+QUICK_START.md
+STARTUP_REFERENCE.md
