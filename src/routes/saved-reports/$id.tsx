@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
@@ -8,6 +8,7 @@ import {
   AlertCircle,
   Loader2,
   FileIcon,
+  ArrowLeft,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 
@@ -216,6 +217,15 @@ export function SavedReportDetailPage() {
 
       {!loading && !error && data && (
         <>
+          {/* Back button */}
+          <button
+            onClick={() => navigate({ to: "/saved-reports" })}
+            className="mb-4 inline-flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-200"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to reports
+          </button>
+
           {/* Header */}
           <div className="mb-6 sm:mb-8">
             <div className="mb-3 flex items-center gap-2 flex-wrap">
