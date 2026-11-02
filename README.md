@@ -141,7 +141,7 @@ Accountability Watch is a web-based platform designed to collect and securely st
 
 ### Prerequisites
 
-- **Node.js** 18 or later
+- **Node.js** 24 or later
 - **npm** or **yarn**
 
 ### Installation
@@ -153,26 +153,17 @@ cd accountability-watch
 
 # Install dependencies
 npm install
+```
 
-# Create environment file
-cp .env.example .env
-# Edit .env with your configuration
+### Running the Application
 
-# Start development server
+```bash
 npm run dev
 ```
 
-The application opens at `http://localhost:5173`
+The terminal will print the development server URL (typically `http://localhost:5173` or `http://localhost:8080`). Open that URL in your browser.
 
-### Environment Setup
-
-See `.env.example` for required variables. Key configuration:
-
-- `VITE_SUPABASE_URL` - Backend service URL (optional - for legal partner access)
-- `VITE_SUPABASE_PUBLISHABLE_KEY` - Frontend authentication key (optional)
-- `VITE_QUICK_EXIT_URL` - Quick exit button destination
-
-All environment variables are optional for local development with SQLite.
+For full setup and troubleshooting instructions, see [LOCAL_SETUP.md](LOCAL_SETUP.md).
 
 ---
 
@@ -394,10 +385,12 @@ This is a **college Computer Science project**, not a production civic infrastru
 ### Known Constraints
 
 - Evidence storage is filesystem-based (no cloud integration)
+- File metadata is stored but files cannot yet be downloaded from the web interface
 - No built-in notification system for legal partners
-- Moderation workflow is basic (approve/reject only)
+- Moderation workflow is basic (status field stored but not implemented in UI)
 - Analytics are retrospective, not real-time
 - No mobile-optimized interface (responsive web only)
+- Admin dashboard features shown in UI are not fully functional
 
 ### This is Appropriate For
 
@@ -464,29 +457,40 @@ db/
 
 ## Troubleshooting
 
+### Port Already in Use
+
+Vite automatically finds an available port. Check your terminal for the actual URL (e.g., `http://localhost:5173` or `http://localhost:8080`).
+
 ### Dependencies Won't Install
 
-```bash
-# Clear cache and reinstall
-rm -rf node_modules package-lock.json
-npm install
-```
-
-### Tests Fail
-
-Ensure Node.js 18+ is installed:
+Ensure Node.js 24+ is installed:
 
 ```bash
 node --version
 ```
 
-###Port Already in Use
-
-Development server defaults to port 5173. To change:
+Then try reinstalling:
 
 ```bash
-npm run dev -- --port 3000
+npm install
 ```
+
+### Tests Fail
+
+```bash
+node --version  # Must be 24+
+npm run test -- --run  # Run once instead of watch mode
+```
+
+### Database Issues
+
+Do not delete `db/accountability.db`. If you encounter database issues:
+
+1. Stop the application (Ctrl+C)
+2. Ensure no other Node processes are accessing the database
+3. Restart with `npm run dev`
+
+For more detailed troubleshooting, see [LOCAL_SETUP.md](LOCAL_SETUP.md#troubleshooting)
 
 ---
 

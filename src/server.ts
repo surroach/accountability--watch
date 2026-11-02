@@ -420,6 +420,7 @@ async function handleApiRoute(request: Request): Promise<Response | null> {
         const filesStmt = db.prepare(`
           SELECT
             id,
+            storage_path,
             file_name,
             content_type,
             size_bytes,
@@ -436,17 +437,30 @@ async function handleApiRoute(request: Request): Promise<Response | null> {
         
         const files = filesStmt.all(id);
         
+        // Check file existence
+        const { fileExists } = await import("./server/file-storage");
+        const filesWithExistence = files.map((f: any) => ({
+          id: f.id,
+          file_name: f.file_name,
+          content_type: f.content_type,
+          size_bytes: Number(f.size_bytes),
+          sha256: f.sha256,
+          gps_latitude: f.gps_latitude,
+          gps_longitude: f.gps_longitude,
+          gps_accuracy_meters: f.gps_accuracy_meters ? Number(f.gps_accuracy_meters) : null,
+          media_timestamp: f.media_timestamp,
+          created_at: f.created_at,
+          exists: fileExists(f.storage_path),
+          // storage_path intentionally NOT included in response
+        }));
+        
         const result = apiResponse({
           report: {
             ...report,
             urgent_flag: !!report.urgent_flag,
             consent_given: !!report.consent_given,
           },
-          files: files.map((f: any) => ({
-            ...f,
-            size_bytes: Number(f.size_bytes),
-            gps_accuracy_meters: f.gps_accuracy_meters ? Number(f.gps_accuracy_meters) : null,
-          })),
+          files: filesWithExistence,
         });
 
         return new Response(JSON.stringify(result), {
@@ -457,6 +471,197 @@ async function handleApiRoute(request: Request): Promise<Response | null> {
         console.error("❌ Error fetching report:", error);
         const result = apiError(
           "Failed to retrieve report",
+          500,
+          error instanceof Error ? error.message : "Unknown error"
+        );
+        return new Response(JSON.stringify(result), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // GET /api/stats - get dashboard statistics
+    if (path === "/api/stats" && request.method === "GET") {
+      try {
+        const url = new URL(request.url);
+        const fromDate = url.searchParams.get("from_date");
+        const toDate = url.searchParams.get("to_date");
+        const cityFilter = url.searchParams.get("city_filter");
+
+        const db = getDatabase();
+
+        // Build date filters
+        let whereClause = "WHERE 1=1";
+        const params: any[] = [];
+
+        if (fromDate) {
+          whereClause += " AND incident_at >= ?";
+          params.push(fromDate);
+        }
+        if (toDate) {
+          // Add one day to include the full selected date
+          const endDate = new Date(toDate);
+          endDate.setUTCDate(endDate.getUTCDate() + 1);
+          whereClause += " AND incident_at < ?";
+          params.push(endDate.toISOString());
+        }
+        if (cityFilter) {
+          whereClause += " AND city LIKE ?";
+          params.push(cityFilter);
+        }
+
+        // Get total reports
+        const totalStmt = db.prepare(`
+          SELECT COUNT(*) as count FROM incident_reports ${whereClause}
+        `);
+        const totalResult = totalStmt.all(...params) as any[];
+        const totalReports = totalResult[0]?.count || 0;
+
+        // Get reports by city
+        const cityStmt = db.prepare(`
+          SELECT city, COUNT(*) as count
+          FROM incident_reports
+          ${whereClause}
+          GROUP BY city
+          ORDER BY count DESC
+        `);
+        const byCity = cityStmt.all(...params) as any[];
+
+        // Get reports by month
+        const monthStmt = db.prepare(`
+          SELECT 
+            strftime('%Y-%m', incident_at) as month,
+            COUNT(*) as count
+          FROM incident_reports
+          ${whereClause}
+          GROUP BY month
+          ORDER BY month ASC
+        `);
+        const byMonth = monthStmt.all(...params) as any[];
+
+        // Calculate trend
+        let trend: { direction: "up" | "down" | "stable"; percentage: number } | undefined;
+
+        if (byMonth.length >= 2) {
+          const midpoint = Math.floor(byMonth.length / 2);
+          const firstHalf = byMonth
+            .slice(0, midpoint)
+            .reduce((sum, m) => sum + (m.count || 0), 0);
+          const secondHalf = byMonth
+            .slice(midpoint)
+            .reduce((sum, m) => sum + (m.count || 0), 0);
+
+          if (firstHalf > 0 && secondHalf > 0) {
+            const percentChange = ((secondHalf - firstHalf) / firstHalf) * 100;
+            const direction =
+              percentChange > 5 ? "up" : percentChange < -5 ? "down" : "stable";
+            trend = {
+              direction,
+              percentage: Math.abs(Math.round(percentChange)),
+            };
+          }
+        }
+
+        const result = apiResponse({
+          total_reports: totalReports,
+          by_city: byCity,
+          by_month: byMonth,
+          trend,
+        });
+
+        return new Response(JSON.stringify(result), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (error) {
+        console.error("❌ Error fetching stats:", error);
+        const result = apiError(
+          "Failed to fetch statistics",
+          500,
+          error instanceof Error ? error.message : "Unknown error"
+        );
+        return new Response(JSON.stringify(result), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // GET /api/reports/:id/files/:fileId - download a specific file
+    const fileDownloadMatch = path.match(/^\/api\/reports\/([a-f0-9\-]+)\/files\/([a-f0-9\-]+)$/);
+    if (fileDownloadMatch && request.method === "GET") {
+      try {
+        const reportId = fileDownloadMatch[1];
+        const fileId = fileDownloadMatch[2];
+
+        if (!reportId || !fileId) {
+          const result = apiError("Report ID and file ID are required", 400);
+          return new Response(JSON.stringify(result), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const db = getDatabase();
+        
+        // Get file metadata and verify it belongs to the report
+        const fileStmt = db.prepare(`
+          SELECT
+            id,
+            report_id,
+            storage_path,
+            file_name,
+            content_type,
+            size_bytes,
+            sha256
+          FROM report_evidence
+          WHERE id = ? AND report_id = ?
+        `);
+        
+        const fileRecord = fileStmt.get(fileId, reportId);
+        
+        if (!fileRecord) {
+          const result = apiError("File not found", 404);
+          return new Response(JSON.stringify(result), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        // Check if file exists
+        const { fileExists, getFileBuffer } = await import("./server/file-storage");
+        if (!fileExists(fileRecord.storage_path)) {
+          const result = apiError("File not found in local storage", 404);
+          return new Response(JSON.stringify(result), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        // Get file buffer
+        const fileBuffer = getFileBuffer(fileRecord.storage_path);
+        if (!fileBuffer) {
+          const result = apiError("Could not read file", 500);
+          return new Response(JSON.stringify(result), {
+            status: 500,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        // Return file with appropriate headers
+        return new Response(fileBuffer, {
+          status: 200,
+          headers: {
+            "Content-Type": fileRecord.content_type || "application/octet-stream",
+            "Content-Length": String(fileRecord.size_bytes),
+            "Content-Disposition": `attachment; filename="${encodeURIComponent(fileRecord.file_name)}"`,
+          },
+        });
+      } catch (error) {
+        console.error("❌ Error downloading file:", error);
+        const result = apiError(
+          "Failed to download file",
           500,
           error instanceof Error ? error.message : "Unknown error"
         );

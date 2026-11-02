@@ -1,18 +1,15 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
+  Download,
   Calendar,
   MapPin,
   AlertCircle,
   Loader2,
-  Download,
-  FileText,
   FileIcon,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/saved-reports/$id")({
   head: () => ({
@@ -50,7 +47,6 @@ type Report = {
 
 type ReportFile = {
   id: string;
-  storage_path: string;
   file_name: string;
   content_type: string;
   size_bytes: number;
@@ -163,73 +159,91 @@ export function SavedReportDetailPage() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const downloadFile = async (fileId: string, fileName: string) => {
+    try {
+      const response = await fetch(`/api/reports/${id}/files/${fileId}`);
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || "Failed to download file");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast.success(`Downloaded ${fileName}`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to download file";
+      console.error("Download error:", err);
+      toast.error(message);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 sm:px-5 py-8 sm:py-10">
-        <button
-          onClick={() => navigate({ to: "/saved-reports" })}
-          className="mb-6 inline-flex items-center justify-center gap-2 rounded-full border-2 border-ink px-4 py-2 font-display text-sm font-semibold transition-colors duration-200 hover:bg-lime focus-visible:outline focus-visible:outline-2 focus-visible:outline-ink"
-          aria-label="Go back to reports list"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-          Back to reports
-        </button>
+    <>
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              Loading report details…
+            </p>
+          </div>
+        </div>
+      )}
 
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Loading report details…
+      {error && (
+        <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="font-display text-sm font-semibold text-destructive">
+                Error loading report
               </p>
+              <p className="mt-1 text-xs text-destructive/80">{error}</p>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {error && (
-          <div className="rounded-lg bg-destructive/10 border border-destructive/30 p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-display text-sm font-semibold text-destructive">
-                  Error loading report
-                </p>
-                <p className="mt-1 text-xs text-destructive/80">{error}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {!loading && !error && data && (
-          <>
-            {/* Header */}
-            <div className="mb-6 sm:mb-8">
-              <div className="mb-3 flex items-center gap-2 flex-wrap">
-                <p className="font-mono text-lg font-bold text-foreground">
-                  {data.report.report_code}
-                </p>
-                <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(
-                    data.report.status
-                  )}`}
-                >
-                  {getStatusLabel(data.report.status)}
+      {!loading && !error && data && (
+        <>
+          {/* Header */}
+          <div className="mb-6 sm:mb-8">
+            <div className="mb-3 flex items-center gap-2 flex-wrap">
+              <p className="font-mono text-lg font-bold text-foreground">
+                {data.report.report_code}
+              </p>
+              <span
+                className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(
+                  data.report.status
+                )}`}
+              >
+                {getStatusLabel(data.report.status)}
+              </span>
+              {data.report.urgent_flag && (
+                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                  Urgent
                 </span>
-                {data.report.urgent_flag && (
-                  <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
-                    Urgent
-                  </span>
-                )}
-              </div>
-              <h1 className="font-display text-3xl font-bold">
-                {getIncidentTypeLabel(data.report.incident_type)}
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {data.report.submission_mode === "anonymous"
-                  ? "Submitted anonymously"
-                  : "Submitted with contact information"}
-              </p>
+              )}
             </div>
+            <h1 className="font-display text-3xl font-bold">
+              {getIncidentTypeLabel(data.report.incident_type)}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {data.report.submission_mode === "anonymous"
+                ? "Submitted anonymously"
+                : "Submitted with contact information"}
+            </p>
+          </div>
 
             {/* Main details */}
             <div className="card-white space-y-6 p-5 sm:p-6 md:p-8 mb-6">
@@ -371,9 +385,23 @@ export function SavedReportDetailPage() {
                           {formatFileSize(file.size_bytes)}
                           {file.content_type && ` · ${file.content_type}`}
                         </p>
-                        {!file.exists && (
-                          <p className="text-xs text-amber-700 mt-1">
-                            ⚠ File not found in local storage
+                        {file.exists ? (
+                          <div className="flex items-center gap-2 mt-2">
+                            <button
+                              onClick={() =>
+                                downloadFile(file.id, file.file_name)
+                              }
+                              className="inline-flex items-center gap-1 rounded-md bg-ink px-3 py-1.5 font-display text-xs font-semibold text-ink-foreground transition-all duration-200 hover:bg-ink/90"
+                              aria-label={`Download ${file.file_name}`}
+                            >
+                              <Download className="h-3.5 w-3.5" />
+                              Download
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-amber-700 mt-2 flex items-center gap-1">
+                            <AlertCircle className="h-3.5 w-3.5" />
+                            File not found in local storage
                           </p>
                         )}
                         {file.sha256 && (
@@ -417,7 +445,6 @@ export function SavedReportDetailPage() {
             </div>
           </>
         )}
-      </div>
-    </div>
+    </>
   );
 }

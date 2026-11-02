@@ -22,6 +22,7 @@ import { Route as TermsRouteImport } from './routes/terms'
 import { Route as TransparencyRouteImport } from './routes/transparency'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedModerationRouteImport } from './routes/_authenticated/moderation'
+import { Route as SavedReportsIndexRouteImport } from './routes/saved-reports/index'
 import { Route as SavedReportsIdRouteImport } from './routes/saved-reports/$id'
 
 const IndexRoute = IndexRouteImport.update({
@@ -88,6 +89,11 @@ const AuthenticatedModerationRoute = AuthenticatedModerationRouteImport.update({
   path: '/moderation',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const SavedReportsIndexRoute = SavedReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SavedReportsRoute,
+} as any)
 const SavedReportsIdRoute = SavedReportsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -108,6 +114,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRoute
   '/moderation': typeof AuthenticatedModerationRoute
   '/saved-reports/$id': typeof SavedReportsIdRoute
+  '/saved-reports/': typeof SavedReportsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -117,12 +124,12 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/report': typeof ReportRoute
   '/resources': typeof ResourcesRoute
-  '/saved-reports': typeof SavedReportsRouteWithChildren
   '/terms': typeof TermsRoute
   '/transparency': typeof TransparencyRoute
   '/admin': typeof AuthenticatedAdminRoute
   '/moderation': typeof AuthenticatedModerationRoute
   '/saved-reports/$id': typeof SavedReportsIdRoute
+  '/saved-reports': typeof SavedReportsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -140,6 +147,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRoute
   '/_authenticated/moderation': typeof AuthenticatedModerationRoute
   '/saved-reports/$id': typeof SavedReportsIdRoute
+  '/saved-reports/': typeof SavedReportsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -157,6 +165,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/moderation'
     | '/saved-reports/$id'
+    | '/saved-reports/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,12 +175,12 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/report'
     | '/resources'
-    | '/saved-reports'
     | '/terms'
     | '/transparency'
     | '/admin'
     | '/moderation'
     | '/saved-reports/$id'
+    | '/saved-reports'
   id:
     | '__root__'
     | '/'
@@ -188,6 +197,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/moderation'
     | '/saved-reports/$id'
+    | '/saved-reports/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -297,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedModerationRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/saved-reports/': {
+      id: '/saved-reports/'
+      path: '/'
+      fullPath: '/saved-reports/'
+      preLoaderRoute: typeof SavedReportsIndexRouteImport
+      parentRoute: typeof SavedReportsRoute
+    }
     '/saved-reports/$id': {
       id: '/saved-reports/$id'
       path: '/$id'
@@ -322,10 +339,12 @@ const AuthenticatedRouteRouteWithChildren =
 
 interface SavedReportsRouteChildren {
   SavedReportsIdRoute: typeof SavedReportsIdRoute
+  SavedReportsIndexRoute: typeof SavedReportsIndexRoute
 }
 
 const SavedReportsRouteChildren: SavedReportsRouteChildren = {
   SavedReportsIdRoute: SavedReportsIdRoute,
+  SavedReportsIndexRoute: SavedReportsIndexRoute,
 }
 
 const SavedReportsRouteWithChildren = SavedReportsRoute._addFileChildren(

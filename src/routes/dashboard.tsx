@@ -1,10 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useRef, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   BarChart,
@@ -17,17 +13,22 @@ import {
 } from "recharts";
 import {
   Download,
-  FileJson,
   TrendingUp,
   TrendingDown,
   Minus,
-  ChevronRight,
   AlertCircle,
   RefreshCw,
+  Calendar,
+  MapPin,
+  BarChart3,
+  Map,
+  Activity,
+  Inbox,
+  Building2,
+  Star,
 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { Link } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -56,59 +57,32 @@ type Stats = {
   total_reports: number;
   by_city: { city: string; count: number }[];
   by_month: { month: string; count: number }[];
-  trend?: { direction: "up" | "down" | "stable"; percentage: number };
+  trend?: { direction: "up" | "down" | "stable"; percentage: number; months?: string };
   previous_period_total?: number;
 };
-
-// ── Breadcrumb navigation ─────────────────────────────────────────────────────
-function Breadcrumb({
-  items,
-}: {
-  items: Array<{ label: string; href?: string }>;
-}) {
-  return (
-    <nav aria-label="Breadcrumb" className="mb-6">
-      <ol className="flex items-center gap-2 text-sm">
-        {items.map((item, idx) => (
-          <li key={idx} className="flex items-center gap-2">
-            {item.href ? (
-              <>
-                <Link
-                  to={item.href}
-                  className="text-muted-foreground hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink rounded px-1"
-                >
-                  {item.label}
-                </Link>
-                {idx < items.length - 1 && (
-                  <ChevronRight 
-                    className="h-4 w-4 text-muted-foreground flex-shrink-0" 
-                    aria-hidden="true"
-                  />
-                )}
-              </>
-            ) : (
-              <>
-                <span 
-                  className="text-foreground font-medium"
-                  aria-current="page"
-                >
-                  {item.label}
-                </span>
-              </>
-            )}
-          </li>
-        ))}
-      </ol>
-    </nav>
-  );
-}
 
 function Dashboard() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [year, setYear] = useState("");
+  const [month, setMonth] = useState("");
   const [city, setCity] = useState("");
   const [debouncedCity, setDebouncedCity] = useState("");
   const chartRef = useRef<HTMLDivElement>(null);
+
+  // Compute from/to dates based on year/month selection
+  const computedFromDate = year && month 
+    ? `${year}-${String(month).padStart(2, "0")}-01`
+    : from;
+  
+  const computedToDate = year && month
+    ? (() => {
+        const date = new Date(`${year}-${String(month).padStart(2, "0")}-01`);
+        date.setMonth(date.getMonth() + 1);
+        date.setDate(date.getDate() - 1);
+        return date.toISOString().split("T")[0];
+      })()
+    : to;
 
   // Debounce city filter to reduce query calls
   useEffect(() => {
@@ -119,66 +93,80 @@ function Dashboard() {
   }, [city]);
 
   const { data, isLoading, error, isError, refetch } = useQuery({
-    queryKey: ["public-stats", from, to, debouncedCity],
+    queryKey: ["public-stats", computedFromDate, computedToDate, debouncedCity],
     queryFn: async (): Promise<Stats> => {
-      // G3: Validate date range before querying
-      if (from && to) {
-        const fromDate = new Date(from);
-        const toDate = new Date(to);
+      // Validate date range before querying
+      if (computedFromDate && computedToDate) {
+        const fromDate = new Date(computedFromDate);
+        const toDate = new Date(computedToDate);
         if (fromDate > toDate) {
           throw new Error("Start date cannot be after end date");
         }
       }
       
       const args: Record<string, string> = {};
-      if (from) args.from_date = new Date(from).toISOString();
-      if (to) args.to_date = new Date(to).toISOString();
+      if (computedFromDate) args.from_date = new Date(computedFromDate).toISOString();
+      if (computedToDate) args.to_date = new Date(computedToDate).toISOString();
       if (debouncedCity) args.city_filter = `%${debouncedCity}%`;
-      const { data, error } = await supabase.rpc(
-        "public_incident_stats",
-        args as never,
-      );
-      if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-
-      const total_reports = Number(row?.total_reports ?? 0);
-      const by_city = (row?.by_city as any) ?? [];
-      const by_month = (row?.by_month as any) ?? [];
-
-      // G3: Calculate trend with equal-length periods and clear conditions
-      let trend:
-        { direction: "up" | "down" | "stable"; percentage: number } | undefined;
       
-      // Only calculate trend if we have at least 2 months of data
-      if (by_month.length >= 2) {
-        // G3: Split into equal-length periods - first half vs second half
-        const midpoint = Math.floor(by_month.length / 2);
-        const firstHalf = by_month
-          .slice(0, midpoint)
-          .reduce((sum, m) => sum + m.count, 0);
-        const secondHalf = by_month
-          .slice(midpoint)
-          .reduce((sum, m) => sum + m.count, 0);
+      // Use ONLY local SQLite API (no Supabase fallback)
+      const params = new URLSearchParams(args);
+      const response = await fetch(`/api/stats?${params}`);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status} ${response.statusText}`);
+      }
+      
+      const apiData = await response.json();
+      if (!apiData.success || !apiData.data) {
+        throw new Error("Invalid API response structure");
+      }
+      
+      const row = apiData.data;
+      const total_reports = Number(row.total_reports ?? 0);
+      const by_city = (row.by_city as any) ?? [];
+      const by_month = (row.by_month as any) ?? [];
 
-        // Only show trend if both periods have data
-        if (firstHalf > 0 && secondHalf > 0) {
-          const percentChange = ((secondHalf - firstHalf) / firstHalf) * 100;
-          const direction =
-            percentChange > 5 ? "up" : percentChange < -5 ? "down" : "stable";
-          trend = {
-            direction,
-            percentage: Math.abs(Math.round(percentChange)),
-          };
+      // Calculate trend comparing the two most recent months
+      let trend:
+        { direction: "up" | "down" | "stable"; percentage: number; months?: string } | undefined;
+      
+      if (by_month.length >= 2) {
+        // Get the two most recent months (reverse order from API)
+        const months = [...by_month].reverse(); // Most recent first
+        const currentMonth = months[0];
+        const previousMonth = months[1];
+
+        if (currentMonth && previousMonth) {
+          const currentCount = currentMonth.count;
+          const previousCount = previousMonth.count;
+
+          if (previousCount > 0) {
+            const percentChange = ((currentCount - previousCount) / previousCount) * 100;
+            const direction =
+              percentChange > 5 ? "up" : percentChange < -5 ? "down" : "stable";
+            trend = {
+              direction,
+              percentage: Math.abs(Math.round(percentChange)),
+              months: `${previousMonth.month} → ${currentMonth.month}`,
+            };
+          } else if (currentCount > 0) {
+            // If previous month was 0 but current has reports
+            trend = {
+              direction: "up",
+              percentage: 100,
+              months: `${previousMonth.month} → ${currentMonth.month}`,
+            };
+          }
         }
       }
-      // If only 1 month or 0 months, trend is undefined (not shown)
 
       return {
         total_reports,
         by_city,
         by_month,
         trend,
-        previous_period_total: total_reports, // G3: Don't use this for trend, kept for compatibility
+        previous_period_total: total_reports,
       };
     },
     retry: 1,
@@ -189,7 +177,6 @@ function Dashboard() {
     const timestamp = new Date().toISOString().split("T")[0];
     const filename = `accountability-watch-${timestamp}.csv`;
 
-    // Build CSV content
     const lines: string[] = [];
 
     // By city section
@@ -227,7 +214,7 @@ function Dashboard() {
     try {
       const canvas = await html2canvas(chartRef.current, {
         scale: 2,
-        backgroundColor: "#ffffff",
+        backgroundColor: "#0f0f0f",
       });
 
       const pdf = new jsPDF({
@@ -242,497 +229,523 @@ function Dashboard() {
       let heightLeft = imgHeight;
       let position = 10;
 
-      // Add title and metadata
-      pdf.setFontSize(16);
-      pdf.text("Accountability Watch", 10, 10);
-      pdf.setFontSize(10);
-      pdf.text("Incident Report Statistics", 10, 20);
-      pdf.setFontSize(8);
-      pdf.text(
-        `Generated: ${new Date().toLocaleString()}${from ? ` | From: ${from}` : ""}${to ? ` | To: ${to}` : ""}`,
-        10,
-        28,
-      );
+      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+      heightLeft -= (pdf.internal.pageSize.height - 20);
 
-      // Add chart image
-      pdf.addImage(imgData, "PNG", 10, 35, imgWidth, imgHeight);
-      heightLeft -= imgHeight;
-      position = 35 + imgHeight + 10;
-
-      // Add summary stats
-      if (position + 40 > pdf.internal.pageSize.getHeight()) {
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
         pdf.addPage();
-        position = 10;
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pdf.internal.pageSize.height;
       }
 
-      pdf.setFontSize(12);
-      pdf.text("Summary Statistics", 10, position);
-      position += 10;
-
-      pdf.setFontSize(10);
-      pdf.text(`Total Reports: ${data?.total_reports || 0}`, 10, position);
-      position += 8;
-      pdf.text(
-        `Cities Represented: ${data?.by_city?.length || 0}`,
-        10,
-        position,
-      );
-      position += 8;
-      pdf.text(
-        `Months with Reports: ${data?.by_month?.length || 0}`,
-        10,
-        position,
-      );
-
-      // Add disclaimer
-      position += 15;
-      pdf.setFontSize(8);
-      pdf.text(
-        "Reports here are unverified allegations submitted by members of the public. Publication of",
-        10,
-        position,
-      );
-      position += 5;
-      pdf.text(
-        "aggregate counts does not constitute a finding of misconduct against any individual.",
-        10,
-        position,
-      );
-
-      const timestamp = new Date().toISOString().split("T")[0];
-      pdf.save(`accountability-watch-${timestamp}.pdf`);
-      
-      toast.success("Data exported as PDF");
-    } catch (error) {
-      console.error("PDF export failed:", error);
+      pdf.save(filename);
+      toast.success("Report exported as PDF");
+    } catch (err) {
+      console.error("PDF export failed:", err);
       toast.error("Failed to export PDF");
     }
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 sm:px-5 py-8 sm:py-12 space-y-8 sm:space-y-10">
-      <Breadcrumb 
-        items={[
-          { label: "Home", href: "/" },
-          { label: "Public dashboard" }
-        ]}
-      />
-
-      <p className="mb-2 sm:mb-3 font-display text-xs uppercase tracking-widest">
-        <span className="highlight-lime">Public data</span>
-      </p>
-      <h1 id="page-title" className="font-display text-3xl sm:text-4xl md:text-5xl font-bold">
-        Aggregate dashboard
-      </h1>
-      <p className="mt-2 sm:mt-3 max-w-2xl text-xs sm:text-sm text-muted-foreground">
-        Anonymized counts only. No officer names, photos, badge numbers, or
-        individual case detail appear here. For research and journalism use.
-      </p>
-
-      <div className="mt-8 grid gap-3 sm:gap-4 rounded-3xl border-2 border-ink bg-background p-4 sm:p-5 md:grid-cols-3">
-        <div>
-          <Label htmlFor="from-date" className="font-display text-xs sm:text-xs">
-            From
-            <span className="text-muted-foreground text-xs ml-1">(start date)</span>
-          </Label>
-          <Input
-            id="from-date"
-            type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            aria-describedby="filter-help from-date-error"
-            className="text-base sm:text-sm"
-          />
-          {from && to && new Date(from) > new Date(to) && (
-            <p id="from-date-error" className="mt-1 text-xs text-destructive" role="alert">
-              Start date cannot be after end date
-            </p>
-          )}
+    <div className="min-h-screen p-4 md:p-8">
+      {/* Header */}
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-8 md:mb-12">
+          <h1 className="text-4xl md:text-5xl font-bold font-display tracking-tight mb-2">
+            Accountability Watch
+          </h1>
+          <p className="text-muted-foreground text-sm md:text-base">
+            Anonymized, aggregate incident data — No individual identifiers
+          </p>
         </div>
-        <div>
-          <Label htmlFor="to-date" className="font-display text-xs sm:text-xs">
-            To
-            <span className="text-muted-foreground text-xs ml-1">(end date, inclusive)</span>
-          </Label>
-          <Input
-            id="to-date"
-            type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            aria-describedby="filter-help to-date-error"
-            className="text-base sm:text-sm"
-          />
-          {from && to && new Date(from) > new Date(to) && (
-            <p id="to-date-error" className="mt-1 text-xs text-destructive" role="alert">
-              End date cannot be before start date
-            </p>
-          )}
-        </div>
-        <div>
-          <Label htmlFor="city-filter" className="font-display text-xs sm:text-xs">
-            City contains
-            <span className="text-muted-foreground text-xs ml-1">(partial match)</span>
-          </Label>
-          <Input
-            id="city-filter"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            placeholder="e.g. Delhi"
-            aria-describedby="filter-help"
-            className="text-base sm:text-sm"
-          />
-        </div>
-      </div>
-      <p id="filter-help" className="sr-only">
-        Use these filters to refine the data shown in the dashboard below. Dates are interpreted as local calendar dates (not UTC-adjusted). Leave empty to include all dates or cities.
-      </p>
 
-      <div className="mt-4 sm:mt-6 flex flex-wrap items-center gap-2 sm:gap-3">
-        <Button
-          onClick={exportCSV}
-          disabled={!data || data.by_city.length === 0 || isLoading || isError}
-          variant="outline"
-          className="rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 h-auto transition-colors duration-200 hover:bg-muted disabled:cursor-not-allowed"
-          aria-label="Export dashboard data as CSV"
-        >
-          <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" aria-hidden="true" /> Export CSV
-        </Button>
-        <Button
-          onClick={exportPDF}
-          disabled={!data || data.by_city.length === 0 || isLoading || isError}
-          variant="outline"
-          className="rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 h-auto transition-colors duration-200 hover:bg-muted disabled:cursor-not-allowed"
-          aria-label="Export dashboard data as PDF"
-        >
-          <FileJson className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" aria-hidden="true" /> Export PDF
-        </Button>
-        {isError && (
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            className="rounded-full text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 h-auto transition-colors duration-200 hover:bg-muted"
-            aria-label="Retry loading dashboard data"
-          >
-            <RefreshCw className="h-3.5 w-3.5 sm:h-4 sm:w-4 mr-1" aria-hidden="true" /> Retry
-          </Button>
-        )}
-      </div>
-
-      {/* G1: Render four distinct states */}
-      {isLoading && (
-        <div className="mt-8 rounded-2xl border border-border/60 bg-muted/40 p-6 text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-ink mb-3"></div>
-          <p className="text-sm text-muted-foreground">Loading dashboard data...</p>
-        </div>
-      )}
-
-      {isError && (
-        <div className="mt-8 rounded-2xl border border-destructive/30 bg-destructive/10 p-6">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
-            <div className="flex-1">
-              <p className="font-display font-semibold text-sm text-destructive">
-                Could not load dashboard data
-              </p>
-              <p className="mt-1 text-xs text-destructive/80">
-                An error occurred while fetching statistics. This could be a network issue or temporary service problem.
-              </p>
-              <Button
-                onClick={() => refetch()}
-                size="sm"
-                variant="outline"
-                className="mt-3"
-                aria-label="Retry loading dashboard data"
+        {/* Controls */}
+        <div className="card-white p-4 md:p-6 mb-8">
+          {/* Filter Type Selector */}
+          <div className="mb-4 pb-4 border-b border-border">
+            <p className="text-xs font-semibold uppercase tracking-widest text-foreground mb-3">Filter type:</p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setYear("");
+                  setMonth("");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  !year && !month
+                    ? "bg-ink text-ink-foreground"
+                    : "border border-border text-foreground hover:bg-muted"
+                }`}
               >
-                <RefreshCw className="h-3.5 w-3.5 mr-1" aria-hidden="true" /> Try again
-              </Button>
+                Date Range
+              </button>
+              <button
+                onClick={() => {
+                  setFrom("");
+                  setTo("");
+                }}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                  year || month
+                    ? "bg-ink text-ink-foreground"
+                    : "border border-border text-foreground hover:bg-muted"
+                }`}
+              >
+                Year & Month
+              </button>
             </div>
           </div>
-        </div>
-      )}
 
-      {!isLoading && !isError && data && (
-        <>
-          {/* G1: Data successfully loaded */}
-          <div className="mt-8 grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            <Stat
-              label="Total reports"
-              value={String(data.total_reports)}
-              variant="ink"
-              trend={data.total_reports > 0 && data.by_month.length >= 2 ? data.trend : undefined}
-              isLoading={false}
-            />
-            <Stat
-              label="Cities represented"
-              value={String(data.by_city?.length ?? 0)}
-              isLoading={false}
-            />
-            <Stat
-              label="Months with reports"
-              value={String(data.by_month?.length ?? 0)}
-              isLoading={false}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            {/* Date Filters */}
+            {!year && !month ? (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest mb-2 text-foreground">
+                    <Calendar className="inline-block h-3.5 w-3.5 mr-1" />
+                    From Date
+                  </label>
+                  <input
+                    type="date"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest mb-2 text-foreground">
+                    <Calendar className="inline-block h-3.5 w-3.5 mr-1" />
+                    To Date
+                  </label>
+                  <input
+                    type="date"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest mb-2 text-foreground">
+                    <MapPin className="inline-block h-3.5 w-3.5 mr-1" />
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search city..."
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                  />
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setFrom("");
+                      setTo("");
+                      setCity("");
+                      refetch();
+                    }}
+                    className="w-full px-3 py-2 border border-border rounded-lg text-sm font-medium text-foreground hover:border-ink transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest mb-2 text-foreground">
+                    Year
+                  </label>
+                  <input
+                    type="number"
+                    min="2020"
+                    max={new Date().getFullYear()}
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    placeholder="YYYY"
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest mb-2 text-foreground">
+                    Month
+                  </label>
+                  <select
+                    value={month}
+                    onChange={(e) => setMonth(e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                  >
+                    <option value="">Select month</option>
+                    {Array.from({ length: 12 }, (_, i) => {
+                      const m = i + 1;
+                      const monthName = new Date(2025, m - 1).toLocaleString("en-US", { month: "long" });
+                      return (
+                        <option key={m} value={m}>
+                          {monthName}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest mb-2 text-foreground">
+                    <MapPin className="inline-block h-3.5 w-3.5 mr-1" />
+                    City
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search city..."
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-foreground text-sm placeholder-muted-foreground focus:outline-none focus:border-ink focus:ring-1 focus:ring-ink"
+                  />
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    onClick={() => {
+                      setYear("");
+                      setMonth("");
+                      setCity("");
+                      refetch();
+                    }}
+                    className="w-full px-3 py-2 border border-border rounded-lg text-sm font-medium text-foreground hover:border-ink transition-colors"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
-          {data.by_city.length === 0 && data.by_month.length === 0 ? (
-            /* G1: Data successfully loaded but empty */
-            <div className="mt-8 rounded-2xl border border-border/60 bg-muted/40 p-8 text-center">
-              <p className="text-sm text-muted-foreground font-medium">
-                No reports found for the selected filters.
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Try removing or adjusting the date range or city filter to see results.
-              </p>
+          {/* Control Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => refetch()}
+              className="flex items-center gap-2 px-4 py-2 bg-ink text-ink-foreground hover:bg-ink/90 rounded-lg text-sm font-medium transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </button>
+            <button
+              onClick={exportCSV}
+              disabled={!data || data.total_reports === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-lime text-lime-foreground hover:bg-lime/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
+            <button
+              onClick={exportPDF}
+              disabled={!data || data.total_reports === 0}
+              className="flex items-center gap-2 px-4 py-2 border border-border text-foreground hover:bg-muted rounded-lg text-sm font-medium transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              Export PDF
+            </button>
+          </div>
+        </div>
+
+        {/* Main Content */}
+        {isLoading ? (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="card-white p-6 animate-pulse"
+                >
+                  <div className="h-3 bg-muted rounded w-24 mb-4"></div>
+                  <div className="h-10 bg-muted rounded w-32"></div>
+                </div>
+              ))}
             </div>
-          ) : (
-            /* G1: Data successfully loaded with results */
-            <>
-              <div
-                ref={chartRef}
-                className="mt-8 grid gap-4 sm:gap-6 lg:grid-cols-2 bg-white p-4 sm:p-6 rounded-2xl"
-                role="region"
-                aria-labelledby="chart-section-title"
-              >
-                <div className="card-white p-4 sm:p-6">
-                  <h2 id="by-city-title" className="mb-3 sm:mb-4 font-display text-lg font-bold">
-                    By city
-                  </h2>
-                  {data.by_city.length > 0 ? (
-                    <ul className="divide-y divide-border max-h-96 overflow-y-auto" aria-labelledby="by-city-title">
-                      {data.by_city.map((r) => (
-                        <li
-                          key={r.city}
-                          className="flex items-center justify-between py-3 text-sm sm:text-base"
-                        >
-                          <span className="font-display text-sm">{r.city}</span>
-                          <span className="font-mono text-sm font-bold tabular-nums text-foreground" aria-label={`${r.city}: ${r.count} reports`}>
-                            {r.count}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <EmptyState message="No cities match your filter." />
-                  )}
-                </div>
-                <div className="card-white p-4 sm:p-6">
-                  <h2 id="by-month-title" className="mb-3 sm:mb-4 font-display text-lg font-bold">
-                    By month
-                  </h2>
-                  {data.by_month.length > 0 ? (
-                    <div className="h-48 sm:h-64" role="img" aria-labelledby="by-month-title" aria-label={`Bar chart showing ${data.by_month.length} months of incident reports, ranging from ${Math.min(...data.by_month.map(m => m.count))} to ${Math.max(...data.by_month.map(m => m.count))} reports per month`}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data.by_month} barCategoryGap="40%">
-                          <CartesianGrid
-                            strokeDasharray="3 3"
-                            stroke="var(--color-border)"
-                            strokeOpacity={0.5}
-                            vertical={false}
-                          />
-                          <XAxis
-                            dataKey="month"
-                            stroke="var(--color-muted-foreground)"
-                            strokeOpacity={0.4}
-                            tick={{
-                              fill: "var(--color-muted-foreground)",
-                              fontSize: 10,
-                            }}
-                            tickLine={false}
-                            axisLine={false}
-                          />
-                          <YAxis
-                            stroke="var(--color-muted-foreground)"
-                            strokeOpacity={0.4}
-                            tick={{
-                              fill: "var(--color-muted-foreground)",
-                              fontSize: 10,
-                            }}
-                            tickLine={false}
-                            axisLine={false}
-                            allowDecimals={false}
-                            width={28}
-                          />
-                          <Tooltip
-                            cursor={{ fill: "var(--color-muted)", opacity: 0.5 }}
-                            contentStyle={{
-                              background: "var(--color-card)",
-                              color: "var(--color-card-foreground)",
-                              border: "1px solid var(--color-border)",
-                              borderRadius: 8,
-                              fontSize: 12,
-                            }}
-                            itemStyle={{ color: "var(--color-foreground)" }}
-                            labelStyle={{ fontWeight: 600 }}
-                          />
-                          <Bar
-                            dataKey="count"
-                            fill="var(--color-ink)"
-                            radius={[3, 3, 0, 0]}
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  ) : (
-                    <EmptyState message="No monthly data available." />
-                  )}
-                </div>
+          </div>
+        ) : isError || error ? (
+          <div className="card-white border-destructive/50 bg-destructive/5 p-6">
+            <p className="font-display font-semibold mb-1 text-destructive">Error loading statistics</p>
+            <p className="text-sm text-muted-foreground">{error?.message || "Unknown error"}</p>
+            <button
+              onClick={() => refetch()}
+              className="mt-4 px-4 py-2 bg-ink text-ink-foreground hover:bg-ink/90 rounded-lg text-sm font-medium transition-colors"
+            >
+              Try again
+            </button>
+          </div>
+        ) : data && data.total_reports > 0 ? (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <StatCard
+                label="Total Reports"
+                value={data.total_reports.toString()}
+                icon={<BarChart3 className="h-6 w-6" />}
+                variant="primary"
+              />
+              <StatCard
+                label="Cities Represented"
+                value={data.by_city.filter(c => c.city && c.city.trim()).length.toString()}
+                icon={<Map className="h-6 w-6" />}
+                variant="secondary"
+              />
+              <StatCard
+                label="Months with Reports"
+                value={data.by_month.length.toString()}
+                icon={<Calendar className="h-6 w-6" />}
+                variant="primary"
+              />
+              <StatCard
+                label="Reporting Trend"
+                value={
+                  data.trend
+                    ? `${data.trend.direction === "up" ? "↑" : data.trend.direction === "down" ? "↓" : "→"} ${data.trend.percentage}%`
+                    : "—"
+                }
+                icon={<Activity className="h-6 w-6" />}
+                variant="tertiary"
+              />
+            </div>
+
+            {/* Charts Section */}
+            <div ref={chartRef} className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Reports by Month */}
+              <div className="card-white p-6">
+                <h2 className="text-lg font-display font-bold mb-4">Reports Over Time</h2>
+                {data.by_month && data.by_month.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={data.by_month} margin={{ top: 16, right: 16, left: -20, bottom: 16 }}>
+                      <XAxis
+                        dataKey="month"
+                        stroke="var(--color-muted-foreground)"
+                        style={{ fontSize: "12px" }}
+                        axisLine={{ stroke: "var(--color-border)" }}
+                      />
+                      <YAxis 
+                        stroke="var(--color-muted-foreground)" 
+                        style={{ fontSize: "12px" }}
+                        axisLine={{ stroke: "var(--color-border)" }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "var(--color-card)",
+                          border: "1px solid var(--color-border)",
+                          borderRadius: "8px",
+                          color: "var(--color-foreground)",
+                        }}
+                        cursor={{ fill: "var(--color-lime)" }}
+                      />
+                      <Bar
+                        dataKey="count"
+                        fill="var(--color-lime)"
+                        radius={[8, 8, 0, 0]}
+                        isAnimationActive={true}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-muted-foreground">
+                    No monthly data available
+                  </div>
+                )}
               </div>
 
-              {/* G3: Only show insights if we have sufficient data for trend */}
-              {data.by_month.length >= 2 && (
-                <div className="mt-8 rounded-2xl border-2 border-border bg-card p-6">
-                  <h3 id="insights-title" className="font-display text-lg font-bold mb-4">
-                    Insights & patterns
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <InsightCard
-                      title="Trend direction"
-                      description={
-                        data.trend
-                          ? data.trend.direction === "up"
-                            ? `Reporting rate is increasing (+${data.trend.percentage}%)`
-                            : data.trend.direction === "down"
-                              ? `Reporting rate is decreasing (−${data.trend.percentage}%)`
-                              : "Reporting rate is stable"
-                          : "Insufficient data for trend calculation"
-                      }
-                      icon={
-                        data.trend ? (
-                          data.trend.direction === "up" ? (
-                            <TrendingUp className="h-5 w-5 text-foreground/60" aria-hidden="true" />
-                          ) : data.trend.direction === "down" ? (
-                            <TrendingDown className="h-5 w-5 text-foreground/60" aria-hidden="true" />
-                          ) : (
-                            <Minus className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                          )
-                        ) : (
-                          <AlertCircle className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                        )
-                      }
-                    />
-                    <InsightCard
-                      title="Peak reporting month"
-                      description={
-                        data.by_month.length > 0
-                          ? `${data.by_month.reduce((max, m) => (m.count > max.count ? m : max)).month} — ${data.by_month.reduce((max, m) => (m.count > max.count ? m : max)).count} reports`
-                          : "No data"
-                      }
-                      icon={<TrendingUp className="h-5 w-5 text-foreground/60" aria-hidden="true" />}
-                    />
-                    <InsightCard
-                      title="Most active city"
-                      description={
-                        data.by_city.length > 0
-                          ? `${data.by_city[0].city} — ${data.by_city[0].count} reports`
-                          : "No data"
-                      }
-                      icon={<TrendingUp className="h-5 w-5 text-foreground/60" aria-hidden="true" />}
-                    />
+              {/* Reports by City */}
+              <div className="card-white p-6">
+                <h2 className="text-lg font-display font-bold mb-4">Reports by City</h2>
+                {data.by_city && data.by_city.length > 0 ? (
+                  <div className="space-y-3 max-h-96 overflow-y-auto">
+                    {data.by_city
+                      .filter(c => c.city && c.city.trim())
+                      .slice(0, 10)
+                      .map((c, idx) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium truncate">
+                                {c.city}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 ml-2">
+                            <div className="w-24 bg-muted rounded-full h-2">
+                              <div
+                                className="bg-lime h-2 rounded-full transition-all"
+                                style={{
+                                  width: `${(c.count / Math.max(...data.by_city.filter(x => x.city).map((x) => x.count))) * 100}%`,
+                                }}
+                              />
+                            </div>
+                            <span className="highlight-lime font-semibold min-w-fit text-sm">
+                              {c.count}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    {data.by_city.filter(c => c.city && c.city.trim()).length > 10 && (
+                      <p className="text-xs text-muted-foreground pt-2 border-t border-border">
+                        +{data.by_city.filter(c => c.city && c.city.trim()).length - 10} more cities
+                      </p>
+                    )}
+                    {data.by_city.some(c => !c.city || !c.city.trim()) && (
+                      <div className="mt-4 pt-4 border-t border-border">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2">
+                          City not specified
+                        </p>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Reports without a city</span>
+                          <span className="text-sm font-semibold">
+                            {data.by_city.find(c => !c.city || !c.city.trim())?.count || 0}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-            </>
-          )}
-        </>
-      )}
+                ) : (
+                  <div className="h-80 flex items-center justify-center text-muted-foreground">
+                    No city data available
+                  </div>
+                )}
+              </div>
+            </div>
 
-      {!isLoading && !isError && (
-        <p className="mt-8 rounded-2xl border border-border/60 bg-muted/40 p-4 text-xs text-muted-foreground">
-          Reports here are unverified allegations submitted by members of the
-          public. Publication of aggregate counts does not constitute a finding of
-          misconduct against any individual.
-        </p>
-      )}
+            {/* Insights */}
+            {data.by_month && data.by_month.length >= 2 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <InsightCard
+                  title="Trend"
+                  value={
+                    data.trend?.direction === "up"
+                      ? `Increasing +${data.trend.percentage}%`
+                      : data.trend?.direction === "down"
+                        ? `Decreasing −${data.trend.percentage}%`
+                        : "Stable"
+                  }
+                  subtitle={data.trend?.months ? `${data.trend.months}` : undefined}
+                  icon={
+                    data.trend?.direction === "up"
+                      ? <TrendingUp className="h-5 w-5 text-lime" />
+                      : data.trend?.direction === "down"
+                        ? <TrendingDown className="h-5 w-5 text-destructive" />
+                        : <Minus className="h-5 w-5 text-muted-foreground" />
+                  }
+                />
+                <InsightCard
+                  title="Peak Month"
+                  value={
+                    data.by_month.reduce((max, m) =>
+                      m.count > max.count ? m : max
+                    ).month
+                  }
+                  subtitle={`${data.by_month.reduce((max, m) =>
+                    m.count > max.count ? m : max
+                  ).count} reports`}
+                  icon={<TrendingUp className="h-5 w-5 text-lime" />}
+                />
+                <InsightCard
+                  title="Most Active City"
+                  value={data.by_city.filter(c => c.city && c.city.trim()).length > 0 ? data.by_city.filter(c => c.city && c.city.trim())[0]?.city || "Unknown" : "N/A"}
+                  subtitle={data.by_city.filter(c => c.city && c.city.trim()).length > 0 ? `${data.by_city.filter(c => c.city && c.city.trim())[0]?.count || 0} reports` : "No city data"}
+                  icon={<MapPin className="h-5 w-5 text-ink" />}
+                />
+              </div>
+            )}
+
+            {/* Disclaimer */}
+            <div className="card-white border-accent/50 bg-accent/5 p-4 text-sm leading-relaxed text-foreground">
+              Reports here are unverified allegations submitted by members of the public. Publication of aggregate counts does not constitute a finding of misconduct against any individual.
+            </div>
+          </>
+        ) : (
+          <div className="card-white p-12 text-center">
+            <div className="text-muted-foreground mb-4 flex justify-center">
+              <Inbox className="h-16 w-16" />
+            </div>
+            <h3 className="text-lg font-display font-bold mb-2">No Reports Yet</h3>
+            <p className="text-muted-foreground max-w-md mx-auto text-sm">
+              No reports match your filters. Try adjusting the date range or city filter to see results.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function Stat({
+function StatCard({
   label,
   value,
-  variant = "white",
-  trend,
-  isLoading,
+  icon,
+  variant = "primary",
 }: {
   label: string;
   value: string;
-  variant?: "white" | "ink";
-  trend?: { direction: "up" | "down" | "stable"; percentage: number };
-  isLoading?: boolean;
+  icon: React.ReactNode;
+  variant?: "primary" | "secondary" | "tertiary";
 }) {
+  const bgColors = {
+    primary: "bg-lime/10 border-lime/30",
+    secondary: "bg-ink/10 border-ink/30",
+    tertiary: "bg-accent/10 border-accent/30",
+  };
+
+  const textColors = {
+    primary: "text-ink",
+    secondary: "text-ink",
+    tertiary: "text-ink",
+  };
+
+  const iconColors = {
+    primary: "text-lime",
+    secondary: "text-ink",
+    tertiary: "text-ink",
+  };
+
   return (
-    <div className={`${variant === "ink" ? "card-ink" : "card-white"} p-6`}>
-      <p
-        className={`font-display text-xs uppercase tracking-widest ${variant === "ink" ? "text-white/60" : "text-muted-foreground"}`}
-      >
-        {label}
-      </p>
-      <div className="mt-2 flex items-end gap-2">
-        <p className={`font-display text-4xl font-bold ${isLoading ? "animate-pulse" : ""}`}>
-          {value}
-        </p>
-        {!isLoading && trend && (
-          <div
-            className={`mb-1 flex items-center gap-1 text-xs font-semibold ${
-              trend.direction === "up"
-                ? "text-foreground/70"
-                : trend.direction === "down"
-                  ? "text-foreground/70"
-                  : "text-muted-foreground"
-            }`}
-          >
-            {trend.direction === "up" && <TrendingUp className="h-3.5 w-3.5" aria-hidden="true" />}
-            {trend.direction === "down" && (
-              <TrendingDown className="h-3.5 w-3.5" aria-hidden="true" />
-            )}
-            {trend.direction === "stable" && <Minus className="h-3.5 w-3.5" aria-hidden="true" />}
-            <span>{trend.percentage}%</span>
-          </div>
-        )}
+    <div
+      className={`${bgColors[variant]} border rounded-2xl p-6 transition-all hover:scale-105 cursor-pointer card-white`}
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-2 text-foreground">
+            {label}
+          </p>
+          <p className={`text-4xl md:text-5xl font-bold font-display ${textColors[variant]}`}>
+            {value}
+          </p>
+        </div>
+        <div className={`opacity-60 ${iconColors[variant]}`}>{icon}</div>
       </div>
-    </div>
-  );
-}
-
-function EmptyState({ message }: { message?: string }) {
-  return (
-    <div className="py-12 text-center">
-      <p className="text-sm text-muted-foreground mb-3">
-        {message || "No data available for this filter yet."}
-      </p>
-      <p className="text-xs text-muted-foreground/70">
-        Try adjusting the date range or city filter to see results.
-      </p>
-    </div>
-  );
-}
-
-function LoadingSkeleton() {
-  return (
-    <div className="space-y-3 animate-pulse">
-      <div className="h-12 bg-muted rounded-lg"></div>
-      <div className="h-12 bg-muted rounded-lg"></div>
-      <div className="h-12 bg-muted rounded-lg"></div>
     </div>
   );
 }
 
 function InsightCard({
   title,
-  description,
+  value,
+  subtitle,
   icon,
 }: {
   title: string;
-  description: string;
+  value: string;
+  subtitle?: string;
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-border/60 p-4">
+    <div className="card-white p-4 hover:border-lime/50 transition-colors">
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 mt-1">{icon}</div>
-        <div className="min-w-0">
-          <p className="font-display text-sm font-semibold">{title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <div className="flex-shrink-0 mt-1 text-ink">{icon}</div>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold uppercase tracking-widest mb-1 text-foreground">
+            {title}
+          </p>
+          <p className="text-lg font-display font-bold text-ink truncate">{value}</p>
+          {subtitle && <p className="text-xs text-foreground mt-1">{subtitle}</p>}
         </div>
       </div>
     </div>

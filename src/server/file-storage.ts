@@ -8,7 +8,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 /**
  * Get attachment storage directory
@@ -138,4 +138,23 @@ export function getFileFullPath(storagePath) {
 export function fileExists(storagePath) {
   const fullPath = getFileFullPath(storagePath);
   return existsSync(fullPath);
+}
+
+/**
+ * Get file buffer for a stored file
+ * @param {string} storagePath - Storage path from database
+ * @returns {Buffer | null} File buffer or null if not found
+ */
+export function getFileBuffer(storagePath: string): Buffer | null {
+  try {
+    const fullPath = getFileFullPath(storagePath);
+    if (!existsSync(fullPath)) {
+      return null;
+    }
+    return readFileSync(fullPath);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('❌ Error reading file:', message);
+    return null;
+  }
 }

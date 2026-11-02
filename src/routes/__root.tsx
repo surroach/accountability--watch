@@ -87,17 +87,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       meta: [
         { charSet: "utf-8" },
         { name: "viewport", content: "width=device-width, initial-scale=1" },
-        { title: "Accountability Watch — Prototype documentation platform" },
+        { title: "Accountability Watch — Documentation platform" },
         {
           name: "description",
           content:
-            "Accountability Watch is a prototype platform exploring how technology can document alleged police misconduct. This is a design and research tool, not a formal complaint system or emergency service.",
+            "Accountability Watch helps document incidents and review aggregate reporting data. Learn more about how it works.",
         },
         { property: "og:title", content: "Accountability Watch" },
         {
           property: "og:description",
           content:
-            "A prototype platform for documenting allegations. Not a formal complaint system, emergency response, or a substitute for contacting authorities directly.",
+            "Document incidents and review aggregate reporting data. See the Resources page for legal aid and support.",
         },
         { property: "og:type", content: "website" },
         { name: "twitter:card", content: "summary_large_image" },
@@ -105,7 +105,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         {
           name: "twitter:description",
           content:
-            "Prototype platform for documenting allegations. See the Resources page for legal aid and support.",
+            "Documentation platform for incidents. See the Resources page for legal aid and support.",
         },
         { property: "og:url", content: "https://accountability.watch" },
       ],
@@ -431,9 +431,9 @@ function Footer() {
 
           {/* Project Note */}
           <div>
-            <h3 className="font-display font-bold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Project note</h3>
+            <h3 className="font-display font-bold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">About this project</h3>
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-              This is a prototype platform for documenting incidents. Future versions may include legal partner integration, but current functionality is for demonstration only.
+              Accountability Watch helps document incidents and review aggregate reporting data. See the Resources page for legal aid and support options.
             </p>
           </div>
         </div>
@@ -444,7 +444,7 @@ function Footer() {
             © {currentYear} Accountability Watch.
           </p>
           <p className="text-xs max-w-sm leading-relaxed">
-            This is a prototype platform. Officer names, photos, and badge numbers are not published. For information on legal support, see the Resources page.
+            Officer names, photos, and badge numbers are not published. For information on legal support and resources, see the Resources page.
           </p>
         </div>
       </div>

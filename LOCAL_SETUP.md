@@ -10,27 +10,30 @@ This is a polished local-only implementation of Accountability Watch for college
 
 ## Quick Start
 
-### Windows (Recommended)
+### Installation
 
-**Option 1: PowerShell (Recommended)**
+All platforms:
+```bash
+npm install
+```
+
+### Windows
+
 ```powershell
-.\start.ps1
+npm run dev
 ```
 
-**Option 2: Command Prompt**
-```cmd
-start.bat
-```
+Then open the URL printed in your terminal (typically http://localhost:5173 or http://localhost:8080, depending on port availability).
 
 ### macOS / Linux
 
 ```bash
-npm install
-npm run build
 npm run dev
 ```
 
-The application will be available at **http://localhost:3000**
+Then open the URL printed in your terminal.
+
+**Note:** The `start.ps1` and `start.bat` scripts are excluded from the repository and not available for installation. Use `npm run dev` instead on all platforms.
 
 ## What You Can Demonstrate
 
@@ -56,8 +59,8 @@ The application will be available at **http://localhost:3000**
 
 ### 3. **Demonstrate Persistence**
 - Submit a report and note the reference number
-- Close the application
-- Reopen it
+- Close the application (Ctrl+C)
+- Reopen it (`npm run dev`)
 - Go to "View your reports"
 - The report is still there with all details
 
@@ -68,7 +71,7 @@ The application will be available at **http://localhost:3000**
   - File name and size
   - SHA-256 hash for integrity
   - GPS metadata if embedded in image
-  - Timestamp metadata
+  - Timestamp metadata (if available)
 
 ## Local Data Storage
 
@@ -92,23 +95,26 @@ The application will be available at **http://localhost:3000**
 
 ## Features That Actually Work
 
-### ✅ Working Features
+### ✅ Verified Working (Browser-Tested)
 - **Report submission** → Saved to SQLite
-- **Reference codes** → Unique, tamper-evident UUIDs
+- **Reference codes** → Unique, tamper-evident IDs
 - **Anonymous submission** → Contact fields not stored
 - **Identified submission** → Contact info preserved
-- **File attachments** → Saved locally with metadata
 - **Report list** → Query saved reports, sorted by date
-- **Report details** → View full report + all files
+- **Report details** → View full report information
 - **Persistence** → Data survives app restart
-- **GPS/EXIF metadata** → Extracted from images, stored
+- **GPS/EXIF metadata** → Extracted from images, stored with file metadata
 - **Urgent flag** → Mark reports as high-priority
 - **Incident types** → Categorize by misconduct type
+- **File attachments** → Uploaded files stored locally with SHA-256 hash
+
+### ⚠ Implemented but Not Browser-Tested
+- File download / opening from website (files are stored locally but not yet exposed via web interface for download)
 
 ### ⚠ Not Implemented (Out of Scope)
 - Cloud backup or sync
 - Legal partner integration (no real org connections)
-- Moderation workflow (status field is stored but not used)
+- Moderation workflow (status field is stored but not used in UI)
 - Authentication / login
 - Admin dashboard
 - Public statistics
@@ -120,11 +126,12 @@ The application will be available at **http://localhost:3000**
 
 1. **Start the app**
    ```powershell
-   .\start.ps1
+   npm run dev
    ```
-   Wait for build to complete. Browser opens at http://localhost:3000
+   Wait for the build to complete. The terminal will show the URL (typically http://localhost:5173 or http://localhost:8080).
 
 2. **File a report**
+   - Open the URL shown in your terminal
    - Click "Report an incident"
    - **Step 1:** 
      - Date: Pick today or yesterday
@@ -147,7 +154,8 @@ The application will be available at **http://localhost:3000**
 
 4. **Restart to prove persistence**
    - Press Ctrl+C to stop server
-   - Run `.\start.ps1` again
+   - Run `npm run dev` again
+   - Open the URL shown in the terminal
    - Navigate to "View your reports"
    - Your report is still there ✓
 
@@ -158,15 +166,17 @@ The application will be available at **http://localhost:3000**
 - Verify installation: `node --version` in terminal
 
 ### "npm install fails"
-- Delete `node_modules` folder and `package-lock.json`
-- Run script again
-- Or manually: `npm install && npm run build`
+- Ensure you have Node.js 24+ installed: `node --version`
+- Try installing again: `npm install`
+- Clear npm cache if needed: `npm cache clean --force` then `npm install`
+- If a specific package fails, consult the error message for that package's requirements
 
-### "Port 3000 already in use"
-- Another app is using port 3000
-- Option 1: Stop other app
-- Option 2: Close terminal and restart
-- Option 3: Manually run `npm run dev` and it may use a different port
+### "Port 3000 already in use" or "Port in use"
+- Vite chooses the first available port when you run `npm run dev`
+- The exact port is printed in your terminal output
+- Check the terminal for a message like: `Local: http://localhost:5173` or `http://localhost:8080`
+- Open that URL in your browser
+- If you see connection refused, make sure the `npm run dev` command is still running
 
 ### "Build fails"
 - Try: `npm run build:dev`
@@ -174,10 +184,16 @@ The application will be available at **http://localhost:3000**
 - Check TypeScript errors: `npm run lint`
 
 ### "Database locked"
-- Another instance of the app is running
-- Close all instances
-- Delete `db/accountability.db` if corrupted
-- Restart app
+- The database file `db/accountability.db` may be in use
+- **Do not delete the database.** It contains all submitted reports.
+- Instead:
+  - Check that only one instance of the application is running
+  - Stop the application completely (press Ctrl+C in the terminal)
+  - Wait a few seconds for file locks to release
+  - Restart the application with `npm run dev`
+- If the issue persists after these steps, investigate your system's file locking:
+  - On Windows: Use `tasklist` to find other Node processes and close them
+  - On macOS/Linux: Use `lsof | grep accountability.db` to find which process holds the lock
 
 ## File Structure
 
@@ -189,21 +205,23 @@ accountability-watch/
 ├── src/
 │   ├── routes/
 │   │   ├── report.tsx          # Form page (calls /api/reports)
-│   │   ├── saved-reports.tsx   # List page
-│   │   └── saved-reports/$id.tsx  # Detail page
+│   │   ├── saved-reports.tsx   # List page (calls /api/reports)
+│   │   └── saved-reports/$id.tsx  # Detail page (calls /api/reports/:id)
 │   ├── server/
-│   │   ├── report-repository.mjs   # SQLite insert/read
-│   │   ├── database.mjs        # DB connection & init
-│   │   ├── file-storage.mjs    # Local file save
-│   │   └── api-response.mjs    # Response format
-│   ├── routes/api/
-│   │   ├── reports.post.ts     # POST /api/reports (submit)
-│   │   ├── reports.get.ts      # GET /api/reports (list)
-│   │   └── reports/[id].get.ts # GET /api/reports/:id (detail)
-├── start.bat                   # Windows batch startup
-├── start.ps1                   # Windows PowerShell startup
-└── LOCAL_SETUP.md              # This file
+│   │   ├── report-repository.ts   # SQLite insert/read
+│   │   ├── database.ts        # DB connection & init
+│   │   ├── file-storage.ts    # Local file save
+│   │   └── api-response.ts    # Response format
+│   ├── server.ts              # Server entry point
+│   ├── components/            # Reusable UI components
+│   └── lib/                   # Utility functions
+├── tests/                     # Test files (Vitest)
+├── vite.config.ts            # Build configuration
+├── package.json              # Dependencies and scripts
+└── LOCAL_SETUP.md            # This file
 ```
+
+**Note:** The `start.bat` and `start.ps1` scripts referenced in older documentation are not part of the repository. Use `npm run dev` on all platforms.
 
 ## API Endpoints (For Reference)
 

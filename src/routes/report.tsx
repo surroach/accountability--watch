@@ -914,6 +914,16 @@ export function ReportPage() {
 
       const incidentDate = datetimeLocalToISO(incidentAt);
 
+      // Browser-compatible base64 encoding function
+      function arrayBufferToBase64(buffer: ArrayBuffer): string {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+      }
+
       // Prepare files data for upload
       let filesData: Array<{
         name: string;
@@ -926,11 +936,27 @@ export function ReportPage() {
         gps_accuracy?: number;
         media_timestamp?: string;
       }> = [];
+      
+      // Track files that failed to prepare
+      const filePreparationErrors: Array<{ file: string; message: string }> = [];
 
       for (const file of files) {
         try {
           const buffer = await file.arrayBuffer();
-          const base64 = Buffer.from(buffer).toString('base64');
+          
+          // Use browser-compatible base64 encoding
+          let base64: string;
+          try {
+            base64 = arrayBufferToBase64(buffer);
+          } catch (err) {
+            filePreparationErrors.push({
+              file: file.name,
+              message: 'Could not encode file to base64'
+            });
+            console.error('Error encoding file to base64:', err);
+            continue;
+          }
+          
           const hash = await sha256Hex(file);
           const fileKey = `${file.name}|${file.size}|${file.lastModified}`;
           const meta = fileMetadata.get(fileKey);
@@ -947,6 +973,11 @@ export function ReportPage() {
             media_timestamp: meta?.timestamp,
           });
         } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+          filePreparationErrors.push({
+            file: file.name,
+            message: errorMsg
+          });
           console.error('Error preparing file:', err);
           // Continue with other files
         }
@@ -993,33 +1024,48 @@ export function ReportPage() {
       }
 
       const reportRecord = result.data;
-      const fileErrors = result.fileErrors || [];
+      const backendFileErrors = result.fileErrors || [];
+      
+      // Combine file preparation errors with backend errors
+      const allFileErrors = [
+        ...filePreparationErrors.map((err: any) => ({
+          file: err.file,
+          stage: 'preparation',
+          message: err.message
+        })),
+        ...backendFileErrors
+      ];
 
-      // Report honest outcomes - separate report from file attachment status
-      if (files.length > 0) {
-        const attachedCount = files.length - fileErrors.length;
-        
-        if (attachedCount === files.length && fileErrors.length === 0) {
+      // Use backend's actual files_attached count for honest reporting
+      const filesAttached = reportRecord.files_attached || 0;
+      const totalFilesSelected = files.length;
+
+      // Report honest outcomes - use actual attached count from backend
+      if (totalFilesSelected > 0) {
+        if (filesAttached === totalFilesSelected && allFileErrors.length === 0) {
           // All files successfully attached
           toast.success(
-            `Report saved successfully. ${attachedCount} file${attachedCount !== 1 ? "s" : ""} attached. Reference: ${reportRecord.report_code}`
+            `Report saved successfully. ${filesAttached} file${filesAttached !== 1 ? "s" : ""} attached. Reference: ${reportRecord.report_code}`
           );
-        } else if (attachedCount > 0) {
+        } else if (filesAttached > 0) {
           // Some files attached
-          const failedCount = fileErrors.length;
+          const failedCount = allFileErrors.length;
           toast.warning(
-            `Report saved. ${attachedCount} of ${files.length} files attached. Reference: ${reportRecord.report_code}. ${failedCount} file${failedCount !== 1 ? "s" : ""} could not be attached.`
+            `Report saved. ${filesAttached} of ${totalFilesSelected} files attached. Reference: ${reportRecord.report_code}. ${failedCount} file${failedCount !== 1 ? "s" : ""} could not be attached.`
           );
         } else {
           // No files attached
-          toast.warning(`Report saved without files. Reference: ${reportRecord.report_code}. Files could not be processed.`);
+          toast.warning(`Report saved without files. Reference: ${reportRecord.report_code}. ${totalFilesSelected} file${totalFilesSelected !== 1 ? "s" : ""} could not be processed.`);
         }
       } else {
         toast.success(`Report saved successfully! Reference: ${reportRecord.report_code}`);
       }
 
       // E5: Mark submission complete so unsaved warning doesn't appear
-      setSubmitted({ code: reportRecord.report_code, fileErrors: fileErrors.length > 0 ? fileErrors : undefined });
+      setSubmitted({ 
+        code: reportRecord.report_code, 
+        fileErrors: allFileErrors.length > 0 ? allFileErrors : undefined 
+      });
       setHasUnsavedChanges(false);
       window.scrollTo({ top: 0, behavior: "instant" });
     } catch (err) {
