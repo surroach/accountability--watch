@@ -671,6 +671,92 @@ async function handleApiRoute(request: Request): Promise<Response | null> {
         });
       }
     }
+
+    // PATCH /api/reports/:id - update a report (e.g., status)
+    const reportUpdateMatch = path.match(/^\/api\/reports\/([a-f0-9\-]+)$/);
+    if (reportUpdateMatch && request.method === "PATCH") {
+      try {
+        const id = reportUpdateMatch[1];
+        if (!id) {
+          const result = apiError("Report ID is required", 400);
+          return new Response(JSON.stringify(result), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const body = await request.json();
+        const { status } = body;
+
+        if (!status) {
+          const result = apiError("Status is required", 400);
+          return new Response(JSON.stringify(result), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const validStatuses = ['new', 'under_review', 'referred', 'closed', 'pending_moderation', 'moderation_approved', 'moderation_rejected'];
+        if (!validStatuses.includes(status)) {
+          const result = apiError(`Invalid status. Must be one of: ${validStatuses.join(', ')}`, 400);
+          return new Response(JSON.stringify(result), {
+            status: 400,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        const db = getDatabase();
+        
+        // Verify report exists
+        const checkStmt = db.prepare("SELECT id FROM incident_reports WHERE id = ?");
+        const existing = checkStmt.all(id);
+        
+        if (existing.length === 0) {
+          const result = apiError("Report not found", 404);
+          return new Response(JSON.stringify(result), {
+            status: 404,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        // Update status
+        const updateStmt = db.prepare(`
+          UPDATE incident_reports
+          SET status = ?, updated_at = ?
+          WHERE id = ?
+        `);
+        
+        const now = new Date().toISOString();
+        updateStmt.run(status, now, id);
+        
+        // Return updated report
+        const getStmt = db.prepare("SELECT * FROM incident_reports WHERE id = ?");
+        const updated = getStmt.all(id)[0];
+        
+        const result = apiResponse({
+          report: {
+            ...updated,
+            urgent_flag: !!updated.urgent_flag,
+          },
+        });
+
+        return new Response(JSON.stringify(result), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } catch (error) {
+        console.error("❌ Error updating report:", error);
+        const result = apiError(
+          "Failed to update report",
+          500,
+          error instanceof Error ? error.message : "Unknown error"
+        );
+        return new Response(JSON.stringify(result), {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+    }
   } catch (error) {
     console.error("❌ API module error:", error);
     return new Response(

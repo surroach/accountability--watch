@@ -109,29 +109,20 @@ function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: dbError } = await supabase
-        .from("incident_reports")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Try local API first (SQLite)
+      const response = await fetch("/api/reports");
+      const result = await response.json();
       
-      if (dbError) {
-        if (
-          dbError.code === "PGRST301" ||
-          dbError.message.toLowerCase().includes("permission")
-        ) {
-          setHasAccess(false);
-        } else {
-          setError(dbError.message);
-          toast.error(`Failed to load reports: ${dbError.message}`);
-        }
-        setReports([]);
-      } else {
-        setHasAccess(true);
-        setReports((data as Report[]) ?? []);
+      if (!response.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to load reports");
       }
+      
+      setHasAccess(true);
+      setReports((result.data?.reports as Report[]) ?? []);
     } catch (err: any) {
-      setError(err?.message || "An unexpected error occurred");
-      toast.error(`Error loading reports: ${err?.message || "Unknown error"}`);
+      const message = err?.message || "An unexpected error occurred";
+      setError(message);
+      toast.error(`Failed to load reports: ${message}`);
       setReports([]);
     } finally {
       setLoading(false);
@@ -159,7 +150,7 @@ function AdminPage() {
   }, [reports, query, statusFilter]);
 
   async function updateStatus(id: string, status: Report["status"]) {
-    // H2: Prevent duplicate clicks while status action is in progress
+    // Prevent duplicate clicks while status action is in progress
     if (updatingStatusId) {
       toast.error("An update is already in progress. Please wait.");
       return;
@@ -167,21 +158,24 @@ function AdminPage() {
 
     setUpdatingStatusId(id);
     try {
-      const { error: updateError } = await supabase
-        .from("incident_reports")
-        .update({ status })
-        .eq("id", id);
+      // Use local API endpoint for status update
+      const response = await fetch(`/api/reports/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
       
-      if (updateError) {
-        throw updateError;
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to update status");
       }
       
-      // H2: Only update state if operation succeeds
       toast.success("Status updated");
       setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
     } catch (err: any) {
       const errorMsg = err?.message || "Failed to update status";
-      toast.error(`${errorMsg}`);
+      toast.error(errorMsg);
     } finally {
       setUpdatingStatusId(null);
     }
