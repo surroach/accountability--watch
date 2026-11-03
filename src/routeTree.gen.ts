@@ -8,278 +8,348 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from "./routes/__root";
-import { Route as IndexRouteImport } from "./routes/index";
-import { Route as AuthenticatedRouteRouteImport } from "./routes/_authenticated/route";
-import { Route as AboutRouteImport } from "./routes/about";
-import { Route as AdminReportsRouteImport } from "./routes/admin-reports";
-import { Route as AuthRouteImport } from "./routes/auth";
-import { Route as DashboardRouteImport } from "./routes/dashboard";
-import { Route as ReportRouteImport } from "./routes/report";
-import { Route as ResourcesRouteImport } from "./routes/resources";
-import { Route as TermsRouteImport } from "./routes/terms";
-import { Route as TransparencyRouteImport } from "./routes/transparency";
-import { Route as AuthenticatedAdminRouteImport } from "./routes/_authenticated/admin";
-import { Route as AuthenticatedModerationRouteImport } from "./routes/_authenticated/moderation";
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as AdminReportsRouteImport } from './routes/admin-reports'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ReportRouteImport } from './routes/report'
+import { Route as ResourcesRouteImport } from './routes/resources'
+import { Route as SavedReportsRouteImport } from './routes/saved-reports'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TransparencyRouteImport } from './routes/transparency'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedModerationRouteImport } from './routes/_authenticated/moderation'
+import { Route as SavedReportsIndexRouteImport } from './routes/saved-reports/index'
+import { Route as SavedReportsIdRouteImport } from './routes/saved-reports/$id'
 
 const IndexRoute = IndexRouteImport.update({
-  id: "/",
-  path: "/",
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: "/_authenticated",
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AboutRoute = AboutRouteImport.update({
-  id: "/about",
-  path: "/about",
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AdminReportsRoute = AdminReportsRouteImport.update({
-  id: "/admin-reports",
-  path: "/admin-reports",
+  id: '/admin-reports',
+  path: '/admin-reports',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthRoute = AuthRouteImport.update({
-  id: "/auth",
-  path: "/auth",
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
-  id: "/dashboard",
-  path: "/dashboard",
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const ReportRoute = ReportRouteImport.update({
-  id: "/report",
-  path: "/report",
+  id: '/report',
+  path: '/report',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const ResourcesRoute = ResourcesRouteImport.update({
-  id: "/resources",
-  path: "/resources",
+  id: '/resources',
+  path: '/resources',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
+const SavedReportsRoute = SavedReportsRouteImport.update({
+  id: '/saved-reports',
+  path: '/saved-reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
-  id: "/terms",
-  path: "/terms",
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const TransparencyRoute = TransparencyRouteImport.update({
-  id: "/transparency",
-  path: "/transparency",
+  id: '/transparency',
+  path: '/transparency',
   getParentRoute: () => rootRouteImport,
-} as any);
+} as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: "/admin",
-  path: "/admin",
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
 const AuthenticatedModerationRoute = AuthenticatedModerationRouteImport.update({
-  id: "/moderation",
-  path: "/moderation",
+  id: '/moderation',
+  path: '/moderation',
   getParentRoute: () => AuthenticatedRouteRoute,
-} as any);
+} as any)
+const SavedReportsIndexRoute = SavedReportsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SavedReportsRoute,
+} as any)
+const SavedReportsIdRoute = SavedReportsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => SavedReportsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/admin-reports": typeof AdminReportsRoute;
-  "/auth": typeof AuthRoute;
-  "/dashboard": typeof DashboardRoute;
-  "/report": typeof ReportRoute;
-  "/resources": typeof ResourcesRoute;
-  "/terms": typeof TermsRoute;
-  "/transparency": typeof TransparencyRoute;
-  "/admin": typeof AuthenticatedAdminRoute;
-  "/moderation": typeof AuthenticatedModerationRoute;
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin-reports': typeof AdminReportsRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/report': typeof ReportRoute
+  '/resources': typeof ResourcesRoute
+  '/saved-reports': typeof SavedReportsRouteWithChildren
+  '/terms': typeof TermsRoute
+  '/transparency': typeof TransparencyRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/moderation': typeof AuthenticatedModerationRoute
+  '/saved-reports/$id': typeof SavedReportsIdRoute
+  '/saved-reports/': typeof SavedReportsIndexRoute
 }
 export interface FileRoutesByTo {
-  "/": typeof IndexRoute;
-  "/about": typeof AboutRoute;
-  "/admin-reports": typeof AdminReportsRoute;
-  "/auth": typeof AuthRoute;
-  "/dashboard": typeof DashboardRoute;
-  "/report": typeof ReportRoute;
-  "/resources": typeof ResourcesRoute;
-  "/terms": typeof TermsRoute;
-  "/transparency": typeof TransparencyRoute;
-  "/admin": typeof AuthenticatedAdminRoute;
-  "/moderation": typeof AuthenticatedModerationRoute;
+  '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/admin-reports': typeof AdminReportsRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/report': typeof ReportRoute
+  '/resources': typeof ResourcesRoute
+  '/terms': typeof TermsRoute
+  '/transparency': typeof TransparencyRoute
+  '/admin': typeof AuthenticatedAdminRoute
+  '/moderation': typeof AuthenticatedModerationRoute
+  '/saved-reports/$id': typeof SavedReportsIdRoute
+  '/saved-reports': typeof SavedReportsIndexRoute
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport;
-  "/": typeof IndexRoute;
-  "/_authenticated": typeof AuthenticatedRouteRouteWithChildren;
-  "/about": typeof AboutRoute;
-  "/admin-reports": typeof AdminReportsRoute;
-  "/auth": typeof AuthRoute;
-  "/dashboard": typeof DashboardRoute;
-  "/report": typeof ReportRoute;
-  "/resources": typeof ResourcesRoute;
-  "/terms": typeof TermsRoute;
-  "/transparency": typeof TransparencyRoute;
-  "/_authenticated/admin": typeof AuthenticatedAdminRoute;
-  "/_authenticated/moderation": typeof AuthenticatedModerationRoute;
+  __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/about': typeof AboutRoute
+  '/admin-reports': typeof AdminReportsRoute
+  '/auth': typeof AuthRoute
+  '/dashboard': typeof DashboardRoute
+  '/report': typeof ReportRoute
+  '/resources': typeof ResourcesRoute
+  '/saved-reports': typeof SavedReportsRouteWithChildren
+  '/terms': typeof TermsRoute
+  '/transparency': typeof TransparencyRoute
+  '/_authenticated/admin': typeof AuthenticatedAdminRoute
+  '/_authenticated/moderation': typeof AuthenticatedModerationRoute
+  '/saved-reports/$id': typeof SavedReportsIdRoute
+  '/saved-reports/': typeof SavedReportsIndexRoute
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath;
+  fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | "/"
-    | "/about"
-    | "/admin-reports"
-    | "/auth"
-    | "/dashboard"
-    | "/report"
-    | "/resources"
-    | "/terms"
-    | "/transparency"
-    | "/admin"
-    | "/moderation";
-  fileRoutesByTo: FileRoutesByTo;
+    | '/'
+    | '/about'
+    | '/admin-reports'
+    | '/auth'
+    | '/dashboard'
+    | '/report'
+    | '/resources'
+    | '/saved-reports'
+    | '/terms'
+    | '/transparency'
+    | '/admin'
+    | '/moderation'
+    | '/saved-reports/$id'
+    | '/saved-reports/'
+  fileRoutesByTo: FileRoutesByTo
   to:
-    | "/"
-    | "/about"
-    | "/admin-reports"
-    | "/auth"
-    | "/dashboard"
-    | "/report"
-    | "/resources"
-    | "/terms"
-    | "/transparency"
-    | "/admin"
-    | "/moderation";
+    | '/'
+    | '/about'
+    | '/admin-reports'
+    | '/auth'
+    | '/dashboard'
+    | '/report'
+    | '/resources'
+    | '/terms'
+    | '/transparency'
+    | '/admin'
+    | '/moderation'
+    | '/saved-reports/$id'
+    | '/saved-reports'
   id:
-    | "__root__"
-    | "/"
-    | "/_authenticated"
-    | "/about"
-    | "/admin-reports"
-    | "/auth"
-    | "/dashboard"
-    | "/report"
-    | "/resources"
-    | "/terms"
-    | "/transparency"
-    | "/_authenticated/admin"
-    | "/_authenticated/moderation";
-  fileRoutesById: FileRoutesById;
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/about'
+    | '/admin-reports'
+    | '/auth'
+    | '/dashboard'
+    | '/report'
+    | '/resources'
+    | '/saved-reports'
+    | '/terms'
+    | '/transparency'
+    | '/_authenticated/admin'
+    | '/_authenticated/moderation'
+    | '/saved-reports/$id'
+    | '/saved-reports/'
+  fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute;
-  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren;
-  AboutRoute: typeof AboutRoute;
-  AdminReportsRoute: typeof AdminReportsRoute;
-  AuthRoute: typeof AuthRoute;
-  DashboardRoute: typeof DashboardRoute;
-  ReportRoute: typeof ReportRoute;
-  ResourcesRoute: typeof ResourcesRoute;
-  TermsRoute: typeof TermsRoute;
-  TransparencyRoute: typeof TransparencyRoute;
+  IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AboutRoute: typeof AboutRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AuthRoute: typeof AuthRoute
+  DashboardRoute: typeof DashboardRoute
+  ReportRoute: typeof ReportRoute
+  ResourcesRoute: typeof ResourcesRoute
+  SavedReportsRoute: typeof SavedReportsRouteWithChildren
+  TermsRoute: typeof TermsRoute
+  TransparencyRoute: typeof TransparencyRoute
 }
 
-declare module "@tanstack/react-router" {
+declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    "/": {
-      id: "/";
-      path: "/";
-      fullPath: "/";
-      preLoaderRoute: typeof IndexRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated": {
-      id: "/_authenticated";
-      path: "";
-      fullPath: "/";
-      preLoaderRoute: typeof AuthenticatedRouteRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/about": {
-      id: "/about";
-      path: "/about";
-      fullPath: "/about";
-      preLoaderRoute: typeof AboutRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/admin-reports": {
-      id: "/admin-reports";
-      path: "/admin-reports";
-      fullPath: "/admin-reports";
-      preLoaderRoute: typeof AdminReportsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/auth": {
-      id: "/auth";
-      path: "/auth";
-      fullPath: "/auth";
-      preLoaderRoute: typeof AuthRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/dashboard": {
-      id: "/dashboard";
-      path: "/dashboard";
-      fullPath: "/dashboard";
-      preLoaderRoute: typeof DashboardRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/report": {
-      id: "/report";
-      path: "/report";
-      fullPath: "/report";
-      preLoaderRoute: typeof ReportRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/resources": {
-      id: "/resources";
-      path: "/resources";
-      fullPath: "/resources";
-      preLoaderRoute: typeof ResourcesRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/terms": {
-      id: "/terms";
-      path: "/terms";
-      fullPath: "/terms";
-      preLoaderRoute: typeof TermsRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/transparency": {
-      id: "/transparency";
-      path: "/transparency";
-      fullPath: "/transparency";
-      preLoaderRoute: typeof TransparencyRouteImport;
-      parentRoute: typeof rootRouteImport;
-    };
-    "/_authenticated/admin": {
-      id: "/_authenticated/admin";
-      path: "/admin";
-      fullPath: "/admin";
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
-    "/_authenticated/moderation": {
-      id: "/_authenticated/moderation";
-      path: "/moderation";
-      fullPath: "/moderation";
-      preLoaderRoute: typeof AuthenticatedModerationRouteImport;
-      parentRoute: typeof AuthenticatedRouteRoute;
-    };
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-reports': {
+      id: '/admin-reports'
+      path: '/admin-reports'
+      fullPath: '/admin-reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/report': {
+      id: '/report'
+      path: '/report'
+      fullPath: '/report'
+      preLoaderRoute: typeof ReportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resources': {
+      id: '/resources'
+      path: '/resources'
+      fullPath: '/resources'
+      preLoaderRoute: typeof ResourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/saved-reports': {
+      id: '/saved-reports'
+      path: '/saved-reports'
+      fullPath: '/saved-reports'
+      preLoaderRoute: typeof SavedReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/transparency': {
+      id: '/transparency'
+      path: '/transparency'
+      fullPath: '/transparency'
+      preLoaderRoute: typeof TransparencyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/admin': {
+      id: '/_authenticated/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/moderation': {
+      id: '/_authenticated/moderation'
+      path: '/moderation'
+      fullPath: '/moderation'
+      preLoaderRoute: typeof AuthenticatedModerationRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/saved-reports/': {
+      id: '/saved-reports/'
+      path: '/'
+      fullPath: '/saved-reports/'
+      preLoaderRoute: typeof SavedReportsIndexRouteImport
+      parentRoute: typeof SavedReportsRoute
+    }
+    '/saved-reports/$id': {
+      id: '/saved-reports/$id'
+      path: '/$id'
+      fullPath: '/saved-reports/$id'
+      preLoaderRoute: typeof SavedReportsIdRouteImport
+      parentRoute: typeof SavedReportsRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute;
-  AuthenticatedModerationRoute: typeof AuthenticatedModerationRoute;
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRoute
+  AuthenticatedModerationRoute: typeof AuthenticatedModerationRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRoute,
   AuthenticatedModerationRoute: AuthenticatedModerationRoute,
-};
+}
 
 const AuthenticatedRouteRouteWithChildren =
-  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren);
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+interface SavedReportsRouteChildren {
+  SavedReportsIdRoute: typeof SavedReportsIdRoute
+  SavedReportsIndexRoute: typeof SavedReportsIndexRoute
+}
+
+const SavedReportsRouteChildren: SavedReportsRouteChildren = {
+  SavedReportsIdRoute: SavedReportsIdRoute,
+  SavedReportsIndexRoute: SavedReportsIndexRoute,
+}
+
+const SavedReportsRouteWithChildren = SavedReportsRoute._addFileChildren(
+  SavedReportsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -290,19 +360,20 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   ReportRoute: ReportRoute,
   ResourcesRoute: ResourcesRoute,
+  SavedReportsRoute: SavedReportsRouteWithChildren,
   TermsRoute: TermsRoute,
   TransparencyRoute: TransparencyRoute,
-};
+}
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>();
+  ._addFileTypes<FileRouteTypes>()
 
-import type { getRouter } from "./router.tsx";
-import type { startInstance } from "./start.ts";
-declare module "@tanstack/react-start" {
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
   interface Register {
-    ssr: true;
-    router: Awaited<ReturnType<typeof getRouter>>;
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>;
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

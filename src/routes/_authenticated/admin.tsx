@@ -97,32 +97,36 @@ function AdminPage() {
   const navigate = useNavigate();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [open, setOpen] = useState<Report | null>(null);
   const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("incident_reports")
-      .select("*")
-      .order("created_at", { ascending: false });
-    if (error) {
-      if (
-        error.code === "PGRST301" ||
-        error.message.toLowerCase().includes("permission")
-      ) {
-        setHasAccess(false);
-      } else {
-        toast.error(error.message);
+    setError(null);
+    try {
+      // Try local API first (SQLite)
+      const response = await fetch("/api/reports");
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to load reports");
       }
-    } else {
+      
       setHasAccess(true);
-      setReports((data as Report[]) ?? []);
+      setReports((result.data?.reports as Report[]) ?? []);
+    } catch (err: any) {
+      const message = err?.message || "An unexpected error occurred";
+      setError(message);
+      toast.error(`Failed to load reports: ${message}`);
+      setReports([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   useEffect(() => {
@@ -146,31 +150,77 @@ function AdminPage() {
   }, [reports, query, statusFilter]);
 
   async function updateStatus(id: string, status: Report["status"]) {
-    const { error } = await supabase
-      .from("incident_reports")
-      .update({ status })
-      .eq("id", id);
-    if (error) return toast.error(error.message);
-    toast.success("Status updated");
-    setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    // Prevent duplicate clicks while status action is in progress
+    if (updatingStatusId) {
+      toast.error("An update is already in progress. Please wait.");
+      return;
+    }
+
+    setUpdatingStatusId(id);
+    try {
+      // Use local API endpoint for status update
+      const response = await fetch(`/api/reports/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error?.message || "Failed to update status");
+      }
+      
+      toast.success("Status updated");
+      setReports((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
+    } catch (err: any) {
+      const errorMsg = err?.message || "Failed to update status";
+      toast.error(errorMsg);
+    } finally {
+      setUpdatingStatusId(null);
+    }
   }
 
   async function openReport(r: Report) {
-    setOpen(r);
-    const { data } = await supabase
-      .from("report_evidence")
-      .select("*")
-      .eq("report_id", r.id)
-      .order("created_at");
-    setEvidence((data as Evidence[]) ?? []);
+    try {
+      setOpen(r);
+      const { data, error } = await supabase
+        .from("report_evidence")
+        .select("*")
+        .eq("report_id", r.id)
+        .order("created_at");
+      
+      if (error) {
+        throw error;
+      }
+      
+      setEvidence((data as Evidence[]) ?? []);
+    } catch (err: any) {
+      const errorMsg = err?.message || "Failed to load evidence";
+      toast.error(errorMsg);
+      setEvidence([]);
+    }
   }
 
   async function downloadEvidence(ev: Evidence) {
-    const { data, error } = await supabase.storage
-      .from("evidence")
-      .createSignedUrl(ev.storage_path, 300);
-    if (error || !data) return toast.error("Could not generate download link");
-    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    try {
+      const { data, error } = await supabase.storage
+        .from("evidence")
+        .createSignedUrl(ev.storage_path, 300);
+      
+      if (error) {
+        throw error;
+      }
+      
+      if (!data) {
+        throw new Error("No download URL was generated");
+      }
+      
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (err: any) {
+      const errorMsg = err?.message || "Could not generate download link";
+      toast.error(errorMsg);
+    }
   }
 
   function exportCsv() {
@@ -302,98 +352,129 @@ function AdminPage() {
         </Select>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-3xl border-2 border-ink">
-        <table className="w-full text-sm">
-          <thead className="bg-ink text-ink-foreground">
-            <tr>
-              <Th>Code</Th>
-              <Th>Incident</Th>
-              <Th>City</Th>
-              <Th>Status</Th>
-              <Th className="text-right">Actions</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="p-10 text-center text-muted-foreground"
-                >
-                  Loading…
-                </td>
-              </tr>
-            ) : filtered.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="p-10 text-center text-muted-foreground"
-                >
-                  No reports found.
-                </td>
-              </tr>
-            ) : (
-              filtered.map((r) => (
-                <tr
-                  key={r.id}
-                  className="border-t border-border/60 hover:bg-muted/40"
-                >
-                  <Td>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs">{r.report_code}</span>
-                      {r.urgent_flag && (
-                        <Badge variant="destructive" className="text-xs">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Urgent
-                        </Badge>
-                      )}
-                    </div>
-                  </Td>
-                  <Td>
-                    <div>{new Date(r.incident_at).toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {r.location_text}
-                    </div>
-                  </Td>
-                  <Td>{r.city ?? "—"}</Td>
-                  <Td>
-                    <Select
-                      value={r.status}
-                      onValueChange={(v) =>
-                        updateStatus(r.id, v as Report["status"])
-                      }
-                    >
-                      <SelectTrigger className="h-8 w-[190px] text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statuses.map((s) => (
-                          <SelectItem key={s.value} value={s.value}>
-                            {s.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </Td>
-                  <Td className="text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-full"
-                      onClick={() => openReport(r)}
-                    >
-                      <Eye className="h-4 w-4" /> View
-                    </Button>
-                  </Td>
+      {/* H2: Show distinct states */}
+      {error && (
+        <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/10 p-6">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" aria-hidden="true" />
+            <div className="flex-1">
+              <p className="font-display font-semibold text-sm text-destructive">
+                Could not load reports
+              </p>
+              <p className="mt-1 text-xs text-destructive/80">
+                {error}
+              </p>
+              <Button
+                onClick={refresh}
+                size="sm"
+                variant="outline"
+                className="mt-3"
+              >
+                <RefreshCw className="h-3.5 w-3.5 mr-1" aria-hidden="true" /> Try again
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {loading && (
+        <div className="mt-6 rounded-2xl border border-border/60 bg-muted/40 p-12 text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-ink mb-3"></div>
+          <p className="text-sm text-muted-foreground">Loading reports...</p>
+        </div>
+      )}
+
+      {!loading && !error && filtered.length === 0 && (
+        <div className="mt-6 rounded-2xl border border-border/60 bg-muted/40 p-12 text-center">
+          <p className="text-sm text-muted-foreground font-medium">
+            No reports found.
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Try adjusting your search or filter criteria.
+          </p>
+        </div>
+      )}
+
+      {!loading && !error && filtered.length > 0 && (
+        <div className="mt-6 rounded-3xl border-2 border-ink overflow-hidden">
+          {/* H1: Responsive table with horizontal scroll on mobile */}
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-full">
+              <thead className="bg-ink text-ink-foreground">
+                <tr>
+                  <Th>Code</Th>
+                  <Th>Incident</Th>
+                  <Th>City</Th>
+                  <Th>Status</Th>
+                  <Th className="text-right">Actions</Th>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {filtered.map((r) => (
+                  <tr
+                    key={r.id}
+                    className="border-t border-border/60 hover:bg-muted/40"
+                  >
+                    <Td>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs">{r.report_code}</span>
+                        {r.urgent_flag && (
+                          <Badge variant="destructive" className="text-xs">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            Urgent
+                          </Badge>
+                        )}
+                      </div>
+                    </Td>
+                    <Td>
+                      <div>{new Date(r.incident_at).toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {r.location_text}
+                      </div>
+                    </Td>
+                    <Td>{r.city ?? "—"}</Td>
+                    <Td>
+                      <Select
+                        value={r.status}
+                        onValueChange={(v) =>
+                          updateStatus(r.id, v as Report["status"])
+                        }
+                        disabled={updatingStatusId === r.id}
+                      >
+                        <SelectTrigger className="h-8 w-[190px] text-xs" aria-label={`Status for ${r.report_code}`}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statuses.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              {s.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </Td>
+                    <Td className="text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full"
+                        onClick={() => openReport(r)}
+                        aria-label={`View details for ${r.report_code}`}
+                      >
+                        <Eye className="h-4 w-4" aria-hidden="true" /> <span className="ml-1 hidden sm:inline">View</span>
+                      </Button>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    
 
       <Dialog open={!!open} onOpenChange={(v) => !v && setOpen(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] max-h-[85vh] overflow-y-auto md:max-w-2xl">
           {open && (
             <>
               <DialogHeader>
@@ -401,7 +482,7 @@ function AdminPage() {
                   <span className="font-mono text-sm">{open.report_code}</span>
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 text-sm">
+              <div className="space-y-4 text-sm pr-4">
                 <Detail label="Incident at">
                   {new Date(open.incident_at).toLocaleString()}
                 </Detail>

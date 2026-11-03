@@ -9,7 +9,7 @@ export const Route = createFileRoute("/transparency")({
       {
         name: "description",
         content:
-          "How Accountability Watch handles data, who accesses reports, and our anonymization practices.",
+          "This prototype's data handling design and transparency considerations. Security and partner integrations should be verified before production use.",
       },
       {
         property: "og:title",
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/transparency")({
       },
       {
         property: "og:description",
-        content: "Data handling, retention, and access policies.",
+        content: "Prototype data handling design. Not a production privacy policy.",
       },
     ],
   }),
@@ -47,52 +47,22 @@ function TransparencyPage() {
 
       <div className="mt-12 space-y-10">
         <Section
-          title="Verified partner organizations"
+          title="Partner organizations (prototype design)"
           content={
             <>
               <p className="mb-6 text-sm text-muted-foreground">
-                Accountability Watch partners with established civil rights and
-                legal aid organizations to ensure reports reach trained
-                advocates and lawyers. These organizations are verified partners
-                committed to protecting reporter privacy and supporting civil
-                rights.
+                In this prototype, the design shows how verified partner organizations could access
+                reports to support legal and civil rights work. This integration has not yet been implemented.
               </p>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <PartnerCard
-                  name="National Civil Rights Alliance"
-                  description="Civil rights advocacy and legal support"
-                  verified
-                />
-                <PartnerCard
-                  name="Center for Constitutional Rights"
-                  description="Legal defense and policy advocacy"
-                  verified
-                />
-                <PartnerCard
-                  name="International Human Rights Network"
-                  description="Documentation and human rights monitoring"
-                  verified
-                />
-                <PartnerCard
-                  name="Legal Aid Society"
-                  description="Pro bono legal services for low-income communities"
-                  verified
-                />
-                <PartnerCard
-                  name="Transparency International"
-                  description="Anti-corruption and accountability research"
-                  verified
-                />
-                <PartnerCard
-                  name="Human Rights Watch"
-                  description="Independent human rights monitoring"
-                  verified
-                />
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 mb-6">
+                <p className="text-sm text-amber-900">
+                  <strong>⚠️ Note:</strong> The partner organizations listed below are examples for design purposes only.
+                  They have not been contacted or verified. Do not assume this platform is integrated with any organization.
+                </p>
               </div>
-              <p className="mt-6 text-xs text-muted-foreground">
-                All partners are bound by confidentiality agreements and
-                committed to responsible data use. Reports are shared only with
-                explicit consent and in compliance with local laws.
+              <p className="text-xs text-muted-foreground">
+                Actual partner verification, data sharing agreements, and access controls should be configured by
+                the project owner before any real data is collected.
               </p>
             </>
           }
@@ -105,12 +75,11 @@ function TransparencyPage() {
             </div>
             <div>
               <p className="font-display text-sm font-semibold">
-                Accountability Watch is committed to transparency
+                Security & data handling (prototype)
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                We undergo regular security audits and comply with data
-                protection regulations including GDPR, CCPA, and regional
-                privacy laws.
+                This prototype demonstrates data handling patterns. Security practices and compliance
+                requirements should be verified with legal and security experts before production deployment.
               </p>
             </div>
           </div>
@@ -154,7 +123,7 @@ function TransparencyPage() {
         />
 
         <Section
-          title="How we protect your privacy"
+          title="How we protect your privacy (design intent)"
           content={
             <>
               <div className="space-y-4 text-sm text-muted-foreground">
@@ -163,32 +132,29 @@ function TransparencyPage() {
                     Anonymous vs. Identified Submissions
                   </strong>
                   <p className="mt-1">
-                    You can submit completely anonymously (no contact info) or
-                    provide your name for legal follow-up. Either way, your
-                    identity is never published.
+                    The prototype design supports anonymous submission (no contact info) or identified submission.
+                    Either way, the design intends for identity to not be published in public aggregates.
                   </p>
                 </div>
                 <div>
-                  <strong className="text-foreground">Encryption</strong>
+                  <strong className="text-foreground">Data in Transit</strong>
                   <p className="mt-1">
-                    All data in transit is encrypted (TLS 1.3). Sensitive fields
-                    (officer names, badge numbers, reporter contact info) are
-                    never public.
+                    The system should use encrypted transport (HTTPS/TLS). Implementation details depend on
+                    your deployment environment and should be verified with your hosting provider.
                   </p>
                 </div>
                 <div>
                   <strong className="text-foreground">Access Control</strong>
                   <p className="mt-1">
-                    Raw reports are visible only to: (1) legal aid partners and
-                    civil rights organizations we've verified, (2) platform
-                    admins. No one else.
+                    The prototype design shows role-based access: administrators and (optionally) verified partners.
+                    Actual access policies depend on backend configuration and authentication setup.
                   </p>
                 </div>
                 <div>
                   <strong className="text-foreground">Data Hashing</strong>
                   <p className="mt-1">
-                    Evidence files are hashed (SHA-256) on submission, creating
-                    a tamper-evident record that proves file integrity.
+                    The design tracks file hashes (SHA-256) for integrity. This is a design pattern;
+                    actual implementation should be reviewed for cryptographic correctness.
                   </p>
                 </div>
               </div>
@@ -232,7 +198,7 @@ function TransparencyPage() {
         />
 
         <Section
-          title="Data retention"
+          title="Data retention (design considerations)"
           content={
             <>
               <div className="space-y-4 text-sm text-muted-foreground">
@@ -240,20 +206,19 @@ function TransparencyPage() {
                   <strong className="text-foreground">
                     Individual reports:
                   </strong>{" "}
-                  Stored indefinitely in a secure, access-controlled database.
-                  You can request deletion; contact us for details.
+                  Retention strategy should be determined by the project owner based on legal requirements,
+                  funding, and storage capacity. Contact the administrator for information.
                 </div>
                 <div>
                   <strong className="text-foreground">Evidence files:</strong>{" "}
-                  Kept as long as the report may be relevant to ongoing legal
-                  matters (typically 5–7 years).
+                  Storage duration depends on use case and should be specified in a formal data retention policy
+                  before deployment.
                 </div>
                 <div>
                   <strong className="text-foreground">
                     Aggregate statistics:
                   </strong>{" "}
-                  Published data is kept for historical reference but cannot be
-                  traced back to individuals.
+                  Published aggregate data can be kept indefinitely but should not be traceable to individuals.
                 </div>
               </div>
             </>
@@ -359,17 +324,20 @@ function TransparencyPage() {
         />
 
         <Section
-          title="Security practices"
+          title="Security practices (to be verified)"
           content={
             <>
               <ul className="space-y-2 text-sm text-muted-foreground ml-4">
-                <li>• All data encrypted at rest (AES-256)</li>
-                <li>• All connections encrypted in transit (TLS 1.3)</li>
-                <li>• Regular security audits and penetration testing</li>
-                <li>• Zero-knowledge infrastructure where possible</li>
-                <li>• Automated backups with encryption</li>
-                <li>• Incident response plan in place</li>
+                <li>• Encrypt data in transit (HTTPS/TLS recommended)</li>
+                <li>• Implement access controls and authentication</li>
+                <li>• Use automated backups (details depend on hosting)</li>
+                <li>• Plan incident response procedures</li>
+                <li>• Security should be reviewed by external experts before production deployment</li>
               </ul>
+              <p className="mt-4 text-xs text-muted-foreground italic">
+                This is a prototype. Claims about specific encryption standards, audit completion, or
+                compliance certifications should not be made until verified by security professionals.
+              </p>
             </>
           }
         />
@@ -379,24 +347,12 @@ function TransparencyPage() {
           content={
             <>
               <p className="text-sm text-muted-foreground">
-                If you have questions about how we handle your data:
+                For questions about data handling in this prototype, contact the project owner or administrator.
               </p>
-              <div className="mt-4 space-y-2 text-sm">
-                <p>
-                  <strong className="text-foreground">Email:</strong>{" "}
-                  <span className="font-mono">
-                    privacy@accountability-watch.org
-                  </span>
-                </p>
-                <p>
-                  <strong className="text-foreground">
-                    Data subject requests:
-                  </strong>{" "}
-                  <span className="font-mono">
-                    dsr@accountability-watch.org
-                  </span>
-                </p>
-              </div>
+              <p className="mt-4 text-xs text-muted-foreground italic">
+                Formal contact procedures, data subject request handling, and privacy officer contact information
+                should be established before production deployment.
+              </p>
             </>
           }
         />

@@ -98,7 +98,7 @@ CREATE INDEX IF NOT EXISTS idx_incident_reports_status_created
 
 -- Moderation queue (pending reports)
 CREATE INDEX IF NOT EXISTS idx_incident_reports_moderation_urgent 
-  ON incident_reports(is_moderated, urgent_flag, created_at DESC);
+  ON incident_reports(status, urgent_flag, created_at DESC);
 
 -- Geographic filtering for dashboard
 CREATE INDEX IF NOT EXISTS idx_incident_reports_city_created 

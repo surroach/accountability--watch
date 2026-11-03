@@ -7,13 +7,13 @@ export const Route = createFileRoute("/about")({
       {
         name: "description",
         content:
-          "What Accountability Watch is, what it isn't, and why we handle reports the way we do.",
+          "Accountability Watch is a prototype platform for documenting police misconduct allegations. This is a design tool, not an emergency service or formal complaint system.",
       },
       { property: "og:title", content: "About — Accountability Watch" },
       {
         property: "og:description",
         content:
-          "A civic-tech accountability platform for legal aid partners, journalists, and researchers.",
+          "A prototype platform for documenting allegations. Not a formal complaint system or emergency response.",
       },
     ],
   }),
@@ -32,21 +32,32 @@ function About() {
 
       <div className="mt-8 space-y-6 text-base leading-relaxed">
         <p>
-          Accountability Watch is a documentation platform for allegations of
-          police misconduct during protests. We built it for a narrow purpose:
-          to help lawyers, complaint authorities, and civil-rights researchers
-          do their work — nothing more.
+          Accountability Watch is a prototype platform for documenting allegations of
+          police misconduct during protests. This is a design and research tool built to explore
+          how technology can assist lawyers, complaint authorities, and civil-rights researchers —
+          nothing more.
         </p>
 
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 my-6">
+          <p className="text-sm text-amber-900">
+            <strong>Important:</strong> This is a prototype. It does not file formal complaints (FIR), replace official
+            reporting channels, or provide emergency response. Reports submitted here are not automatically
+            filed with authorities or routed to legal aid without your explicit separate action.
+          </p>
+        </div>
+
         <h2 className="pt-4 font-display text-2xl font-bold">
-          How reports move
+          How reports are handled (prototype design)
         </h2>
         <p>
-          A report enters the system with a timestamp and a SHA-256 hash of
-          every uploaded file. It is stored privately. Vetted legal aid partners
-          with sign-in access can review, update status, and export cases for
-          referral. The public sees only aggregate counts — never names, badges,
-          photos, or case detail.
+          In this prototype design, a report enters the system with a timestamp and file hashes
+          for integrity tracking. The design intends for reports to be viewable by administrators and,
+          if enabled, shared with partner organizations. The public dashboard displays only
+          anonymized aggregate counts — never names, badges, photos, or individual case details.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          <em>Note: This is a prototype. Actual data handling, partner access, and legal routing depend on backend
+          configuration and have not yet been verified in production.</em>
         </p>
 
         <h2 className="pt-4 font-display text-2xl font-bold">
@@ -56,27 +67,32 @@ function About() {
           <li>Not a face-matching or officer-identification tool.</li>
           <li>Not a public database of officer names or badge numbers.</li>
           <li>Not a mechanism for retaliation or public shaming.</li>
-          <li>Not a substitute for filing a formal complaint or FIR.</li>
+          <li>Not a formal complaint system or FIR filing tool.</li>
+          <li>Not an emergency response service.</li>
+          <li>Not a substitute for contacting authorities directly.</li>
         </ul>
 
         <h2 className="pt-4 font-display text-2xl font-bold">Data & consent</h2>
         <p>
-          Reports are submitted with an explicit consent statement. Reporter
-          contact information is used only for legal follow-up — never public.
-          Reports may be shared, in aggregate/anonymized form, with journalists
-          and civil-rights groups researching patterns.
+          In this prototype, reports are submitted with a consent statement. The design shows
+          an option to submit anonymously or with contact info. The prototype does not automatically
+          share reports with legal partners—that integration is planned but not yet implemented.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Reporters should not assume their report will reach anyone without taking additional steps
+          to contact authorities or legal aid organizations directly.
         </p>
 
         <div className="mt-10 flex flex-wrap gap-3">
           <Link
             to="/report"
-            className="rounded-full bg-ink px-6 py-3 font-display text-sm font-semibold text-ink-foreground"
+            className="rounded-full bg-ink px-6 py-3 font-display text-sm font-semibold text-ink-foreground transition-all duration-200 hover:bg-ink/90 hover:shadow-md active:scale-95"
           >
             File a report
           </Link>
           <Link
             to="/resources"
-            className="rounded-full border-2 border-ink px-6 py-3 font-display text-sm font-semibold"
+            className="rounded-full border-2 border-ink px-6 py-3 font-display text-sm font-semibold transition-colors duration-200 hover:bg-lime"
           >
             Get help
           </Link>
